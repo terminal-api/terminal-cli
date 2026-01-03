@@ -25,6 +25,7 @@ import {
   generateZshCompletions,
   generateFishCompletions,
 } from "./lib/completions.ts";
+import { startTui } from "./tui/app.ts";
 
 interface GlobalOptions {
   format: OutputFormat;
@@ -481,7 +482,13 @@ async function handleApiCommand(
 async function main(): Promise<void> {
   const rawArgs = process.argv.slice(2);
 
-  if (rawArgs.length === 0 || rawArgs[0] === "--help" || rawArgs[0] === "-h") {
+  // Launch TUI if no arguments provided
+  if (rawArgs.length === 0) {
+    await startTui();
+    return;
+  }
+
+  if (rawArgs[0] === "--help" || rawArgs[0] === "-h") {
     showHelp();
     return;
   }
