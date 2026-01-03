@@ -7,7 +7,17 @@
  */
 
 import { TerminalClient, ClientError } from "./lib/client.ts";
-import { loadConfig, saveConfig, getConfigPath } from "./lib/config.ts";
+import {
+  loadConfig,
+  saveConfig,
+  getConfigPath,
+  listProfiles,
+  getProfile,
+  createProfile,
+  deleteProfile,
+  setDefaultProfile,
+  copyProfile,
+} from "./lib/config.ts";
 import { print, printError, printSuccess, printInfo, type OutputFormat } from "./lib/output.ts";
 import { commandGroups, findCommand, type Command } from "../generated/index.ts";
 import {
@@ -20,6 +30,7 @@ interface GlobalOptions {
   format: OutputFormat;
   apiKey?: string;
   connectionToken?: string;
+  profile?: string;
   all?: boolean;
 }
 
@@ -32,13 +43,13 @@ function parseArgs(args: string[]): {
   const command: string[] = [];
   const positionalArgs: string[] = [];
 
-  // Special handling for config command which has subcommands and positional args
-  if (args[0] === "config") {
-    command.push("config");
+  // Special handling for config/profile commands which have subcommands and positional args
+  if (args[0] === "config" || args[0] === "profile") {
+    command.push(args[0]);
     if (args[1]) {
       command.push(args[1]);
     }
-    // Rest are positional args for config
+    // Rest are positional args for config/profile
     for (let i = 2; i < args.length; i++) {
       const arg = args[i]!;
       if (arg.startsWith("-")) {
@@ -114,6 +125,7 @@ function showHelp(): void {
 
 \x1b[1mGLOBAL OPTIONS:\x1b[0m
   --format <format>    Output format: json, pretty, table (default: json)
+  --profile <name>     Use a specific profile (or set TERMINAL_PROFILE)
   --api-key <key>      API key (or set TERMINAL_API_KEY)
   --connection-token   Connection token (or set TERMINAL_CONNECTION_TOKEN)
   --all                Auto-paginate and fetch all results
@@ -123,6 +135,14 @@ function showHelp(): void {
   config show          Show current configuration
   config set <key>     Set a config value
   config path          Show config file path
+
+\x1b[1mPROFILE COMMANDS:\x1b[0m
+  profile list         List all profiles
+  profile show <name>  Show profile details
+  profile create <name> Create a new profile
+  profile delete <name> Delete a profile
+  profile use <name>   Set default profile
+  profile copy <src> <dst> Copy a profile
 
 \x1b[1mCOMPLETIONS:\x1b[0m
   completions bash     Generate bash completions
@@ -177,11 +197,13 @@ function showCommandHelp(cmd: Command): void {
 async function handleConfigCommand(
   subcommand: string,
   args: string[],
-  _options: Record<string, string | boolean>,
+  options: Record<string, string | boolean>,
 ): Promise<void> {
+  const profileName = options["profile"] as string | undefined;
+
   switch (subcommand) {
     case "show": {
-      const config = loadConfig();
+      const config = loadConfig(profileName);
       // Mask sensitive values
       const displayConfig = {
         ...config,
@@ -199,7 +221,7 @@ async function handleConfigCommand(
       const value = args[1];
 
       if (!key) {
-        printError("Usage: terminal config set <key> <value>");
+        printError("Usage: terminal config set <key> <value> [--profile <name>]");
         printInfo("Available keys: api-key, connection-token, environment");
         return;
       }
@@ -211,20 +233,24 @@ async function handleConfigCommand(
 
       switch (key) {
         case "api-key":
-          saveConfig({ apiKey: value });
-          printSuccess(`API key saved`);
+          saveConfig({ apiKey: value }, profileName);
+          printSuccess(`API key saved${profileName ? ` to profile '${profileName}'` : ""}`);
           break;
         case "connection-token":
-          saveConfig({ connectionToken: value });
-          printSuccess(`Connection token saved`);
+          saveConfig({ connectionToken: value }, profileName);
+          printSuccess(
+            `Connection token saved${profileName ? ` to profile '${profileName}'` : ""}`,
+          );
           break;
         case "environment":
           if (value !== "prod" && value !== "sandbox") {
             printError("Environment must be 'prod' or 'sandbox'");
             return;
           }
-          saveConfig({ environment: value });
-          printSuccess(`Environment set to ${value}`);
+          saveConfig({ environment: value }, profileName);
+          printSuccess(
+            `Environment set to ${value}${profileName ? ` for profile '${profileName}'` : ""}`,
+          );
           break;
         default:
           printError(`Unknown config key: ${key}`);
@@ -241,6 +267,115 @@ async function handleConfigCommand(
     default:
       printError(`Unknown config subcommand: ${subcommand}`);
       printInfo("Available subcommands: show, set, path");
+  }
+}
+
+async function handleProfileCommand(
+  subcommand: string,
+  args: string[],
+  _options: Record<string, string | boolean>,
+): Promise<void> {
+  switch (subcommand) {
+    case "list": {
+      const profiles = listProfiles();
+      for (const profile of profiles) {
+        const marker = profile.isDefault ? " (default)" : "";
+        console.log(`${profile.name}${marker}`);
+      }
+      break;
+    }
+
+    case "show": {
+      const name = args[0];
+      if (!name) {
+        printError("Usage: terminal profile show <name>");
+        return;
+      }
+
+      const profile = getProfile(name);
+      if (!profile) {
+        printError(`Profile '${name}' not found`);
+        return;
+      }
+
+      // Mask sensitive values
+      const displayProfile = {
+        ...profile,
+        apiKey: profile.apiKey ? profile.apiKey.slice(0, 10) + "..." : undefined,
+        connectionToken: profile.connectionToken
+          ? profile.connectionToken.slice(0, 15) + "..."
+          : undefined,
+      };
+      console.log(JSON.stringify(displayProfile, null, 2));
+      break;
+    }
+
+    case "create": {
+      const name = args[0];
+      if (!name) {
+        printError("Usage: terminal profile create <name>");
+        return;
+      }
+
+      if (createProfile(name)) {
+        printSuccess(`Profile '${name}' created`);
+        printInfo(`Set values with: terminal config set <key> <value> --profile ${name}`);
+      } else {
+        printError(`Profile '${name}' already exists`);
+      }
+      break;
+    }
+
+    case "delete": {
+      const name = args[0];
+      if (!name) {
+        printError("Usage: terminal profile delete <name>");
+        return;
+      }
+
+      if (deleteProfile(name)) {
+        printSuccess(`Profile '${name}' deleted`);
+      } else {
+        printError(`Cannot delete profile '${name}' (doesn't exist or is default)`);
+      }
+      break;
+    }
+
+    case "use": {
+      const name = args[0];
+      if (!name) {
+        printError("Usage: terminal profile use <name>");
+        return;
+      }
+
+      if (setDefaultProfile(name)) {
+        printSuccess(`Default profile set to '${name}'`);
+      } else {
+        printError(`Profile '${name}' not found`);
+      }
+      break;
+    }
+
+    case "copy": {
+      const source = args[0];
+      const target = args[1];
+
+      if (!source || !target) {
+        printError("Usage: terminal profile copy <source> <target>");
+        return;
+      }
+
+      if (copyProfile(source, target)) {
+        printSuccess(`Profile '${source}' copied to '${target}'`);
+      } else {
+        printError(`Failed to copy: source '${source}' doesn't exist or target '${target}' exists`);
+      }
+      break;
+    }
+
+    default:
+      printError(`Unknown profile subcommand: ${subcommand}`);
+      printInfo("Available subcommands: list, show, create, delete, use, copy");
   }
 }
 
@@ -288,16 +423,15 @@ async function handleApiCommand(
     }
   }
 
-  // Create client with overrides
-  const config: Record<string, string> = {};
-  if (globalOptions.apiKey) {
-    config["apiKey"] = globalOptions.apiKey;
-  }
-  if (globalOptions.connectionToken) {
-    config["connectionToken"] = globalOptions.connectionToken;
-  }
+  // Load config from profile, then apply CLI overrides
+  const profileConfig = loadConfig(globalOptions.profile);
+  const clientConfig: Record<string, string | undefined> = {
+    apiKey: globalOptions.apiKey ?? profileConfig.apiKey,
+    connectionToken: globalOptions.connectionToken ?? profileConfig.connectionToken,
+    baseUrl: profileConfig.baseUrl,
+  };
 
-  const client = new TerminalClient(config);
+  const client = new TerminalClient(clientConfig);
 
   try {
     let result = await cmd.handler(client, args);
@@ -360,8 +494,10 @@ async function main(): Promise<void> {
   const { command, options, positionalArgs } = parseArgs(rawArgs);
 
   // Extract global options
+  const profileName = options["profile"] as string | undefined;
   const globalOptions: GlobalOptions = {
     format: (options["format"] as OutputFormat) ?? "json",
+    profile: profileName,
     apiKey: options["api-key"] as string | undefined,
     connectionToken: options["connection-token"] as string | undefined,
     all: options["all"] === true,
@@ -390,6 +526,13 @@ async function main(): Promise<void> {
   if (command[0] === "config") {
     const subcommand = command[1] ?? "show";
     await handleConfigCommand(subcommand, positionalArgs, options);
+    return;
+  }
+
+  // Handle profile commands
+  if (command[0] === "profile") {
+    const subcommand = command[1] ?? "list";
+    await handleProfileCommand(subcommand, positionalArgs, options);
     return;
   }
 
