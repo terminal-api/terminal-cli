@@ -1,0 +1,476 @@
+/**
+ * OpenAPI to CLI Generator
+ *
+ * This script fetches the Terminal OpenAPI spec and generates CLI commands
+ * dynamically from it.
+ */
+
+import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { join } from "path";
+
+const OPENAPI_URL = "https://api.withterminal.com/tsp/openapi";
+const GENERATED_DIR = join(import.meta.dir, "..", "generated");
+
+interface OpenAPISpec {
+  openapi: string;
+  info: {
+    title: string;
+    description: string;
+    version: string;
+  };
+  servers: Array<{ url: string; description: string }>;
+  paths: Record<string, PathItem>;
+  components: {
+    schemas: Record<string, Schema>;
+    parameters: Record<string, Parameter>;
+    responses: Record<string, Response>;
+  };
+  tags: Array<{ name: string; description?: string }>;
+}
+
+interface PathItem {
+  get?: Operation;
+  post?: Operation;
+  put?: Operation;
+  patch?: Operation;
+  delete?: Operation;
+  parameters?: Parameter[];
+}
+
+interface Operation {
+  summary: string;
+  description?: string;
+  operationId: string;
+  tags?: string[];
+  parameters?: Array<Parameter | { $ref: string }>;
+  requestBody?: {
+    content: {
+      "application/json": {
+        schema: Schema;
+      };
+    };
+  };
+  responses: Record<string, Response>;
+}
+
+interface Parameter {
+  name: string;
+  in: "path" | "query" | "header";
+  required?: boolean;
+  schema?: Schema;
+  description?: string;
+}
+
+interface Schema {
+  type?: string;
+  properties?: Record<string, Schema>;
+  items?: Schema;
+  $ref?: string;
+  enum?: string[];
+  required?: string[];
+  description?: string;
+}
+
+interface Response {
+  description: string;
+  content?: {
+    "application/json": {
+      schema: Schema;
+    };
+  };
+}
+
+interface CommandDef {
+  name: string;
+  description: string;
+  operationId: string;
+  method: string;
+  path: string;
+  pathParams: ParamDef[];
+  queryParams: ParamDef[];
+  bodyParams: ParamDef[];
+  requiresConnectionToken: boolean;
+  tag: string;
+}
+
+interface ParamDef {
+  name: string;
+  type: string;
+  required: boolean;
+  description: string;
+  enumValues?: string[];
+}
+
+async function fetchOpenAPISpec(): Promise<OpenAPISpec> {
+  console.log("Fetching OpenAPI spec from", OPENAPI_URL);
+  const response = await fetch(OPENAPI_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch OpenAPI spec: ${response.status}`);
+  }
+  return (await response.json()) as OpenAPISpec;
+}
+
+function resolveRef(spec: OpenAPISpec, ref: string): unknown {
+  // Handle $ref like "#/components/parameters/ConnectionToken"
+  const parts = ref.replace("#/", "").split("/");
+  let current: unknown = spec;
+  for (const part of parts) {
+    current = (current as Record<string, unknown>)[part];
+    if (!current) {
+      return null;
+    }
+  }
+  return current;
+}
+
+function resolveParameter(
+  spec: OpenAPISpec,
+  param: Parameter | { $ref: string }
+): Parameter | null {
+  if ("$ref" in param) {
+    return resolveRef(spec, param.$ref) as Parameter | null;
+  }
+  return param;
+}
+
+function toKebabCase(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, "$1-$2")
+    .replace(/[\s_]+/g, "-")
+    .toLowerCase();
+}
+
+function toCamelCase(str: string): string {
+  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+function getSchemaType(schema: Schema | undefined): string {
+  if (!schema) return "string";
+  if (schema.type === "integer" || schema.type === "number") return "number";
+  if (schema.type === "boolean") return "boolean";
+  if (schema.type === "array") return "array";
+  if (schema.type === "object") return "object";
+  return "string";
+}
+
+function extractBodyParams(
+  spec: OpenAPISpec,
+  requestBody: Operation["requestBody"]
+): ParamDef[] {
+  if (!requestBody?.content?.["application/json"]?.schema) {
+    return [];
+  }
+
+  const schema = requestBody.content["application/json"].schema;
+  let resolvedSchema = schema;
+
+  if (schema.$ref) {
+    resolvedSchema = resolveRef(spec, schema.$ref) as Schema;
+  }
+
+  if (!resolvedSchema?.properties) {
+    return [];
+  }
+
+  const required = resolvedSchema.required ?? [];
+
+  return Object.entries(resolvedSchema.properties).map(([name, propSchema]) => {
+    let resolved = propSchema;
+    if (propSchema.$ref) {
+      resolved = resolveRef(spec, propSchema.$ref) as Schema;
+    }
+    return {
+      name,
+      type: getSchemaType(resolved),
+      required: required.includes(name),
+      description: resolved?.description ?? "",
+      enumValues: resolved?.enum,
+    };
+  });
+}
+
+function parseOperations(spec: OpenAPISpec): CommandDef[] {
+  const commands: CommandDef[] = [];
+
+  for (const [path, pathItem] of Object.entries(spec.paths)) {
+    const pathLevelParams = pathItem.parameters ?? [];
+
+    const methods = ["get", "post", "put", "patch", "delete"] as const;
+    for (const method of methods) {
+      const operation = pathItem[method];
+      if (!operation) continue;
+
+      const allParams = [
+        ...pathLevelParams.map((p) => resolveParameter(spec, p)),
+        ...(operation.parameters ?? []).map((p) => resolveParameter(spec, p)),
+      ].filter((p): p is Parameter => p !== null);
+
+      const pathParams: ParamDef[] = [];
+      const queryParams: ParamDef[] = [];
+      let requiresConnectionToken = false;
+
+      for (const param of allParams) {
+        if (param.name === "Connection-Token") {
+          requiresConnectionToken = true;
+          continue;
+        }
+
+        const paramDef: ParamDef = {
+          name: param.name,
+          type: getSchemaType(param.schema),
+          required: param.required ?? false,
+          description: param.description ?? "",
+          enumValues: param.schema?.enum,
+        };
+
+        if (param.in === "path") {
+          pathParams.push(paramDef);
+        } else if (param.in === "query") {
+          queryParams.push(paramDef);
+        }
+      }
+
+      const bodyParams = extractBodyParams(spec, operation.requestBody);
+
+      // Generate command name from operationId or path
+      let commandName = operation.operationId ?? `${method}-${path}`;
+      commandName = toKebabCase(commandName);
+
+      // Get tag
+      const tag = operation.tags?.[0] ?? "other";
+
+      commands.push({
+        name: commandName,
+        description: operation.summary ?? operation.description ?? "",
+        operationId: operation.operationId ?? "",
+        method: method.toUpperCase(),
+        path,
+        pathParams,
+        queryParams,
+        bodyParams,
+        requiresConnectionToken,
+        tag,
+      });
+    }
+  }
+
+  return commands;
+}
+
+function groupByTag(commands: CommandDef[]): Map<string, CommandDef[]> {
+  const groups = new Map<string, CommandDef[]>();
+
+  for (const cmd of commands) {
+    const tag = toKebabCase(cmd.tag);
+    if (!groups.has(tag)) {
+      groups.set(tag, []);
+    }
+    groups.get(tag)!.push(cmd);
+  }
+
+  return groups;
+}
+
+function generateCommandCode(cmd: CommandDef): string {
+  const funcName = toCamelCase(cmd.name.replace(/-/g, "_"));
+  const hasArgs = cmd.pathParams.length > 0 || cmd.queryParams.length > 0 || cmd.bodyParams.length > 0;
+  const argsParam = hasArgs ? "args" : "_args";
+
+  // Generate path with parameter substitution
+  let pathCode = `"${cmd.path}"`;
+  for (const param of cmd.pathParams) {
+    pathCode = pathCode.replace(`{${param.name}}`, `\${args["${param.name}"]}`);
+  }
+  if (cmd.pathParams.length > 0) {
+    pathCode = "`" + pathCode.slice(1, -1) + "`";
+  }
+
+  // Generate query params code
+  const queryCode =
+    cmd.queryParams.length > 0
+      ? `{
+      ${cmd.queryParams.map((p) => `"${p.name}": args["${p.name}"] as string | number | boolean | undefined`).join(",\n      ")}
+    }`
+      : "undefined";
+
+  // Generate body code
+  const bodyCode =
+    cmd.bodyParams.length > 0
+      ? `{
+      ${cmd.bodyParams.map((p) => `"${p.name}": args["${p.name}"]`).join(",\n      ")}
+    }`
+      : "undefined";
+
+  // Determine client method
+  const methodLower = cmd.method.toLowerCase();
+  let clientCall: string;
+
+  if (methodLower === "get" || methodLower === "delete") {
+    clientCall = `await client.${methodLower}(${pathCode}, ${queryCode}, ${cmd.requiresConnectionToken})`;
+  } else {
+    clientCall = `await client.${methodLower}(${pathCode}, ${bodyCode}, ${queryCode}, ${cmd.requiresConnectionToken})`;
+  }
+
+  return `
+export async function ${funcName}(client: TerminalClient, ${argsParam}: Record<string, unknown>): Promise<unknown> {
+  return ${clientCall};
+}`;
+}
+
+function generateCommandDef(cmd: CommandDef): string {
+  const allParams = [...cmd.pathParams, ...cmd.queryParams, ...cmd.bodyParams];
+
+  const argsCode = allParams
+    .map((p) => {
+      let argDef = `{
+      name: "${p.name}",
+      type: "${p.type}",
+      required: ${p.required},
+      description: "${p.description.replace(/"/g, '\\"').replace(/\n/g, " ")}"`;
+      if (p.enumValues) {
+        argDef += `,
+      enum: ${JSON.stringify(p.enumValues)}`;
+      }
+      argDef += `
+    }`;
+      return argDef;
+    })
+    .join(",\n    ");
+
+  return `{
+    name: "${cmd.name}",
+    description: "${cmd.description.replace(/"/g, '\\"').replace(/\n/g, " ")}",
+    method: "${cmd.method}",
+    path: "${cmd.path}",
+    requiresConnectionToken: ${cmd.requiresConnectionToken},
+    args: [
+    ${argsCode}
+    ],
+    handler: ${toCamelCase(cmd.name.replace(/-/g, "_"))}
+  }`;
+}
+
+function generateTagModule(tag: string, commands: CommandDef[]): string {
+  return `// AUTO-GENERATED FILE - DO NOT EDIT
+// Generated from OpenAPI spec
+
+import type { TerminalClient } from "../src/lib/client.ts";
+
+export interface CommandArg {
+  name: string;
+  type: string;
+  required: boolean;
+  description: string;
+  enum?: string[];
+}
+
+export interface Command {
+  name: string;
+  description: string;
+  method: string;
+  path: string;
+  requiresConnectionToken: boolean;
+  args: CommandArg[];
+  handler: (client: TerminalClient, args: Record<string, unknown>) => Promise<unknown>;
+}
+
+// Command handlers
+${commands.map(generateCommandCode).join("\n")}
+
+// Command definitions
+export const commands: Command[] = [
+  ${commands.map(generateCommandDef).join(",\n  ")}
+];
+
+export const tagName = "${tag}";
+export const tagDescription = "${commands[0]?.tag ?? tag}";
+`;
+}
+
+function generateIndexFile(tags: string[]): string {
+  const imports = tags.map((t) => `import * as ${toCamelCase(t)} from "./${t}.ts";`).join("\n");
+
+  const commandsExport = tags.map((t) => `...${toCamelCase(t)}.commands`).join(",\n  ");
+
+  const tagsExport = tags
+    .map(
+      (t) => `{
+    name: "${t}",
+    description: ${toCamelCase(t)}.tagDescription,
+    commands: ${toCamelCase(t)}.commands
+  }`
+    )
+    .join(",\n  ");
+
+  return `// AUTO-GENERATED FILE - DO NOT EDIT
+// Generated from OpenAPI spec
+
+${imports}
+
+export type { Command, CommandArg } from "./${tags[0]}.ts";
+
+export const allCommands = [
+  ${commandsExport}
+];
+
+export const commandGroups = [
+  ${tagsExport}
+];
+
+export function findCommand(name: string) {
+  return allCommands.find(cmd => cmd.name === name);
+}
+
+export function findCommandsByTag(tag: string) {
+  const group = commandGroups.find(g => g.name === tag);
+  return group?.commands ?? [];
+}
+`;
+}
+
+async function main() {
+  try {
+    // Fetch spec
+    const spec = await fetchOpenAPISpec();
+
+    // Parse operations
+    const commands = parseOperations(spec);
+    console.log(`Parsed ${commands.length} commands`);
+
+    // Group by tag
+    const grouped = groupByTag(commands);
+    console.log(`Found ${grouped.size} command groups`);
+
+    // Create output directory
+    if (!existsSync(GENERATED_DIR)) {
+      mkdirSync(GENERATED_DIR, { recursive: true });
+    }
+
+    // Generate files for each tag
+    const tags: string[] = [];
+    for (const [tag, cmds] of grouped) {
+      const code = generateTagModule(tag, cmds);
+      const filePath = join(GENERATED_DIR, `${tag}.ts`);
+      writeFileSync(filePath, code);
+      console.log(`Generated ${filePath} with ${cmds.length} commands`);
+      tags.push(tag);
+    }
+
+    // Generate index file
+    tags.sort();
+    const indexCode = generateIndexFile(tags);
+    writeFileSync(join(GENERATED_DIR, "index.ts"), indexCode);
+    console.log(`Generated index.ts`);
+
+    // Save spec for reference
+    writeFileSync(join(GENERATED_DIR, "openapi.json"), JSON.stringify(spec, null, 2));
+    console.log(`Saved OpenAPI spec to openapi.json`);
+
+    console.log("\nGeneration complete!");
+  } catch (error) {
+    console.error("Generation failed:", error);
+    process.exit(1);
+  }
+}
+
+main();
