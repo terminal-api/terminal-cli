@@ -2,21 +2,26 @@
   "name": "terminal-cli",
   "version": "0.1.0",
   "description": "CLI for the Terminal Telematics API",
-  "module": "src/cli.ts",
-  "type": "module",
   "bin": {
     "terminal": "./dist/cli.js"
   },
+  "type": "module",
+  "module": "src/cli.ts",
   "scripts": {
     "dev": "bun run src/cli.ts",
     "build": "bun build src/cli.ts --outdir dist --target bun",
     "generate": "bun run scripts/generate.ts",
     "lint": "oxlint .",
     "format": "oxfmt --write .",
-    "typecheck": "tsc --noEmit"
+    "format:check": "oxfmt --check .",
+    "typecheck": "tsgo --noEmit",
+    "test": "bun test",
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun test"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@typescript/native-preview": "^7.0.0-dev.20260103.1",
+    "oxfmt": "^0.21.0",
     "oxlint": "^1.36.0",
     "typescript": "^5"
   }

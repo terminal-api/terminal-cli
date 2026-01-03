@@ -16,7 +16,7 @@ function getAllCommands(): string[] {
 
 export function generateBashCompletions(): string {
   const commands = getAllCommands();
-  
+
   return `# Bash completion for terminal-cli
 # Add to ~/.bashrc or ~/.bash_profile:
 #   eval "$(terminal completions bash)"

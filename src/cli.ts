@@ -10,7 +10,11 @@ import { TerminalClient, ClientError } from "./lib/client.ts";
 import { loadConfig, saveConfig, getConfigPath } from "./lib/config.ts";
 import { print, printError, printSuccess, printInfo, type OutputFormat } from "./lib/output.ts";
 import { commandGroups, findCommand, type Command } from "../generated/index.ts";
-import { generateBashCompletions, generateZshCompletions, generateFishCompletions } from "./lib/completions.ts";
+import {
+  generateBashCompletions,
+  generateZshCompletions,
+  generateFishCompletions,
+} from "./lib/completions.ts";
 
 interface GlobalOptions {
   format: OutputFormat;
@@ -19,9 +23,11 @@ interface GlobalOptions {
   all?: boolean;
 }
 
-function parseArgs(
-  args: string[]
-): { command: string[]; options: Record<string, string | boolean>; positionalArgs: string[] } {
+function parseArgs(args: string[]): {
+  command: string[];
+  options: Record<string, string | boolean>;
+  positionalArgs: string[];
+} {
   const options: Record<string, string | boolean> = {};
   const command: string[] = [];
   const positionalArgs: string[] = [];
@@ -171,7 +177,7 @@ function showCommandHelp(cmd: Command): void {
 async function handleConfigCommand(
   subcommand: string,
   args: string[],
-  _options: Record<string, string | boolean>
+  _options: Record<string, string | boolean>,
 ): Promise<void> {
   switch (subcommand) {
     case "show": {
@@ -255,7 +261,7 @@ function isPaginatedResponse(result: unknown): result is PaginatedResponse {
 async function handleApiCommand(
   cmd: Command,
   options: Record<string, string | boolean>,
-  globalOptions: GlobalOptions
+  globalOptions: GlobalOptions,
 ): Promise<void> {
   // Build args from options
   const args: Record<string, unknown> = {};
@@ -305,10 +311,10 @@ async function handleApiCommand(
       while (cursor) {
         pageCount++;
         process.stderr.write(`\rFetching page ${pageCount}...`);
-        
+
         const nextArgs = { ...args, cursor };
         const nextResult = await cmd.handler(client, nextArgs);
-        
+
         if (isPaginatedResponse(nextResult)) {
           allResults.push(...(nextResult.results ?? []));
           cursor = nextResult.next;

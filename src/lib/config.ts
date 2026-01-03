@@ -23,10 +23,7 @@ export function loadConfig(): Config {
   const envApiKey = process.env["TERMINAL_API_KEY"];
   const envConnectionToken = process.env["TERMINAL_CONNECTION_TOKEN"];
   const envBaseUrl = process.env["TERMINAL_BASE_URL"];
-  const envEnvironment = process.env["TERMINAL_ENVIRONMENT"] as
-    | "prod"
-    | "sandbox"
-    | undefined;
+  const envEnvironment = process.env["TERMINAL_ENVIRONMENT"] as "prod" | "sandbox" | undefined;
 
   let fileConfig: Partial<Config> = {};
 

@@ -17,11 +17,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": false,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@generated/*": ["generated/*"]
+      "@/*": ["./src/*"],
+      "@generated/*": ["./generated/*"]
     }
   },
-  "include": ["src/**/*", "scripts/**/*", "generated/**/*"]
+  "include": ["src/**/*", "scripts/**/*", "generated/**/*", "tests/**/*"]
 }

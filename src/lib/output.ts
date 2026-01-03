@@ -114,9 +114,7 @@ function formatArrayAsTable(data: unknown[]): string {
   }
 
   // Build header
-  const header = columns
-    .map((col) => col.toUpperCase().padEnd(widths[col] ?? 0))
-    .join("  ");
+  const header = columns.map((col) => col.toUpperCase().padEnd(widths[col] ?? 0)).join("  ");
   const separator = columns.map((col) => "-".repeat(widths[col] ?? 0)).join("  ");
 
   // Build rows

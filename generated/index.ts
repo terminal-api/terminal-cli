@@ -36,97 +36,97 @@ export const allCommands = [
   ...trailers.commands,
   ...trips.commands,
   ...vehicleUtilization.commands,
-  ...vehicles.commands
+  ...vehicles.commands,
 ];
 
 export const commandGroups = [
   {
     name: "authentication",
     description: authentication.tagDescription,
-    commands: authentication.commands
+    commands: authentication.commands,
   },
   {
     name: "connections",
     description: connections.tagDescription,
-    commands: connections.commands
+    commands: connections.commands,
   },
   {
     name: "data-management",
     description: dataManagement.tagDescription,
-    commands: dataManagement.commands
+    commands: dataManagement.commands,
   },
   {
     name: "devices",
     description: devices.tagDescription,
-    commands: devices.commands
+    commands: devices.commands,
   },
   {
     name: "drivers",
     description: drivers.tagDescription,
-    commands: drivers.commands
+    commands: drivers.commands,
   },
   {
     name: "fault-codes",
     description: faultCodes.tagDescription,
-    commands: faultCodes.commands
+    commands: faultCodes.commands,
   },
   {
     name: "groups",
     description: groups.tagDescription,
-    commands: groups.commands
+    commands: groups.commands,
   },
   {
     name: "hours-of-service",
     description: hoursOfService.tagDescription,
-    commands: hoursOfService.commands
+    commands: hoursOfService.commands,
   },
   {
     name: "ifta",
     description: ifta.tagDescription,
-    commands: ifta.commands
+    commands: ifta.commands,
   },
   {
     name: "issues",
     description: issues.tagDescription,
-    commands: issues.commands
+    commands: issues.commands,
   },
   {
     name: "providers",
     description: providers.tagDescription,
-    commands: providers.commands
+    commands: providers.commands,
   },
   {
     name: "safety",
     description: safety.tagDescription,
-    commands: safety.commands
+    commands: safety.commands,
   },
   {
     name: "trailers",
     description: trailers.tagDescription,
-    commands: trailers.commands
+    commands: trailers.commands,
   },
   {
     name: "trips",
     description: trips.tagDescription,
-    commands: trips.commands
+    commands: trips.commands,
   },
   {
     name: "vehicle-utilization",
     description: vehicleUtilization.tagDescription,
-    commands: vehicleUtilization.commands
+    commands: vehicleUtilization.commands,
   },
   {
     name: "vehicles",
     description: vehicles.tagDescription,
-    commands: vehicles.commands
-  }
+    commands: vehicles.commands,
+  },
 ];
 
 export function findCommand(name: string) {
-  return allCommands.find(cmd => cmd.name === name);
+  return allCommands.find((cmd) => cmd.name === name);
 }
 
 export function findCommandsByTag(tag: string) {
-  const group = commandGroups.find(g => g.name === tag);
+  const group = commandGroups.find((g) => g.name === tag);
   return group?.commands ?? [];
 }

@@ -23,7 +23,10 @@ export interface Command {
 
 // Command handlers
 
-export async function list_providers(client: TerminalClient, _args: Record<string, unknown>): Promise<unknown> {
+export async function list_providers(
+  client: TerminalClient,
+  _args: Record<string, unknown>,
+): Promise<unknown> {
   return await client.get("/providers", undefined, false);
 }
 
@@ -35,11 +38,9 @@ export const commands: Command[] = [
     method: "GET",
     path: "/providers",
     requiresConnectionToken: false,
-    args: [
-    
-    ],
-    handler: list_providers
-  }
+    args: [],
+    handler: list_providers,
+  },
 ];
 
 export const tagName = "providers";

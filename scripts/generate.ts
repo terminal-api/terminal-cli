@@ -125,7 +125,7 @@ function resolveRef(spec: OpenAPISpec, ref: string): unknown {
 
 function resolveParameter(
   spec: OpenAPISpec,
-  param: Parameter | { $ref: string }
+  param: Parameter | { $ref: string },
 ): Parameter | null {
   if ("$ref" in param) {
     return resolveRef(spec, param.$ref) as Parameter | null;
@@ -153,10 +153,7 @@ function getSchemaType(schema: Schema | undefined): string {
   return "string";
 }
 
-function extractBodyParams(
-  spec: OpenAPISpec,
-  requestBody: Operation["requestBody"]
-): ParamDef[] {
+function extractBodyParams(spec: OpenAPISpec, requestBody: Operation["requestBody"]): ParamDef[] {
   if (!requestBody?.content?.["application/json"]?.schema) {
     return [];
   }
@@ -273,7 +270,8 @@ function groupByTag(commands: CommandDef[]): Map<string, CommandDef[]> {
 
 function generateCommandCode(cmd: CommandDef): string {
   const funcName = toCamelCase(cmd.name.replace(/-/g, "_"));
-  const hasArgs = cmd.pathParams.length > 0 || cmd.queryParams.length > 0 || cmd.bodyParams.length > 0;
+  const hasArgs =
+    cmd.pathParams.length > 0 || cmd.queryParams.length > 0 || cmd.bodyParams.length > 0;
   const argsParam = hasArgs ? "args" : "_args";
 
   // Generate path with parameter substitution
@@ -398,7 +396,7 @@ function generateIndexFile(tags: string[]): string {
     name: "${t}",
     description: ${toCamelCase(t)}.tagDescription,
     commands: ${toCamelCase(t)}.commands
-  }`
+  }`,
     )
     .join(",\n  ");
 

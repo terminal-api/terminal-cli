@@ -23,8 +23,7 @@ export class TerminalClient {
   }
 
   async request<T>(options: RequestOptions): Promise<T> {
-    const { method, path, query, body, headers = {}, requiresConnectionToken } =
-      options;
+    const { method, path, query, body, headers = {}, requiresConnectionToken } = options;
 
     // Build URL with query parameters
     // Ensure base URL ends with / for proper path joining
@@ -51,7 +50,7 @@ export class TerminalClient {
     // Add authorization
     if (!this.config.apiKey) {
       throw new Error(
-        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>"
+        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>",
       );
     }
     requestHeaders["Authorization"] = `Bearer ${this.config.apiKey}`;
@@ -60,7 +59,7 @@ export class TerminalClient {
     if (requiresConnectionToken) {
       if (!this.config.connectionToken) {
         throw new Error(
-          "Connection token is required for this endpoint. Set TERMINAL_CONNECTION_TOKEN or run: terminal config set connection-token <token>"
+          "Connection token is required for this endpoint. Set TERMINAL_CONNECTION_TOKEN or run: terminal config set connection-token <token>",
         );
       }
       requestHeaders["Connection-Token"] = this.config.connectionToken;
@@ -98,7 +97,7 @@ export class TerminalClient {
   async get<T>(
     path: string,
     query?: Record<string, string | number | boolean | undefined>,
-    requiresConnectionToken = true
+    requiresConnectionToken = true,
   ): Promise<T> {
     return this.request<T>({
       method: "GET",
@@ -112,7 +111,7 @@ export class TerminalClient {
     path: string,
     body?: unknown,
     query?: Record<string, string | number | boolean | undefined>,
-    requiresConnectionToken = true
+    requiresConnectionToken = true,
   ): Promise<T> {
     return this.request<T>({
       method: "POST",
@@ -127,7 +126,7 @@ export class TerminalClient {
     path: string,
     body?: unknown,
     query?: Record<string, string | number | boolean | undefined>,
-    requiresConnectionToken = true
+    requiresConnectionToken = true,
   ): Promise<T> {
     return this.request<T>({
       method: "PATCH",
@@ -141,7 +140,7 @@ export class TerminalClient {
   async delete<T>(
     path: string,
     query?: Record<string, string | number | boolean | undefined>,
-    requiresConnectionToken = true
+    requiresConnectionToken = true,
   ): Promise<T> {
     return this.request<T>({
       method: "DELETE",
@@ -155,7 +154,7 @@ export class TerminalClient {
 export class ClientError extends Error {
   constructor(
     public status: number,
-    public error: ApiError
+    public error: ApiError,
   ) {
     super(error.message);
     this.name = "ClientError";
