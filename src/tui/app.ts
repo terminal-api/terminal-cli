@@ -211,6 +211,7 @@ async function executeCommand(cmd: Command): Promise<void> {
   state.filterText = "";
   filterInput.value = "";
   resultsSelect.options = []; // Clear the display
+  resultsSelect.setSelectedIndex(0); // Reset selection index
 
   updateStatusBar();
   updateView();
@@ -533,14 +534,24 @@ function updateView(): void {
       resultsSelect.visible = false; // Hide results while loading
       filterInput.visible = false;
     } else {
-      titleDisplay.content = `${cmdName} (${state.filteredResults?.length ?? 0} items)${connectionsHint}`;
+      const resultCount = state.filteredResults?.length ?? 0;
+      titleDisplay.content = `${cmdName} (${resultCount} items)${connectionsHint}`;
       // Always sync the options with current state to prevent stale display
-      resultsSelect.options = resultsToOptions(state.filteredResults ?? []);
-      resultsSelect.visible = true;
-      filterInput.visible = true;
-      // Don't steal focus from filter input if user is typing
-      if (!filterInput.focused) {
-        resultsSelect.focus();
+      const currentOptions = resultsToOptions(state.filteredResults ?? []);
+      resultsSelect.options = currentOptions;
+      resultsSelect.setSelectedIndex(0);
+
+      // Hide results select when empty to prevent showing stale UI
+      if (resultCount === 0) {
+        resultsSelect.visible = false;
+        filterInput.visible = false;
+      } else {
+        resultsSelect.visible = true;
+        filterInput.visible = true;
+        // Don't steal focus from filter input if user is typing
+        if (!filterInput.focused) {
+          resultsSelect.focus();
+        }
       }
     }
   } else if (state.currentView === "detail") {
