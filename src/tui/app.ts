@@ -36,6 +36,7 @@ interface AppState {
   loading: boolean;
   error: string | null;
   selectedItem: unknown | null;
+  selectedResultIndex: number;
   // For args input
   currentArgIndex: number;
   collectedArgs: Record<string, unknown>;
@@ -189,6 +190,12 @@ function filterResults(): void {
   // Update results display
   if (state.filteredResults && resultsSelect) {
     resultsSelect.options = resultsToOptions(state.filteredResults);
+    const maxIndex = state.filteredResults.length - 1;
+    const nextIndex = maxIndex >= 0 ? Math.min(state.selectedResultIndex, maxIndex) : 0;
+    state.selectedResultIndex = nextIndex;
+    if (state.filteredResults.length > 0) {
+      resultsSelect.setSelectedIndex(nextIndex);
+    }
   }
 
   // Update title to show filtered count (without calling full updateView which steals focus)
@@ -209,6 +216,7 @@ async function executeCommand(cmd: Command): Promise<void> {
   state.results = null;
   state.filteredResults = null;
   state.filterText = "";
+  state.selectedResultIndex = 0;
   filterInput.value = "";
   resultsSelect.options = []; // Clear the display
   resultsSelect.setSelectedIndex(0); // Reset selection index
@@ -242,10 +250,14 @@ async function executeCommand(cmd: Command): Promise<void> {
 
     state.filteredResults = state.results;
     state.filterText = "";
+    state.selectedResultIndex = 0;
     filterInput.value = "";
 
     // Update results view
     resultsSelect.options = resultsToOptions(state.filteredResults);
+    if (state.filteredResults.length > 0) {
+      resultsSelect.setSelectedIndex(0);
+    }
   } catch (error) {
     state.error = error instanceof Error ? error.message : String(error);
     state.results = null;
@@ -502,6 +514,7 @@ function setActiveConnection(connection: Record<string, unknown>): void {
   state.results = null;
   state.filteredResults = null;
   state.filterText = "";
+  state.selectedResultIndex = 0;
   updateView();
 }
 
@@ -539,7 +552,12 @@ function updateView(): void {
       // Always sync the options with current state to prevent stale display
       const currentOptions = resultsToOptions(state.filteredResults ?? []);
       resultsSelect.options = currentOptions;
-      resultsSelect.setSelectedIndex(0);
+      const maxIndex = currentOptions.length - 1;
+      const nextIndex = maxIndex >= 0 ? Math.min(state.selectedResultIndex, maxIndex) : 0;
+      state.selectedResultIndex = nextIndex;
+      if (currentOptions.length > 0) {
+        resultsSelect.setSelectedIndex(nextIndex);
+      }
 
       // Hide results select when empty to prevent showing stale UI
       if (resultCount === 0) {
@@ -625,6 +643,7 @@ function setupKeyHandlers(): void {
         state.filteredResults = null;
         state.filterText = "";
         state.selectedCommand = null;
+        state.selectedResultIndex = 0;
         filterInput.value = "";
         resultsSelect.options = []; // Clear the display
       } else if (state.results && state.results.length > 0) {
@@ -683,6 +702,7 @@ function setupKeyHandlers(): void {
         state.filteredResults = null;
         state.filterText = "";
         state.selectedCommand = null;
+        state.selectedResultIndex = 0;
         filterInput.value = "";
         resultsSelect.options = []; // Clear the display
         updateView();
@@ -741,6 +761,7 @@ export async function startTui(profileName?: string): Promise<void> {
     loading: false,
     error: null,
     selectedItem: null,
+    selectedResultIndex: 0,
     currentArgIndex: 0,
     collectedArgs: {},
   };
@@ -902,6 +923,7 @@ export async function startTui(profileName?: string): Promise<void> {
   resultsSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number) => {
     if (state.filteredResults && state.filteredResults[index]) {
       const item = state.filteredResults[index] as Record<string, unknown>;
+      state.selectedResultIndex = index;
 
       // Special handling for connections - set as active connection
       if (isConnectionsView()) {
