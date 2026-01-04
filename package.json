@@ -8,8 +8,7 @@
   "type": "module",
   "module": "src/cli.ts",
   "scripts": {
-    "dev": "bun run src/cli.ts",
-    "dev:watch": "bun --watch run src/cli.ts",
+    "dev": "bun --watch run src/cli.ts",
     "build": "bun build src/cli.ts --outdir dist --target bun",
     "generate": "bun run scripts/generate.ts",
     "lint": "oxlint .",

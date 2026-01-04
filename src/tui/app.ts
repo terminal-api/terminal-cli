@@ -14,6 +14,9 @@ import {
   type CliRenderer,
   type SelectOption,
   type KeyEvent,
+  StyledText,
+  white,
+  dim,
 } from "@opentui/core";
 import { TerminalClient } from "../lib/client.ts";
 import { loadConfig, saveConfig } from "../lib/config.ts";
@@ -242,14 +245,14 @@ async function executeCommand(cmd: Command): Promise<void> {
 
     // Update results view
     resultsSelect.options = resultsToOptions(state.filteredResults);
-    state.currentView = "results";
-    updateView();
   } catch (error) {
     state.error = error instanceof Error ? error.message : String(error);
     state.results = null;
     state.filteredResults = null;
   } finally {
     state.loading = false;
+    state.currentView = "results";
+    updateView();
     updateStatusBar();
   }
 }
@@ -268,36 +271,64 @@ async function fetchConnectionInfo(): Promise<void> {
   }
 }
 
+// Build hotkeys content with styled text (white keys, dim actions)
+function buildHotkeysContent(hotkeys: Array<{ key: string; action: string }>) {
+  // Build chunks: white(key) + dim(action), separated by spaces
+  const chunks = hotkeys.flatMap(({ key, action }, index) => {
+    const parts = [white(key), dim(` ${action}`)];
+    // Add separator between hotkey groups (not after the last one)
+    if (index < hotkeys.length - 1) {
+      parts.push(dim("    "));
+    }
+    return parts;
+  });
+
+  // Add leading space chunk and create StyledText
+  return new StyledText([dim("  "), ...chunks]);
+}
+
 // Update status bar
 function updateStatusBar(): void {
-  let statusText: string;
-
   if (state.loading) {
-    statusText = "Loading...";
+    statusBar.content = "Loading...";
+    return;
   } else if (state.error) {
-    statusText = `Error: ${state.error}`;
-  } else if (state.currentView === "args") {
-    statusText = "Enter: submit | Escape: cancel | q: quit";
-  } else if (state.currentView === "detail") {
-    statusText = "Escape: go back | q: quit";
-  } else if (state.currentView === "results") {
-    const resultCount = state.filteredResults?.length ?? 0;
-    const totalCount = state.results?.length ?? 0;
-    const searchInfo =
-      state.filterText && totalCount > 0
-        ? ` (showing ${resultCount}/${totalCount})`
-        : totalCount > 0
-          ? ` (${totalCount} items)`
-          : "";
-
-    const actionHint = isConnectionsView() ? "Enter: set as active" : "Enter: view details";
-
-    statusText = `Ready${searchInfo} | Tab: commands | /: search | ${actionHint} | Escape: back | q: quit`;
-  } else {
-    statusText = "Enter: execute command | Tab: results | q: quit";
+    statusBar.content = `Error: ${state.error}`;
+    return;
   }
 
-  statusBar.content = statusText;
+  let hotkeys: Array<{ key: string; action: string }> = [];
+
+  if (state.currentView === "args") {
+    hotkeys = [
+      { key: "enter", action: "submit" },
+      { key: "esc", action: "cancel" },
+      { key: "q", action: "quit" },
+    ];
+  } else if (state.currentView === "detail") {
+    hotkeys = [
+      { key: "c", action: "copy" },
+      { key: "esc", action: "back" },
+      { key: "q", action: "quit" },
+    ];
+  } else if (state.currentView === "results") {
+    const actionLabel = isConnectionsView() ? "select" : "details";
+    hotkeys = [
+      { key: "/", action: "search" },
+      { key: "enter", action: actionLabel },
+      { key: "tab", action: "commands" },
+      { key: "esc", action: "back" },
+      { key: "q", action: "quit" },
+    ];
+  } else {
+    hotkeys = [
+      { key: "enter", action: "select" },
+      { key: "tab", action: "results" },
+      { key: "q", action: "quit" },
+    ];
+  }
+
+  statusBar.content = buildHotkeysContent(hotkeys);
 }
 
 // Helper to format date strings
@@ -311,55 +342,59 @@ function formatDate(dateStr: unknown): string {
   }
 }
 
+// Build styled sidebar section: white label, gray value on next line, with spacing
+function sidebarSection(label: string, value: string) {
+  return [white(label), dim(`\n${value}\n\n`)];
+}
+
 // Update connection display in sidebar
 function updateConnectionDisplay(): void {
   const config = loadConfig();
-  let connText: string;
 
   if (state.connectionInfo) {
     const info = state.connectionInfo;
 
     // Extract provider name (provider is an object with .name)
     const provider = info["provider"] as Record<string, unknown> | undefined;
-    const providerName = provider?.["name"] || "N/A";
+    const providerName = String(provider?.["name"] || "N/A");
 
     // Extract company info
     const company = info["company"] as Record<string, unknown> | undefined;
-    const companyName = company?.["name"] || "N/A";
-    const dotNumber = company?.["dotNumber"] || info["dotNumber"] || "N/A";
+    const companyName = String(company?.["name"] || "N/A");
+    const dotNumber = String(company?.["dotNumber"] || info["dotNumber"] || "N/A");
 
-    // Build connection display
-    const lines = [
-      "CONNECTION",
-      "-----------",
-      `Provider: ${providerName}`,
-      `Status: ${info["status"] || "N/A"}`,
-      `Sync: ${info["syncMode"] || "N/A"}`,
-      "",
-      `Company: ${companyName}`,
-      `DOT: ${dotNumber}`,
-      "",
-      `Created: ${formatDate(info["createdAt"])}`,
-      `Updated: ${formatDate(info["updatedAt"])}`,
+    const status = String(info["status"] || "N/A");
+    const syncMode = String(info["syncMode"] || "N/A");
+    const created = formatDate(info["createdAt"]);
+    const updated = formatDate(info["updatedAt"]);
+
+    // Build styled connection display (OpenCode style: white labels, gray values)
+    const chunks = [
+      ...sidebarSection("Provider", providerName),
+      ...sidebarSection("Status", status),
+      ...sidebarSection("Sync Mode", syncMode),
+      ...sidebarSection("Company", companyName),
+      ...sidebarSection("DOT", dotNumber),
+      ...sidebarSection("Created", created),
+      ...sidebarSection("Updated", updated),
     ];
 
-    connText = lines.join("\n");
+    connectionDisplay.content = new StyledText(chunks);
   } else if (config.connectionToken) {
-    connText = `CONNECTION
------------
-Token: ${config.connectionToken.slice(0, 15)}...
-Loading info...`;
+    const chunks = [
+      ...sidebarSection("Token", `${config.connectionToken.slice(0, 15)}...`),
+      dim("\nLoading info..."),
+    ];
+    connectionDisplay.content = new StyledText(chunks);
   } else {
-    connText = `CONNECTION
------------
-No connection token set
-
-Use:
-terminal config set
-connection-token <token>`;
+    const chunks = [
+      white("No Connection\n"),
+      dim("\nSet a connection token:\n"),
+      dim("terminal config set\n"),
+      dim("connection-token <token>"),
+    ];
+    connectionDisplay.content = new StyledText(chunks);
   }
-
-  connectionDisplay.content = connText;
 }
 
 // Check if viewing connections (special handling)
@@ -491,12 +526,22 @@ function updateView(): void {
   } else if (state.currentView === "results") {
     const cmdName = state.selectedCommand?.name ?? "Results";
     const connectionsHint = isConnectionsView() ? " | Enter: set as active connection" : "";
-    titleDisplay.content = `${cmdName} (${state.filteredResults?.length ?? 0} items)${connectionsHint}`;
-    resultsSelect.visible = true;
-    filterInput.visible = true;
-    // Don't steal focus from filter input if user is typing
-    if (!filterInput.focused) {
-      resultsSelect.focus();
+
+    // Show loading state or results count
+    if (state.loading) {
+      titleDisplay.content = `${cmdName} - Loading...`;
+      resultsSelect.visible = false; // Hide results while loading
+      filterInput.visible = false;
+    } else {
+      titleDisplay.content = `${cmdName} (${state.filteredResults?.length ?? 0} items)${connectionsHint}`;
+      // Always sync the options with current state to prevent stale display
+      resultsSelect.options = resultsToOptions(state.filteredResults ?? []);
+      resultsSelect.visible = true;
+      filterInput.visible = true;
+      // Don't steal focus from filter input if user is typing
+      if (!filterInput.focused) {
+        resultsSelect.focus();
+      }
     }
   } else if (state.currentView === "detail") {
     titleDisplay.content = "Item Detail (Escape to go back)";
@@ -510,6 +555,22 @@ function updateView(): void {
   updateStatusBar();
 }
 
+// Copy to clipboard helper
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    // Use pbcopy on macOS, xclip on Linux, clip on Windows
+    const proc = Bun.spawn(["pbcopy"], {
+      stdin: "pipe",
+    });
+    proc.stdin.write(text);
+    proc.stdin.end();
+    await proc.exited;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Setup keyboard handlers
 function setupKeyHandlers(): void {
   renderer.keyInput.on("keypress", (key: KeyEvent) => {
@@ -521,7 +582,14 @@ function setupKeyHandlers(): void {
 
     if (key.name === "tab") {
       if (state.currentView === "results") {
+        // Clear results state when going back to commands via tab
         state.currentView = "commands";
+        state.results = null;
+        state.filteredResults = null;
+        state.filterText = "";
+        state.selectedCommand = null;
+        filterInput.value = "";
+        resultsSelect.options = []; // Clear the display
       } else if (state.results && state.results.length > 0) {
         state.currentView = "results";
       }
@@ -534,6 +602,19 @@ function setupKeyHandlers(): void {
       filterInput.blur();
       // Small delay to ensure blur completes before focusing results
       setTimeout(() => resultsSelect.focus(), 10);
+      return;
+    }
+
+    // Copy to clipboard in detail view
+    if (key.name === "c" && state.currentView === "detail" && state.selectedItem) {
+      const jsonText = JSON.stringify(state.selectedItem, null, 2);
+      copyToClipboard(jsonText).then((success) => {
+        if (success) {
+          statusBar.content = "Copied to clipboard!";
+        } else {
+          statusBar.content = "Failed to copy to clipboard";
+        }
+      });
       return;
     }
 
@@ -559,7 +640,14 @@ function setupKeyHandlers(): void {
         state.selectedItem = null;
         updateView();
       } else if (state.currentView === "results") {
+        // Clear results state when going back to commands
         state.currentView = "commands";
+        state.results = null;
+        state.filteredResults = null;
+        state.filterText = "";
+        state.selectedCommand = null;
+        filterInput.value = "";
+        resultsSelect.options = []; // Clear the display
         updateView();
       }
       return;
@@ -633,14 +721,23 @@ export async function startTui(profileName?: string): Promise<void> {
 
   renderer.setBackgroundColor("#0d1117");
 
-  // Create main layout
+  // Root layout: vertical flex with main area and hotkeys bar at bottom
+  const rootLayout = new BoxRenderable(renderer, {
+    id: "root-layout",
+    width: "100%",
+    height: "100%",
+    flexDirection: "column",
+  });
+  renderer.root.add(rootLayout);
+
+  // Main container (content + sidebar)
   const mainContainer = new BoxRenderable(renderer, {
     id: "main-container",
     width: "100%",
-    height: "100%",
+    flexGrow: 1,
     flexDirection: "row",
   });
-  renderer.root.add(mainContainer);
+  rootLayout.add(mainContainer);
 
   // Content area (left)
   const contentArea = new BoxRenderable(renderer, {
@@ -652,13 +749,12 @@ export async function startTui(profileName?: string): Promise<void> {
   });
   mainContainer.add(contentArea);
 
-  // Sidebar (right)
+  // Sidebar (right) - styled like OpenCode
   const sidebar = new BoxRenderable(renderer, {
     id: "sidebar",
-    width: 30,
+    width: 32,
     height: "100%",
-    borderStyle: "single",
-    borderColor: "#30363d",
+    backgroundColor: "#161b22",
     padding: 1,
     flexDirection: "column",
   });
@@ -669,7 +765,7 @@ export async function startTui(profileName?: string): Promise<void> {
     id: "connection-display",
     content: "",
     width: "100%",
-    height: 15,
+    flexGrow: 1,
     fg: "#c9d1d9",
   });
   sidebar.add(connectionDisplay);
@@ -870,18 +966,15 @@ export async function startTui(profileName?: string): Promise<void> {
     submitCurrentArg(option.value);
   });
 
-  // Status bar at bottom
+  // Status bar at bottom of rootLayout
   statusBar = new TextRenderable(renderer, {
     id: "status-bar",
     content: "",
     width: "100%",
     height: 1,
-    position: "absolute",
-    bottom: 0,
-    left: 0,
     fg: "#8b949e",
   });
-  renderer.root.add(statusBar);
+  rootLayout.add(statusBar);
 
   // Setup keyboard handlers
   setupKeyHandlers();
