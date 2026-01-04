@@ -35,6 +35,20 @@ interface GlobalOptions {
   all?: boolean;
 }
 
+function looksLikeNegativeNumber(value: string): boolean {
+  return /^-\d+(\.\d+)?$/.test(value);
+}
+
+function isOptionValue(value: string | undefined): boolean {
+  if (!value || value === "--") {
+    return false;
+  }
+  if (!value.startsWith("-")) {
+    return true;
+  }
+  return looksLikeNegativeNumber(value);
+}
+
 function parseArgs(args: string[]): {
   command: string[];
   options: Record<string, string | boolean>;
@@ -50,16 +64,21 @@ function parseArgs(args: string[]): {
     if (args[1]) {
       command.push(args[1]);
     }
+    let parsingOptions = true;
     // Rest are positional args for config/profile
     for (let i = 2; i < args.length; i++) {
       const arg = args[i]!;
-      if (arg.startsWith("-")) {
+      if (parsingOptions && arg === "--") {
+        parsingOptions = false;
+        continue;
+      }
+      if (parsingOptions && arg.startsWith("-")) {
         // parse option
         if (arg.startsWith("--")) {
           const [key, value] = arg.slice(2).split("=");
           if (value !== undefined) {
             options[key!] = value;
-          } else if (args[i + 1] && !args[i + 1]!.startsWith("-")) {
+          } else if (isOptionValue(args[i + 1])) {
             options[key!] = args[i + 1]!;
             i++;
           } else {
@@ -67,7 +86,7 @@ function parseArgs(args: string[]): {
           }
         } else {
           const key = arg.slice(1);
-          if (args[i + 1] && !args[i + 1]!.startsWith("-")) {
+          if (isOptionValue(args[i + 1])) {
             options[key] = args[i + 1]!;
             i++;
           } else {
@@ -83,25 +102,32 @@ function parseArgs(args: string[]): {
 
   // Standard parsing for API commands
   let collectingCommand = true;
+  let parsingOptions = true;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
 
-    if (arg.startsWith("--")) {
+    if (parsingOptions && arg === "--") {
+      collectingCommand = false;
+      parsingOptions = false;
+      continue;
+    }
+
+    if (parsingOptions && arg.startsWith("--")) {
       collectingCommand = false;
       const [key, value] = arg.slice(2).split("=");
       if (value !== undefined) {
         options[key!] = value;
-      } else if (args[i + 1] && !args[i + 1]!.startsWith("-")) {
+      } else if (isOptionValue(args[i + 1])) {
         options[key!] = args[i + 1]!;
         i++;
       } else {
         options[key!] = true;
       }
-    } else if (arg.startsWith("-")) {
+    } else if (parsingOptions && arg.startsWith("-")) {
       collectingCommand = false;
       const key = arg.slice(1);
-      if (args[i + 1] && !args[i + 1]!.startsWith("-")) {
+      if (isOptionValue(args[i + 1])) {
         options[key] = args[i + 1]!;
         i++;
       } else {
@@ -442,10 +468,20 @@ async function handleApiCommand(
       const allResults: unknown[] = [...(result.results ?? [])];
       let cursor = result.next;
       let pageCount = 1;
+      const seenCursors = new Set<string>();
+      const resultMeta = result as Record<string, unknown>;
+      const showProgress = Boolean(process.stderr.isTTY);
 
       while (cursor) {
+        if (seenCursors.has(cursor)) {
+          process.stderr.write("\nPagination halted due to repeated cursor.\n");
+          break;
+        }
+        seenCursors.add(cursor);
         pageCount++;
-        process.stderr.write(`\rFetching page ${pageCount}...`);
+        if (showProgress) {
+          process.stderr.write(`\rFetching page ${pageCount}...`);
+        }
 
         const nextArgs = { ...args, cursor };
         const nextResult = await cmd.handler(client, nextArgs);
@@ -458,12 +494,15 @@ async function handleApiCommand(
         }
       }
 
-      if (pageCount > 1) {
+      if (pageCount > 1 && showProgress) {
         process.stderr.write(`\rFetched ${pageCount} pages, ${allResults.length} total results\n`);
       }
 
       // Return combined results without pagination cursor
-      result = { results: allResults };
+      const mergedMeta = { ...resultMeta };
+      delete mergedMeta.results;
+      delete mergedMeta.next;
+      result = { ...mergedMeta, results: allResults };
     }
 
     print(result, { format: globalOptions.format });
@@ -484,7 +523,11 @@ async function main(): Promise<void> {
 
   // Launch TUI if no arguments provided
   if (rawArgs.length === 0) {
-    await startTui();
+    if (process.stdin.isTTY && process.stdout.isTTY) {
+      await startTui();
+    } else {
+      showHelp();
+    }
     return;
   }
 
@@ -494,7 +537,8 @@ async function main(): Promise<void> {
   }
 
   if (rawArgs[0] === "--version" || rawArgs[0] === "-v") {
-    console.log("terminal-cli 0.1.0");
+    const { name, version } = await getCliVersion();
+    console.log(`${name} ${version}`);
     return;
   }
 
@@ -599,3 +643,17 @@ main().catch((error) => {
   printError(error instanceof Error ? error.message : String(error));
   process.exit(1);
 });
+
+async function getCliVersion(): Promise<{ name: string; version: string }> {
+  try {
+    const pkgUrl = new URL("../package.json", import.meta.url);
+    const pkgText = await Bun.file(pkgUrl).text();
+    const pkg = JSON.parse(pkgText) as { name?: string; version?: string };
+    return {
+      name: pkg.name ?? "terminal-cli",
+      version: pkg.version ?? "unknown",
+    };
+  } catch {
+    return { name: "terminal-cli", version: "unknown" };
+  }
+}

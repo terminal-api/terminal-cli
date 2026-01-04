@@ -568,15 +568,41 @@ function updateView(): void {
 
 // Copy to clipboard helper
 async function copyToClipboard(text: string): Promise<boolean> {
+  for (const command of getClipboardCommands()) {
+    const success = await tryClipboardCommand(command, text);
+    if (success) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getClipboardCommands(): string[][] {
+  switch (process.platform) {
+    case "darwin":
+      return [["pbcopy"]];
+    case "win32":
+      return [["cmd", "/c", "clip"]];
+    default:
+      return [
+        ["wl-copy"],
+        ["xclip", "-selection", "clipboard"],
+        ["xsel", "--clipboard", "--input"],
+      ];
+  }
+}
+
+async function tryClipboardCommand(command: string[], text: string): Promise<boolean> {
   try {
-    // Use pbcopy on macOS, xclip on Linux, clip on Windows
-    const proc = Bun.spawn(["pbcopy"], {
+    const proc = Bun.spawn(command, {
       stdin: "pipe",
+      stdout: "ignore",
+      stderr: "ignore",
     });
     proc.stdin.write(text);
     proc.stdin.end();
-    await proc.exited;
-    return true;
+    const exitCode = await proc.exited;
+    return exitCode === 0;
   } catch {
     return false;
   }

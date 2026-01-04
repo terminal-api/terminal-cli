@@ -1,6 +1,14 @@
 import { homedir } from "os";
 import { join } from "path";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  renameSync,
+  rmSync,
+  chmodSync,
+} from "fs";
 
 export interface ProfileConfig {
   apiKey?: string;
@@ -48,9 +56,29 @@ function loadConfigFile(): ConfigFile {
 
 function saveConfigFile(configFile: ConfigFile): void {
   if (!existsSync(CONFIG_DIR)) {
-    mkdirSync(CONFIG_DIR, { recursive: true });
+    mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
   }
-  writeFileSync(CONFIG_FILE, JSON.stringify(configFile, null, 2));
+  const serialized = JSON.stringify(configFile, null, 2);
+  const tempFile = join(CONFIG_DIR, `config.json.tmp-${process.pid}-${Date.now()}`);
+
+  try {
+    writeFileSync(tempFile, serialized, { mode: 0o600 });
+    renameSync(tempFile, CONFIG_FILE);
+  } catch {
+    try {
+      writeFileSync(CONFIG_FILE, serialized, { mode: 0o600 });
+    } finally {
+      if (existsSync(tempFile)) {
+        rmSync(tempFile);
+      }
+    }
+  }
+
+  try {
+    chmodSync(CONFIG_FILE, 0o600);
+  } catch {
+    // Best effort on platforms without POSIX permissions.
+  }
 }
 
 export function loadConfig(profileName?: string): Config {

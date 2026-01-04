@@ -4,6 +4,13 @@ export interface OutputOptions {
   format: OutputFormat;
 }
 
+const STDOUT_COLORS_ENABLED = Boolean(process.stdout.isTTY) && !process.env["NO_COLOR"];
+const STDERR_COLORS_ENABLED = Boolean(process.stderr.isTTY) && !process.env["NO_COLOR"];
+
+function colorize(code: string, text: string, enabled: boolean): string {
+  return enabled ? `\x1b[${code}m${text}\x1b[0m` : text;
+}
+
 export function formatOutput(data: unknown, options: OutputOptions): string {
   switch (options.format) {
     case "json":
@@ -21,15 +28,15 @@ function formatPretty(data: unknown, indent = 0): string {
   const prefix = "  ".repeat(indent);
 
   if (data === null || data === undefined) {
-    return `${prefix}\x1b[90mnull\x1b[0m`;
+    return `${prefix}${colorize("90", "null", STDOUT_COLORS_ENABLED)}`;
   }
 
   if (typeof data === "string") {
-    return `${prefix}\x1b[32m"${data}"\x1b[0m`;
+    return `${prefix}${colorize("32", `"${data}"`, STDOUT_COLORS_ENABLED)}`;
   }
 
   if (typeof data === "number" || typeof data === "boolean") {
-    return `${prefix}\x1b[33m${data}\x1b[0m`;
+    return `${prefix}${colorize("33", String(data), STDOUT_COLORS_ENABLED)}`;
   }
 
   if (Array.isArray(data)) {
@@ -51,7 +58,8 @@ function formatPretty(data: unknown, indent = 0): string {
           typeof value === "object" && value !== null
             ? `\n${formatPretty(value, indent + 1)}`
             : ` ${formatPretty(value, 0).trim()}`;
-        return `${prefix}  \x1b[36m${key}\x1b[0m:${formattedValue}`;
+        const coloredKey = colorize("36", key, STDOUT_COLORS_ENABLED);
+        return `${prefix}  ${coloredKey}:${formattedValue}`;
       })
       .join("\n");
     return `${prefix}{\n${lines}\n${prefix}}`;
@@ -165,13 +173,14 @@ export function print(data: unknown, options: OutputOptions): void {
 
 export function printError(error: Error | string): void {
   const message = error instanceof Error ? error.message : error;
-  console.error(`\x1b[31mError:\x1b[0m ${message}`);
+  const label = colorize("31", "Error:", STDERR_COLORS_ENABLED);
+  console.error(`${label} ${message}`);
 }
 
 export function printSuccess(message: string): void {
-  console.log(`\x1b[32m${message}\x1b[0m`);
+  console.log(colorize("32", message, STDOUT_COLORS_ENABLED));
 }
 
 export function printInfo(message: string): void {
-  console.log(`\x1b[36m${message}\x1b[0m`);
+  console.log(colorize("36", message, STDOUT_COLORS_ENABLED));
 }

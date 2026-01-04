@@ -178,7 +178,7 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
 
     // Get current connection
     {
-      pattern: /^\/tsp\/v1\/current-connection$/,
+      pattern: /^\/tsp\/v1\/connections\/current$/,
       handler: () => {
         return Response.json(mockData.connections[0]);
       },
