@@ -637,6 +637,7 @@ async function main(): Promise<void> {
   }
 
   await handleApiCommand(cmd, options, globalOptions);
+  process.exit(0);
 }
 
 main().catch((error) => {
