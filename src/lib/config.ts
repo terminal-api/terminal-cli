@@ -26,7 +26,6 @@ export interface Config {
   apiKey?: string;
   connectionToken?: string;
   baseUrl: string;
-  environment: "prod" | "sandbox";
 }
 
 function getConfigDir(): string {
@@ -37,7 +36,7 @@ function getConfigFile(): string {
   return join(getConfigDir(), "config.json");
 }
 
-const DEFAULT_PROFILE = "default";
+const DEFAULT_PROFILE = "prod";
 
 function getBaseUrl(environment: "prod" | "sandbox"): string {
   return environment === "sandbox"
@@ -57,7 +56,10 @@ function loadConfigFile(): ConfigFile {
 
   return {
     defaultProfile: DEFAULT_PROFILE,
-    profiles: { [DEFAULT_PROFILE]: {} },
+    profiles: {
+      [DEFAULT_PROFILE]: { environment: "prod" },
+      sandbox: { environment: "sandbox" },
+    },
   };
 }
 
@@ -110,7 +112,6 @@ export function loadConfig(profileName?: string): Config {
     apiKey: envApiKey ?? profile.apiKey,
     connectionToken: envConnectionToken ?? profile.connectionToken,
     baseUrl,
-    environment,
   };
 }
 

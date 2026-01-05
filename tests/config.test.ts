@@ -77,35 +77,27 @@ describe("config", () => {
       expect(config.baseUrl).toBe("https://custom.api.com");
     });
 
-    test("TERMINAL_ENVIRONMENT is read from environment", async () => {
+    test("TERMINAL_ENVIRONMENT sets sandbox baseUrl", async () => {
       process.env.TERMINAL_ENVIRONMENT = "sandbox";
-
-      const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
-      const config = configModule.loadConfig();
-
-      expect(config.environment).toBe("sandbox");
-    });
-
-    test("TERMINAL_BASE_URL with sandbox uses custom URL", async () => {
-      process.env.TERMINAL_ENVIRONMENT = "sandbox";
-      process.env.TERMINAL_BASE_URL = "https://api.sandbox.withterminal.com/tsp/v1";
 
       const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
       const config = configModule.loadConfig();
 
       expect(config.baseUrl).toBe("https://api.sandbox.withterminal.com/tsp/v1");
-      expect(config.environment).toBe("sandbox");
+    });
+
+    test("TERMINAL_BASE_URL overrides TERMINAL_ENVIRONMENT", async () => {
+      process.env.TERMINAL_ENVIRONMENT = "sandbox";
+      process.env.TERMINAL_BASE_URL = "https://custom.api.com";
+
+      const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
+      const config = configModule.loadConfig();
+
+      expect(config.baseUrl).toBe("https://custom.api.com");
     });
   });
 
   describe("default values", () => {
-    test("defaults to prod environment", async () => {
-      const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
-      const config = configModule.loadConfig();
-
-      expect(config.environment).toBe("prod");
-    });
-
     test("baseUrl defaults to production URL", async () => {
       const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
       const config = configModule.loadConfig();
