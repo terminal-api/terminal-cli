@@ -48,7 +48,7 @@ export async function get_driver(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   return await client.get(
-    `/drivers/${args["id"]}`,
+    `/drivers/${String(args["id"])}`,
     {
       raw: args["raw"] as string | number | boolean | undefined,
       expand: args["expand"] as string | number | boolean | undefined,

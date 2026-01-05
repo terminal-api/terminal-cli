@@ -65,7 +65,14 @@ function formatPretty(data: unknown, indent = 0): string {
     return `${prefix}{\n${lines}\n${prefix}}`;
   }
 
-  return `${prefix}${String(data)}`;
+  // data at this point can only be function or symbol
+  if (typeof data === "function") {
+    return `${prefix}[function]`;
+  }
+  if (typeof data === "symbol") {
+    return `${prefix}${data.toString()}`;
+  }
+  return `${prefix}[unknown]`;
 }
 
 function formatTable(data: unknown): string {
@@ -208,11 +215,15 @@ function formatCellValue(value: unknown): string {
     }
     return "[object]";
   }
-  return String(value);
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
 }
 
 export function print(data: unknown, options: OutputOptions): void {
-  console.log(formatOutput(data, options));
+  const output = formatOutput(data, options);
+  process.stdout.write(output + "\n");
 }
 
 export function printError(error: Error | string): void {

@@ -3,6 +3,14 @@ import type { TuiContext } from "./types.ts";
 import { formatDate, getDisplayValue } from "./format.ts";
 import { isConnectionsView } from "./constants.ts";
 
+function safeString(val: unknown): string {
+  if (val === null || val === undefined) return "N/A";
+  if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+    return String(val);
+  }
+  return JSON.stringify(val);
+}
+
 export function resultsToOptions(results: unknown[], showConnections: boolean): SelectOption[] {
   return results.map((item, index) => {
     const record = item as Record<string, unknown>;
@@ -10,44 +18,46 @@ export function resultsToOptions(results: unknown[], showConnections: boolean): 
     if (showConnections) {
       const id = (record["id"] as string) || `Item ${index + 1}`;
       const provider = getDisplayValue(record["provider"]) || "N/A";
-      const status = record["status"] || "N/A";
-      const syncMode = record["syncMode"] || "N/A";
+      const status = safeString(record["status"]);
+      const syncMode = safeString(record["syncMode"]);
       const createdAt = formatDate(record["createdAt"]);
 
       const company = record["company"] as Record<string, unknown> | undefined;
-      const companyName = company?.["name"] || "N/A";
+      const companyName = safeString(company?.["name"]);
 
-      const externalId = record["externalId"] || "N/A";
+      const externalId = safeString(record["externalId"]);
 
       return {
-        name: String(companyName),
+        name: companyName,
         description: `${id} | ${provider} | ${status} | sync: ${syncMode} | extId: ${externalId} | created: ${createdAt}`,
         value: index,
       };
     }
 
+    const firstName = record["firstName"];
+    const lastName = record["lastName"];
     const name =
       (record["name"] as string) ||
       (record["id"] as string) ||
-      (record["firstName"] && record["lastName"]
-        ? `${record["firstName"]} ${record["lastName"]}`
+      (typeof firstName === "string" && typeof lastName === "string"
+        ? `${firstName} ${lastName}`
         : null) ||
       `Item ${index + 1}`;
 
     const descParts: string[] = [];
-    if (record["status"]) descParts.push(`status: ${record["status"]}`);
+    if (record["status"]) descParts.push(`status: ${safeString(record["status"])}`);
     if (record["provider"]) {
       const providerName = getDisplayValue(record["provider"]);
       if (providerName) descParts.push(`provider: ${providerName}`);
     }
     // Priority fields to always show if present
-    if (record["vin"]) descParts.push(`vin: ${record["vin"]}`);
-    if (record["make"]) descParts.push(`make: ${record["make"]}`);
-    if (record["model"]) descParts.push(`model: ${record["model"]}`);
-    if (record["year"]) descParts.push(`year: ${record["year"]}`);
-    if (record["firstName"]) descParts.push(`firstName: ${record["firstName"]}`);
-    if (record["lastName"]) descParts.push(`lastName: ${record["lastName"]}`);
-    if (record["email"]) descParts.push(`email: ${record["email"]}`);
+    if (record["vin"]) descParts.push(`vin: ${safeString(record["vin"])}`);
+    if (record["make"]) descParts.push(`make: ${safeString(record["make"])}`);
+    if (record["model"]) descParts.push(`model: ${safeString(record["model"])}`);
+    if (record["year"]) descParts.push(`year: ${safeString(record["year"])}`);
+    if (record["firstName"]) descParts.push(`firstName: ${safeString(record["firstName"])}`);
+    if (record["lastName"]) descParts.push(`lastName: ${safeString(record["lastName"])}`);
+    if (record["email"]) descParts.push(`email: ${safeString(record["email"])}`);
 
     return {
       name: String(name),

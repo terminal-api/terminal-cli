@@ -12,8 +12,8 @@ describe("CLI", () => {
     baseUrl = getServerUrl(server);
   });
 
-  afterAll(() => {
-    server.stop();
+  afterAll(async () => {
+    await server.stop();
   });
 
   async function runCli(

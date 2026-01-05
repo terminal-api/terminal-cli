@@ -50,7 +50,7 @@ export async function get_safety_event(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   return await client.get(
-    `/safety/events/${args["id"]}`,
+    `/safety/events/${String(args["id"])}`,
     {
       expand: args["expand"] as string | number | boolean | undefined,
       raw: args["raw"] as string | number | boolean | undefined,
@@ -64,7 +64,7 @@ export async function get_event_camera_media(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   return await client.get(
-    `/safety/events/${args["id"]}/camera-media`,
+    `/safety/events/${String(args["id"])}/camera-media`,
     {
       raw: args["raw"] as string | number | boolean | undefined,
     },

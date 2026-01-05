@@ -74,7 +74,7 @@ async function tryClipboardCommand(command: string[], text: string): Promise<boo
       stderr: "ignore",
     });
     proc.stdin.write(text);
-    proc.stdin.end();
+    await proc.stdin.end();
     const exitCode = await proc.exited;
     return exitCode === 0;
   } catch {

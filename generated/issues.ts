@@ -47,7 +47,12 @@ export async function resolve_issue(
   client: TerminalClient,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  return await client.post(`/issues/${args["issueId"]}/resolve`, undefined, undefined, false);
+  return await client.post(
+    `/issues/${String(args["issueId"])}/resolve`,
+    undefined,
+    undefined,
+    false,
+  );
 }
 
 // Command definitions

@@ -13,8 +13,8 @@ describe("TerminalClient", () => {
     baseUrl = getServerUrl(server);
   });
 
-  afterAll(() => {
-    server.stop();
+  afterAll(async () => {
+    await server.stop();
   });
 
   describe("authentication", () => {
@@ -24,7 +24,7 @@ describe("TerminalClient", () => {
         baseUrl,
       });
 
-      await expect(client.get("/vehicles")).rejects.toThrow("API key is required");
+      expect(() => client.get("/vehicles")).toThrow("API key is required");
     });
 
     test("returns 401 for invalid API key format", async () => {
@@ -49,7 +49,7 @@ describe("TerminalClient", () => {
         connectionToken: undefined,
       });
 
-      await expect(client.get("/vehicles")).rejects.toThrow("Connection token is required");
+      expect(() => client.get("/vehicles")).toThrow("Connection token is required");
     });
 
     test("succeeds for endpoints that don't require connection token", async () => {

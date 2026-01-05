@@ -60,7 +60,7 @@ export async function get_sync_job_status(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   return await client.get(
-    `/syncs/${args["id"]}`,
+    `/syncs/${String(args["id"])}`,
     {
       expand: args["expand"] as string | number | boolean | undefined,
     },
@@ -72,14 +72,14 @@ export async function retry_sync(
   client: TerminalClient,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  return await client.post(`/syncs/${args["id"]}/retry`, undefined, undefined, true);
+  return await client.post(`/syncs/${String(args["id"])}/retry`, undefined, undefined, true);
 }
 
 export async function cancel_sync(
   client: TerminalClient,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  return await client.post(`/syncs/${args["id"]}/cancel`, undefined, undefined, true);
+  return await client.post(`/syncs/${String(args["id"])}/cancel`, undefined, undefined, true);
 }
 
 export async function passthrough(

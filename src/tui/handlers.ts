@@ -62,7 +62,7 @@ function bindComponentHandlers(context: TuiContext): void {
       state.currentView = "args";
       updateView(context);
     } else {
-      executeCommand(context, cmd);
+      void executeCommand(context, cmd);
     }
   });
 
@@ -103,7 +103,7 @@ function handleArgValue(context: TuiContext, value: unknown): void {
   const result = recordArgValue(state, value);
 
   if (result.done && state.selectedCommand) {
-    executeCommand(context, state.selectedCommand);
+    void executeCommand(context, state.selectedCommand);
     return;
   }
 
@@ -164,7 +164,7 @@ function setupKeyHandlers(context: TuiContext): void {
     if (state.currentView === "detail" && state.selectedItem) {
       if (key.name === "c") {
         const jsonText = JSON.stringify(state.selectedItem, null, 2);
-        copyToClipboard(jsonText).then((success) => {
+        void copyToClipboard(jsonText).then((success) => {
           statusBar.content = success ? "Copied JSON to clipboard!" : "Failed to copy to clipboard";
         });
         return;
@@ -172,8 +172,12 @@ function setupKeyHandlers(context: TuiContext): void {
 
       if (key.name === "i") {
         const id = state.selectedItem["id"];
-        if (id) {
-          copyToClipboard(String(id)).then((success) => {
+        if (id !== null && id !== undefined) {
+          const idStr =
+            typeof id === "string" || typeof id === "number" || typeof id === "boolean"
+              ? String(id)
+              : JSON.stringify(id);
+          void copyToClipboard(idStr).then((success) => {
             statusBar.content = success ? "Copied ID to clipboard!" : "Failed to copy to clipboard";
           });
         } else {
@@ -185,8 +189,12 @@ function setupKeyHandlers(context: TuiContext): void {
 
     if (key.name === "i" && state.currentView === "detail" && state.selectedItem) {
       const id = state.selectedItem["id"];
-      if (id) {
-        copyToClipboard(String(id)).then((success) => {
+      if (id !== null && id !== undefined) {
+        const idStr =
+          typeof id === "string" || typeof id === "number" || typeof id === "boolean"
+            ? String(id)
+            : JSON.stringify(id);
+        void copyToClipboard(idStr).then((success) => {
           statusBar.content = success ? "Copied ID to clipboard!" : "Failed to copy to clipboard";
         });
       } else {

@@ -48,7 +48,7 @@ export async function get_vehicle(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   return await client.get(
-    `/vehicles/${args["id"]}`,
+    `/vehicles/${String(args["id"])}`,
     {
       raw: args["raw"] as string | number | boolean | undefined,
       expand: args["expand"] as string | number | boolean | undefined,
@@ -80,7 +80,7 @@ export async function list_historical_vehicle_locations(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   return await client.get(
-    `/vehicles/${args["vehicleId"]}/locations`,
+    `/vehicles/${String(args["vehicleId"])}/locations`,
     {
       cursor: args["cursor"] as string | number | boolean | undefined,
       limit: args["limit"] as string | number | boolean | undefined,
@@ -97,7 +97,7 @@ export async function list_historical_vehicle_stats(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   return await client.get(
-    `/vehicles/${args["vehicleId"]}/stats/historical`,
+    `/vehicles/${String(args["vehicleId"])}/stats/historical`,
     {
       cursor: args["cursor"] as string | number | boolean | undefined,
       limit: args["limit"] as string | number | boolean | undefined,

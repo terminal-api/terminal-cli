@@ -4,6 +4,14 @@ import { loadConfig, saveConfig } from "../lib/config.ts";
 import type { TuiContext } from "./types.ts";
 import { formatDate, sidebarSection } from "./format.ts";
 
+function safeString(val: unknown): string {
+  if (val === null || val === undefined) return "N/A";
+  if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+    return String(val);
+  }
+  return JSON.stringify(val);
+}
+
 export async function fetchConnectionInfo(context: TuiContext): Promise<void> {
   try {
     const result = await context.client.get<Record<string, unknown>>("/connections/current");
@@ -23,14 +31,14 @@ export function updateConnectionDisplay(context: TuiContext): void {
 
   if (connectionInfo) {
     const provider = connectionInfo["provider"] as Record<string, unknown> | undefined;
-    const providerName = String(provider?.["name"] || "N/A");
+    const providerName = safeString(provider?.["name"]);
 
     const company = connectionInfo["company"] as Record<string, unknown> | undefined;
-    const companyName = String(company?.["name"] || "N/A");
-    const dotNumber = String(company?.["dotNumber"] || connectionInfo["dotNumber"] || "N/A");
+    const companyName = safeString(company?.["name"]);
+    const dotNumber = safeString(company?.["dotNumber"] ?? connectionInfo["dotNumber"]);
 
-    const status = String(connectionInfo["status"] || "N/A");
-    const syncMode = String(connectionInfo["syncMode"] || "N/A");
+    const status = safeString(connectionInfo["status"]);
+    const syncMode = safeString(connectionInfo["syncMode"]);
     const created = formatDate(connectionInfo["createdAt"]);
     const updated = formatDate(connectionInfo["updatedAt"]);
 
@@ -82,7 +90,7 @@ export function setActiveConnection(
   context.state.error = null;
 
   const providerObj = connection["provider"] as Record<string, unknown> | undefined;
-  const providerName = providerObj?.["name"] || "Unknown";
+  const providerName = safeString(providerObj?.["name"]);
 
   context.components.statusBar.content = `Active connection set to ${providerName} (${token.slice(0, 15)}...)`;
 

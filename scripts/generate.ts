@@ -274,10 +274,10 @@ function generateCommandCode(cmd: CommandDef): string {
     cmd.pathParams.length > 0 || cmd.queryParams.length > 0 || cmd.bodyParams.length > 0;
   const argsParam = hasArgs ? "args" : "_args";
 
-  // Generate path with parameter substitution
+  // Generate path with parameter substitution (cast to string to satisfy template expression type checking)
   let pathCode = `"${cmd.path}"`;
   for (const param of cmd.pathParams) {
-    pathCode = pathCode.replace(`{${param.name}}`, `\${args["${param.name}"]}`);
+    pathCode = pathCode.replace(`{${param.name}}`, `\${String(args["${param.name}"])}`);
   }
   if (cmd.pathParams.length > 0) {
     pathCode = "`" + pathCode.slice(1, -1) + "`";
@@ -471,4 +471,7 @@ async function main() {
   }
 }
 
-main();
+main().catch((error) => {
+  console.error("Generation failed:", error);
+  process.exit(1);
+});

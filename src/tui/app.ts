@@ -80,7 +80,7 @@ export async function startTui(profileName?: string): Promise<void> {
   updateView(context);
 
   if (config.connectionToken) {
-    fetchConnectionInfo(context);
+    void fetchConnectionInfo(context);
   }
 
   commandSelect.focus();

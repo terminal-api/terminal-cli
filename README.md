@@ -25,10 +25,13 @@ terminal config set api-key sk_prod_xxx
 Now you can make API calls or start the interactive TUI:
 
 API Calls
+
 ```bash
 terminal list-connections --format table
 ```
+
 TUI
+
 ```base
 terminal
 ```

@@ -219,6 +219,15 @@ function showCommandHelp(cmd: Command): void {
       }
     }
   }
+
+  console.log(`
+\x1b[1mGLOBAL OPTIONS:\x1b[0m
+  --format <format>          Output format: json, pretty, table (default: json)
+  --api-key <key>            API key override
+  --connection-token <token> Connection token override
+  --all                      Auto-paginate and fetch all results
+  --profile <name>           Use a specific config profile
+`);
 }
 
 async function handleConfigCommand(
@@ -651,7 +660,6 @@ async function main(): Promise<void> {
   }
 
   await handleApiCommand(cmd, options, globalOptions);
-  process.exit(0);
 }
 
 main().catch((error) => {
