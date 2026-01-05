@@ -8,7 +8,7 @@ Requires [Bun](https://bun.sh) runtime.
 
 ```bash
 # Clone and install
-git clone <repo-url>
+git clone https://github.com/terminal-api/terminal-cli.git
 cd terminal-cli
 bun install
 
@@ -22,10 +22,15 @@ After linking, the `terminal` command is available globally. Configure your API 
 terminal config set api-key sk_prod_xxx
 ```
 
-Now you can make API calls:
+Now you can make API calls or start the interactive TUI:
 
+API Calls
 ```bash
 terminal list-connections --format table
+```
+TUI
+```base
+terminal
 ```
 
 To rebuild after making changes:
