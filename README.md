@@ -2,20 +2,42 @@
 
 A CLI for the [Terminal Telematics API](https://withterminal.com), auto-generated from the OpenAPI spec.
 
-## Installation
+## Quick Start
 
 Requires [Bun](https://bun.sh) runtime.
 
 ```bash
-# Install dependencies
+# Clone and install
+git clone <repo-url>
+cd terminal-cli
 bun install
 
-# Run in development mode
-bun run dev <command>
+# Build and link globally
+bun run build && bun link
+```
 
-# Build for distribution
+After linking, the `terminal` command is available globally. Configure your API key:
+
+```bash
+terminal config set api-key sk_prod_xxx
+```
+
+Now you can make API calls:
+
+```bash
+terminal list-connections --format table
+```
+
+To rebuild after making changes:
+
+```bash
 bun run build
-./dist/cli.js <command>
+```
+
+To unlink:
+
+```bash
+bun unlink
 ```
 
 ## Configuration
@@ -25,6 +47,7 @@ Set your API credentials:
 ```bash
 terminal config set api-key sk_prod_xxx
 terminal config set connection-token con_tkn_xxx
+terminal config set base-url https://api.withterminal.com/tsp/v1
 ```
 
 Or use environment variables:
@@ -32,6 +55,7 @@ Or use environment variables:
 ```bash
 export TERMINAL_API_KEY=sk_prod_xxx
 export TERMINAL_CONNECTION_TOKEN=con_tkn_xxx
+export TERMINAL_BASE_URL=https://api.withterminal.com/tsp/v1
 ```
 
 View current config:
@@ -112,33 +136,6 @@ terminal completions fish > ~/.config/fish/completions/terminal.fish
 ```
 
 ## Development
-
-### Global CLI Setup
-
-To use `terminal` as a global command that runs your local development version:
-
-```bash
-# Build and link globally (one-time setup)
-bun run build && bun link
-
-# Now you can use 'terminal' anywhere
-terminal --version
-terminal list-vehicles --format table
-```
-
-After linking, the `terminal` command will use your built `dist/cli.js`. When you make changes, rebuild to update:
-
-```bash
-bun run build
-```
-
-To unlink:
-
-```bash
-bun unlink
-```
-
-### Development Commands
 
 ```bash
 # Run CLI in dev mode (with watch)
