@@ -91,14 +91,43 @@ function formatTable(data: unknown): string {
   return String(data);
 }
 
+function getTerminalWidth(): number {
+  return process.stdout.columns || 120;
+}
+
+function flattenObject(obj: Record<string, unknown>, prefix = ""): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    const newKey = prefix ? `${prefix}.${key}` : key;
+
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      // Recursively flatten nested objects
+      Object.assign(result, flattenObject(value as Record<string, unknown>, newKey));
+    } else {
+      result[newKey] = value;
+    }
+  }
+
+  return result;
+}
+
 function formatArrayAsTable(data: unknown[]): string {
   if (data.length === 0) {
     return "No results";
   }
 
-  // Get all unique keys from all objects
+  // Flatten all objects first
+  const flattenedData = data.map((item) => {
+    if (item && typeof item === "object" && !Array.isArray(item)) {
+      return flattenObject(item as Record<string, unknown>);
+    }
+    return item;
+  });
+
+  // Get all unique keys from all flattened objects
   const keys = new Set<string>();
-  for (const item of data) {
+  for (const item of flattenedData) {
     if (item && typeof item === "object") {
       Object.keys(item as Record<string, unknown>).forEach((k) => keys.add(k));
     }
@@ -106,28 +135,43 @@ function formatArrayAsTable(data: unknown[]): string {
 
   const columns = Array.from(keys);
 
-  // Calculate column widths
+  // Calculate column widths based on content
   const widths: Record<string, number> = {};
   for (const col of columns) {
     widths[col] = col.length;
-    for (const item of data) {
+    for (const item of flattenedData) {
       if (item && typeof item === "object") {
         const value = (item as Record<string, unknown>)[col];
         const strValue = formatCellValue(value);
         widths[col] = Math.max(widths[col] ?? 0, strValue.length);
       }
     }
-    // Cap width at 50 characters
-    widths[col] = Math.min(widths[col] ?? 0, 50);
+    // Cap individual column width at 40 characters
+    widths[col] = Math.min(widths[col] ?? 0, 40);
+  }
+
+  // Filter columns to fit terminal width
+  const termWidth = getTerminalWidth();
+  const columnGap = 2;
+  const visibleColumns: string[] = [];
+  let usedWidth = 0;
+
+  for (const col of columns) {
+    const colWidth = widths[col] ?? 0;
+    const needed = usedWidth === 0 ? colWidth : colWidth + columnGap;
+    if (usedWidth + needed <= termWidth) {
+      visibleColumns.push(col);
+      usedWidth += needed;
+    }
   }
 
   // Build header
-  const header = columns.map((col) => col.toUpperCase().padEnd(widths[col] ?? 0)).join("  ");
-  const separator = columns.map((col) => "-".repeat(widths[col] ?? 0)).join("  ");
+  const header = visibleColumns.map((col) => col.toUpperCase().padEnd(widths[col] ?? 0)).join("  ");
+  const separator = visibleColumns.map((col) => "-".repeat(widths[col] ?? 0)).join("  ");
 
   // Build rows
-  const rows = data.map((item) => {
-    return columns
+  const rows = flattenedData.map((item) => {
+    return visibleColumns
       .map((col) => {
         const value = (item as Record<string, unknown>)[col];
         const strValue = formatCellValue(value);
