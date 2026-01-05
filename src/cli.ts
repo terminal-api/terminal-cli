@@ -187,12 +187,16 @@ function showHelp(): void {
   }
 
   console.log(`
+\x1b[1mSUBCOMMANDS:\x1b[0m
+  <command> schema       Show the response schema for a command
+
 \x1b[1mEXAMPLES:\x1b[0m
   terminal config set api-key sk_prod_xxx
   terminal config set connection-token con_tkn_xxx
   terminal list-vehicles --format table
   terminal get-vehicle vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC
   terminal list-drivers --limit 10
+  terminal list-vehicles schema
 `);
 }
 
@@ -221,6 +225,9 @@ function showCommandHelp(cmd: Command): void {
   }
 
   console.log(`
+\x1b[1mSUBCOMMANDS:\x1b[0m
+  ${cmd.name} schema       Show the expected response schema
+
 \x1b[1mGLOBAL OPTIONS:\x1b[0m
   --format <format>          Output format: json, pretty, table (default: json)
   --api-key <key>            API key override
@@ -628,6 +635,21 @@ async function main(): Promise<void> {
         printInfo("Available shells: bash, zsh, fish");
     }
     process.exit(0);
+  }
+
+  // Handle schema subcommand: <command> schema
+  if (command.length >= 2 && command[command.length - 1] === "schema") {
+    const cmdName = command.slice(0, -1).join("-");
+    const cmd = findCommand(cmdName);
+    if (cmd) {
+      if (cmd.responseSchema) {
+        print(cmd.responseSchema, { format: globalOptions.format });
+      } else {
+        printInfo(`No response schema available for '${cmdName}'`);
+      }
+      process.exit(0);
+    }
+    // Fall through to normal error handling if command not found
   }
 
   // Try to find API command

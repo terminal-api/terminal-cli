@@ -19,6 +19,7 @@ export interface Command {
   requiresConnectionToken: boolean;
   args: CommandArg[];
   handler: (client: TerminalClient, args: Record<string, unknown>) => Promise<unknown>;
+  responseSchema: unknown;
 }
 
 // Command handlers
@@ -116,6 +117,82 @@ export const commands: Command[] = [
       },
     ],
     handler: list_issues,
+    responseSchema: {
+      type: "object",
+      properties: {
+        results: {
+          type: "array",
+          items: {
+            type: "object",
+            title: "Issue",
+            "x-model-category": "platform",
+            properties: {
+              id: {
+                type: "string",
+                title: "IssueId",
+                format: "ulid",
+                example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+              },
+              status: { enum: ["ongoing", "resolved"] },
+              connection: {
+                type: "string",
+                title: "ConnectionId",
+                format: "ulid",
+                example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+              },
+              error: {
+                type: "object",
+                properties: {
+                  code: {
+                    type: "string",
+                    title: "IssueCode",
+                    enum: [
+                      "missing_permissions",
+                      "exceeded_retention_window",
+                      "invalid_source_id",
+                      "unknown_device_type",
+                      "missing_safety_configuration",
+                      "inaccessible_data",
+                    ],
+                  },
+                  message: {
+                    type: "string",
+                    example:
+                      "Failed to ingest HOS Logs, missing permissions to access Duty Status Logs",
+                  },
+                },
+                required: ["code", "message"],
+              },
+              firstReportedAt: {
+                type: "string",
+                title: "ISODateTime",
+                format: "date-time",
+                example: "2021-01-06T03:24:53.000Z",
+                description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+              },
+              lastReportedAt: {
+                type: "string",
+                title: "ISODateTime",
+                format: "date-time",
+                example: "2021-01-06T03:24:53.000Z",
+                description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+              },
+            },
+            required: ["id", "connection", "status", "error", "firstReportedAt", "lastReportedAt"],
+            "x-description":
+              "An issue is a problem we encountered while ingesting data from a connection that may impact the quality or completeness of the data.",
+          },
+        },
+        next: {
+          type: "string",
+          title: "Pagination Cursor",
+          example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
+          description: "Cursor used for pagination.",
+          format: "cursor",
+        },
+      },
+      required: ["results"],
+    },
   },
   {
     name: "resolve-issue",
@@ -132,6 +209,65 @@ export const commands: Command[] = [
       },
     ],
     handler: resolve_issue,
+    responseSchema: {
+      type: "object",
+      title: "Issue",
+      "x-model-category": "platform",
+      properties: {
+        id: {
+          type: "string",
+          title: "IssueId",
+          format: "ulid",
+          example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+        },
+        status: { enum: ["ongoing", "resolved"] },
+        connection: {
+          type: "string",
+          title: "ConnectionId",
+          format: "ulid",
+          example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+        },
+        error: {
+          type: "object",
+          properties: {
+            code: {
+              type: "string",
+              title: "IssueCode",
+              enum: [
+                "missing_permissions",
+                "exceeded_retention_window",
+                "invalid_source_id",
+                "unknown_device_type",
+                "missing_safety_configuration",
+                "inaccessible_data",
+              ],
+            },
+            message: {
+              type: "string",
+              example: "Failed to ingest HOS Logs, missing permissions to access Duty Status Logs",
+            },
+          },
+          required: ["code", "message"],
+        },
+        firstReportedAt: {
+          type: "string",
+          title: "ISODateTime",
+          format: "date-time",
+          example: "2021-01-06T03:24:53.000Z",
+          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+        },
+        lastReportedAt: {
+          type: "string",
+          title: "ISODateTime",
+          format: "date-time",
+          example: "2021-01-06T03:24:53.000Z",
+          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+        },
+      },
+      required: ["id", "connection", "status", "error", "firstReportedAt", "lastReportedAt"],
+      "x-description":
+        "An issue is a problem we encountered while ingesting data from a connection that may impact the quality or completeness of the data.",
+    },
   },
 ];
 

@@ -91,6 +91,7 @@ interface CommandDef {
   bodyParams: ParamDef[];
   requiresConnectionToken: boolean;
   tag: string;
+  responseSchema: unknown;
 }
 
 interface ParamDef {
@@ -186,6 +187,58 @@ function extractBodyParams(spec: OpenAPISpec, requestBody: Operation["requestBod
   });
 }
 
+function resolveSchemaRefs(
+  spec: OpenAPISpec,
+  schema: unknown,
+  visited = new Set<string>(),
+): unknown {
+  if (!schema || typeof schema !== "object") {
+    return schema;
+  }
+
+  const obj = schema as Record<string, unknown>;
+
+  // Handle $ref
+  if (obj.$ref && typeof obj.$ref === "string") {
+    // Prevent infinite recursion
+    if (visited.has(obj.$ref)) {
+      return { $ref: obj.$ref };
+    }
+    visited.add(obj.$ref);
+    const resolved = resolveRef(spec, obj.$ref);
+    return resolveSchemaRefs(spec, resolved, visited);
+  }
+
+  // Recursively resolve all properties
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (Array.isArray(value)) {
+      result[key] = value.map((item) => resolveSchemaRefs(spec, item, new Set(visited)));
+    } else if (typeof value === "object" && value !== null) {
+      result[key] = resolveSchemaRefs(spec, value, new Set(visited));
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+function extractResponseSchema(spec: OpenAPISpec, responses: Operation["responses"]): unknown {
+  // Get the 200 response schema
+  const successResponse = responses["200"];
+  if (!successResponse) {
+    return null;
+  }
+
+  const content = successResponse.content?.["application/json"];
+  if (!content?.schema) {
+    return null;
+  }
+
+  // Resolve all $refs in the schema
+  return resolveSchemaRefs(spec, content.schema);
+}
+
 function parseOperations(spec: OpenAPISpec): CommandDef[] {
   const commands: CommandDef[] = [];
 
@@ -236,6 +289,9 @@ function parseOperations(spec: OpenAPISpec): CommandDef[] {
       // Get tag
       const tag = operation.tags?.[0] ?? "other";
 
+      // Extract response schema
+      const responseSchema = extractResponseSchema(spec, operation.responses);
+
       commands.push({
         name: commandName,
         description: operation.summary ?? operation.description ?? "",
@@ -247,6 +303,7 @@ function parseOperations(spec: OpenAPISpec): CommandDef[] {
         bodyParams,
         requiresConnectionToken,
         tag,
+        responseSchema,
       });
     }
   }
@@ -344,7 +401,8 @@ function generateCommandDef(cmd: CommandDef): string {
     args: [
     ${argsCode}
     ],
-    handler: ${toCamelCase(cmd.name.replace(/-/g, "_"))}
+    handler: ${toCamelCase(cmd.name.replace(/-/g, "_"))},
+    responseSchema: ${JSON.stringify(cmd.responseSchema)}
   }`;
 }
 
@@ -370,6 +428,7 @@ export interface Command {
   requiresConnectionToken: boolean;
   args: CommandArg[];
   handler: (client: TerminalClient, args: Record<string, unknown>) => Promise<unknown>;
+  responseSchema: unknown;
 }
 
 // Command handlers

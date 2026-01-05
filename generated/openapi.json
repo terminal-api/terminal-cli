@@ -4471,7 +4471,7 @@
             "properties": {
               "provider": {
                 "type": "string",
-                "enum": ["egreen-lucid-eld"]
+                "enum": ["egreen-eld-v2"]
               },
               "credentials": {
                 "type": "object",
@@ -5183,7 +5183,7 @@
             "properties": {
               "provider": {
                 "type": "string",
-                "enum": ["factor-lucid-eld"]
+                "enum": ["factor-eld-v2"]
               },
               "credentials": {
                 "type": "object",
@@ -6065,7 +6065,7 @@
             "properties": {
               "provider": {
                 "type": "string",
-                "enum": ["ilog-lucid-eld"]
+                "enum": ["ilog-eld-v2"]
               },
               "credentials": {
                 "type": "object",

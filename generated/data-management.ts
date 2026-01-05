@@ -19,6 +19,7 @@ export interface Command {
   requiresConnectionToken: boolean;
   args: CommandArg[];
   handler: (client: TerminalClient, args: Record<string, unknown>) => Promise<unknown>;
+  responseSchema: unknown;
 }
 
 // Command handlers
@@ -135,6 +136,83 @@ export const commands: Command[] = [
       },
     ],
     handler: list_sync_history,
+    responseSchema: {
+      type: "object",
+      properties: {
+        results: {
+          type: "array",
+          items: {
+            type: "object",
+            title: "Sync",
+            "x-model-category": "platform",
+            properties: {
+              id: {
+                type: "string",
+                title: "SyncId",
+                format: "ulid",
+                example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
+              },
+              status: {
+                type: "string",
+                title: "SyncStatus",
+                description: "The status of the sync",
+                example: "completed",
+                enum: ["requested", "in_progress", "completed", "failed"],
+              },
+              failureReason: {
+                type: "string",
+                description: "If the sync failed, this will contain the reason",
+                example: "Reason for failure if sync status is 'failed'",
+              },
+              issues: {
+                type: "array",
+                description:
+                  "Issues are problems encountered with a connection that did not result in a failed sync but may require manual intervention. You can see the issues for a given sync by providing `issues` to the `expand` parameter.",
+                items: {
+                  type: "string",
+                  title: "IssueId",
+                  format: "ulid",
+                  example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                },
+              },
+              startFrom: {
+                type: "string",
+                title: "ISODateTime",
+                format: "date-time",
+                example: "2021-01-06T03:24:53.000Z",
+                description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+              },
+              attempts: { type: "number", example: 1 },
+              requestedAt: {
+                type: "string",
+                title: "ISODateTime",
+                format: "date-time",
+                example: "2021-01-06T03:24:53.000Z",
+                description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+              },
+              completedAt: {
+                type: "string",
+                title: "ISODateTime",
+                format: "date-time",
+                example: "2021-01-06T03:24:53.000Z",
+                description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+              },
+            },
+            required: ["id", "status", "requestedAt"],
+            "x-description":
+              "An object containing the state of a sync job. This can be polled after connection linking to know when data is available for ingestion.",
+          },
+        },
+        next: {
+          type: "string",
+          title: "Pagination Cursor",
+          example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
+          description: "Cursor used for pagination.",
+          format: "cursor",
+        },
+      },
+      required: ["results"],
+    },
   },
   {
     name: "request-sync",
@@ -164,6 +242,7 @@ export const commands: Command[] = [
       },
     ],
     handler: request_sync,
+    responseSchema: null,
   },
   {
     name: "get-sync-job-status",
@@ -187,6 +266,67 @@ export const commands: Command[] = [
       },
     ],
     handler: get_sync_job_status,
+    responseSchema: {
+      type: "object",
+      title: "Sync",
+      "x-model-category": "platform",
+      properties: {
+        id: {
+          type: "string",
+          title: "SyncId",
+          format: "ulid",
+          example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
+        },
+        status: {
+          type: "string",
+          title: "SyncStatus",
+          description: "The status of the sync",
+          example: "completed",
+          enum: ["requested", "in_progress", "completed", "failed"],
+        },
+        failureReason: {
+          type: "string",
+          description: "If the sync failed, this will contain the reason",
+          example: "Reason for failure if sync status is 'failed'",
+        },
+        issues: {
+          type: "array",
+          description:
+            "Issues are problems encountered with a connection that did not result in a failed sync but may require manual intervention. You can see the issues for a given sync by providing `issues` to the `expand` parameter.",
+          items: {
+            type: "string",
+            title: "IssueId",
+            format: "ulid",
+            example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+          },
+        },
+        startFrom: {
+          type: "string",
+          title: "ISODateTime",
+          format: "date-time",
+          example: "2021-01-06T03:24:53.000Z",
+          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+        },
+        attempts: { type: "number", example: 1 },
+        requestedAt: {
+          type: "string",
+          title: "ISODateTime",
+          format: "date-time",
+          example: "2021-01-06T03:24:53.000Z",
+          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+        },
+        completedAt: {
+          type: "string",
+          title: "ISODateTime",
+          format: "date-time",
+          example: "2021-01-06T03:24:53.000Z",
+          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+        },
+      },
+      required: ["id", "status", "requestedAt"],
+      "x-description":
+        "An object containing the state of a sync job. This can be polled after connection linking to know when data is available for ingestion.",
+    },
   },
   {
     name: "retry-sync",
@@ -203,6 +343,18 @@ export const commands: Command[] = [
       },
     ],
     handler: retry_sync,
+    responseSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          title: "SyncId",
+          format: "ulid",
+          example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
+        },
+        message: { type: "string", example: "Sync retry requested" },
+      },
+    },
   },
   {
     name: "cancel-sync",
@@ -219,6 +371,18 @@ export const commands: Command[] = [
       },
     ],
     handler: cancel_sync,
+    responseSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          title: "SyncId",
+          format: "ulid",
+          example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
+        },
+        message: { type: "string", example: "Sync cancellation requested" },
+      },
+    },
   },
   {
     name: "passthrough",
@@ -255,6 +419,44 @@ export const commands: Command[] = [
       },
     ],
     handler: passthrough,
+    responseSchema: {
+      type: "object",
+      title: "Passthrough Output",
+      properties: {
+        method: {
+          type: "string",
+          description: "The HTTP method that was used when making the request.",
+          example: "POST",
+        },
+        path: {
+          type: "string",
+          description: "The path that was called with the passthrough request.",
+          example: "/reports",
+          default: "/reports",
+        },
+        statusCode: {
+          type: "integer",
+          example: 200,
+          description: "The resulting status code from the passthrough request.",
+        },
+        headers: {
+          type: "object",
+          example: { "Content-Type": "application/json" },
+          description: "Any returned headers from the passthrough request.",
+        },
+        response: {
+          title: "JSON Value",
+          oneOf: [
+            { type: "object" },
+            { type: "array" },
+            { type: "string" },
+            { type: "number" },
+            { type: "boolean" },
+          ],
+        },
+      },
+      required: ["method", "path", "statusCode", "headers", "response"],
+    },
   },
 ];
 
