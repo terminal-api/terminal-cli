@@ -35,13 +35,18 @@ export function resultsToOptions(results: unknown[], showConnections: boolean): 
       `Item ${index + 1}`;
 
     const descParts: string[] = [];
-    if (record["id"] && record["id"] !== name) descParts.push(`id: ${record["id"]}`);
     if (record["status"]) descParts.push(`status: ${record["status"]}`);
     if (record["provider"]) {
       const providerName = getDisplayValue(record["provider"]);
       if (providerName) descParts.push(`provider: ${providerName}`);
     }
+    // Priority fields to always show if present
     if (record["vin"]) descParts.push(`vin: ${record["vin"]}`);
+    if (record["make"]) descParts.push(`make: ${record["make"]}`);
+    if (record["model"]) descParts.push(`model: ${record["model"]}`);
+    if (record["year"]) descParts.push(`year: ${record["year"]}`);
+    if (record["firstName"]) descParts.push(`firstName: ${record["firstName"]}`);
+    if (record["lastName"]) descParts.push(`lastName: ${record["lastName"]}`);
     if (record["email"]) descParts.push(`email: ${record["email"]}`);
 
     return {

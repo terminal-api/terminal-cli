@@ -113,18 +113,48 @@ terminal completions fish > ~/.config/fish/completions/terminal.fish
 
 ## Development
 
+### Global CLI Setup
+
+To use `terminal` as a global command that runs your local development version:
+
 ```bash
-# Run CLI in dev mode
+# Build and link globally (one-time setup)
+bun run build && bun link
+
+# Now you can use 'terminal' anywhere
+terminal --version
+terminal list-vehicles --format table
+```
+
+After linking, the `terminal` command will use your built `dist/cli.js`. When you make changes, rebuild to update:
+
+```bash
+bun run build
+```
+
+To unlink:
+
+```bash
+bun unlink
+```
+
+### Development Commands
+
+```bash
+# Run CLI in dev mode (with watch)
 bun run dev
 
 # Regenerate commands from OpenAPI spec
 bun run generate
 
-# Lint
-bun run lint
+# Run all checks (typecheck, lint, format, test)
+bun run check
 
-# Type check
+# Individual checks
 bun run typecheck
+bun run lint
+bun run format
+bun test
 
 # Build
 bun run build

@@ -544,6 +544,16 @@ async function main(): Promise<void> {
 
   const { command, options, positionalArgs } = parseArgs(rawArgs);
 
+  // Launch TUI with profile if only --profile is provided
+  if (command.length === 0 && options["profile"]) {
+    if (process.stdin.isTTY && process.stdout.isTTY) {
+      await startTui(options["profile"] as string);
+    } else {
+      showHelp();
+    }
+    return;
+  }
+
   // Extract global options
   const profileName = options["profile"] as string | undefined;
   const globalOptions: GlobalOptions = {
@@ -577,14 +587,14 @@ async function main(): Promise<void> {
   if (command[0] === "config") {
     const subcommand = command[1] ?? "show";
     await handleConfigCommand(subcommand, positionalArgs, options);
-    return;
+    process.exit(0);
   }
 
   // Handle profile commands
   if (command[0] === "profile") {
     const subcommand = command[1] ?? "list";
     await handleProfileCommand(subcommand, positionalArgs, options);
-    return;
+    process.exit(0);
   }
 
   // Handle completions command
@@ -604,7 +614,7 @@ async function main(): Promise<void> {
         printError(`Unknown shell: ${shell}`);
         printInfo("Available shells: bash, zsh, fish");
     }
-    return;
+    process.exit(0);
   }
 
   // Try to find API command

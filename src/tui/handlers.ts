@@ -1,4 +1,9 @@
-import { InputRenderableEvents, SelectRenderableEvents, type KeyEvent } from "@opentui/core";
+import {
+  InputRenderableEvents,
+  SelectRenderableEvents,
+  type KeyEvent,
+  type PasteEvent,
+} from "@opentui/core";
 import type { TuiContext } from "./types.ts";
 import { findCommandByName } from "./commands.ts";
 import { executeCommand } from "./actions.ts";
@@ -92,12 +97,18 @@ function setupKeyHandlers(context: TuiContext): void {
   const { renderer, state, components } = context;
   const { filterInput, resultsSelect, argInput, statusBar } = components;
 
-  renderer.keyInput.on("keypress", (key: KeyEvent) => {
-    if (key.name === "q" && !filterInput.focused) {
-      renderer.stop();
-      process.exit(0);
+  renderer.keyInput.on("paste", (event: PasteEvent) => {
+    if (argInput.focused) {
+      argInput.value = argInput.value + event.text;
+    } else if (filterInput.focused) {
+      filterInput.value = filterInput.value + event.text;
+      state.filterText = filterInput.value;
+      filterResults(context);
+      updateStatusBar(context);
     }
+  });
 
+  renderer.keyInput.on("keypress", (key: KeyEvent) => {
     if (key.name === "tab") {
       if (state.currentView === "results") {
         state.currentView = "commands";
@@ -121,11 +132,37 @@ function setupKeyHandlers(context: TuiContext): void {
       return;
     }
 
-    if (key.name === "c" && state.currentView === "detail" && state.selectedItem) {
-      const jsonText = JSON.stringify(state.selectedItem, null, 2);
-      copyToClipboard(jsonText).then((success) => {
-        statusBar.content = success ? "Copied to clipboard!" : "Failed to copy to clipboard";
-      });
+    if (state.currentView === "detail" && state.selectedItem) {
+      if (key.name === "c") {
+        const jsonText = JSON.stringify(state.selectedItem, null, 2);
+        copyToClipboard(jsonText).then((success) => {
+          statusBar.content = success ? "Copied JSON to clipboard!" : "Failed to copy to clipboard";
+        });
+        return;
+      }
+
+      if (key.name === "i") {
+        const id = state.selectedItem["id"];
+        if (id) {
+          copyToClipboard(String(id)).then((success) => {
+            statusBar.content = success ? "Copied ID to clipboard!" : "Failed to copy to clipboard";
+          });
+        } else {
+          statusBar.content = "No ID field found";
+        }
+        return;
+      }
+    }
+
+    if (key.name === "i" && state.currentView === "detail" && state.selectedItem) {
+      const id = state.selectedItem["id"];
+      if (id) {
+        copyToClipboard(String(id)).then((success) => {
+          statusBar.content = success ? "Copied ID to clipboard!" : "Failed to copy to clipboard";
+        });
+      } else {
+        statusBar.content = "No ID field found";
+      }
       return;
     }
 

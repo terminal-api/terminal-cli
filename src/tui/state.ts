@@ -9,7 +9,7 @@ export interface AppState {
   connectionInfo: Record<string, unknown> | null;
   loading: boolean;
   error: string | null;
-  selectedItem: unknown | null;
+  selectedItem: Record<string, unknown> | null;
   selectedResultIndex: number;
   // For args input
   currentArgIndex: number;

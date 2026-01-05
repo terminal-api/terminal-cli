@@ -36,13 +36,14 @@ export function updateStatusBar(context: TuiContext): void {
     hotkeys = [
       { key: "enter", action: "submit" },
       { key: "esc", action: "cancel" },
-      { key: "q", action: "quit" },
+      { key: "ctrl+c", action: "quit" },
     ];
   } else if (state.currentView === "detail") {
     hotkeys = [
-      { key: "c", action: "copy" },
+      { key: "i", action: "copy id" },
+      { key: "c", action: "copy json" },
       { key: "esc", action: "back" },
-      { key: "q", action: "quit" },
+      { key: "ctrl+c", action: "quit" },
     ];
   } else if (state.currentView === "results") {
     const actionLabel = isConnectionsView(state) ? "select" : "details";
@@ -51,13 +52,13 @@ export function updateStatusBar(context: TuiContext): void {
       { key: "enter", action: actionLabel },
       { key: "tab", action: "commands" },
       { key: "esc", action: "back" },
-      { key: "q", action: "quit" },
+      { key: "ctrl+c", action: "quit" },
     ];
   } else {
     hotkeys = [
       { key: "enter", action: "select" },
       { key: "tab", action: "results" },
-      { key: "q", action: "quit" },
+      { key: "ctrl+c", action: "quit" },
     ];
   }
 
