@@ -5,7 +5,7 @@ import {
   type PasteEvent,
 } from "@opentui/core";
 import type { TuiContext } from "./types.ts";
-import { findCommandByName } from "./commands.ts";
+import { findCommandByName, filterCommandOptions } from "./commands.ts";
 import { executeCommand } from "./actions.ts";
 import { recordArgValue, showCurrentArgInput, getRequiredArgs } from "./args.ts";
 import { setActiveConnection } from "./connection.ts";
@@ -19,9 +19,27 @@ export function setupHandlers(context: TuiContext): void {
   setupKeyHandlers(context);
 }
 
+function filterCommands(context: TuiContext): void {
+  const { state, components } = context;
+  const { commandSelect } = components;
+
+  const filtered = filterCommandOptions(state.commandFilterText);
+  commandSelect.options = filtered;
+
+  if (filtered.length > 0) {
+    commandSelect.setSelectedIndex(0);
+  }
+}
+
 function bindComponentHandlers(context: TuiContext): void {
   const { state, components } = context;
-  const { commandSelect, filterInput, resultsSelect, argInput, argEnumSelect } = components;
+  const { commandSelect, commandFilterInput, filterInput, resultsSelect, argInput, argEnumSelect } =
+    components;
+
+  commandFilterInput.on(InputRenderableEvents.CHANGE, (value: string) => {
+    state.commandFilterText = value;
+    filterCommands(context);
+  });
 
   filterInput.on(InputRenderableEvents.CHANGE, (value: string) => {
     state.filterText = value;
@@ -95,7 +113,8 @@ function handleArgValue(context: TuiContext, value: unknown): void {
 
 function setupKeyHandlers(context: TuiContext): void {
   const { renderer, state, components } = context;
-  const { filterInput, resultsSelect, argInput, statusBar } = components;
+  const { commandFilterInput, filterInput, commandSelect, resultsSelect, argInput, statusBar } =
+    components;
 
   renderer.keyInput.on("paste", (event: PasteEvent) => {
     if (argInput.focused) {
@@ -105,6 +124,10 @@ function setupKeyHandlers(context: TuiContext): void {
       state.filterText = filterInput.value;
       filterResults(context);
       updateStatusBar(context);
+    } else if (commandFilterInput.focused) {
+      commandFilterInput.value = commandFilterInput.value + event.text;
+      state.commandFilterText = commandFilterInput.value;
+      filterCommands(context);
     }
   });
 
@@ -129,6 +152,12 @@ function setupKeyHandlers(context: TuiContext): void {
     if (key.name === "return" && filterInput.focused) {
       filterInput.blur();
       setTimeout(() => resultsSelect.focus(), 10);
+      return;
+    }
+
+    if (key.name === "return" && commandFilterInput.focused) {
+      commandFilterInput.blur();
+      setTimeout(() => commandSelect.focus(), 10);
       return;
     }
 
@@ -167,7 +196,13 @@ function setupKeyHandlers(context: TuiContext): void {
     }
 
     if (key.name === "escape") {
-      if (filterInput.focused) {
+      if (commandFilterInput.focused) {
+        commandFilterInput.blur();
+        commandFilterInput.value = "";
+        state.commandFilterText = "";
+        filterCommands(context);
+        setTimeout(() => commandSelect.focus(), 10);
+      } else if (filterInput.focused) {
         filterInput.blur();
         setTimeout(() => resultsSelect.focus(), 10);
       } else if (argInput.focused || state.currentView === "args") {
@@ -193,6 +228,17 @@ function setupKeyHandlers(context: TuiContext): void {
       return;
     }
 
+    if (key.sequence === "/" && state.currentView === "commands" && !commandFilterInput.focused) {
+      commandFilterInput.focus();
+      setTimeout(() => {
+        if (commandFilterInput.value === "/") {
+          commandFilterInput.value = "";
+          state.commandFilterText = "";
+        }
+      }, 10);
+      return;
+    }
+
     if (key.sequence === "/" && state.currentView === "results" && !filterInput.focused) {
       filterInput.focus();
       setTimeout(() => {
@@ -202,6 +248,24 @@ function setupKeyHandlers(context: TuiContext): void {
         }
       }, 10);
       return;
+    }
+
+    if (commandFilterInput.focused && state.currentView === "commands") {
+      setTimeout(() => {
+        if (!commandFilterInput.focused || state.currentView !== "commands") {
+          return;
+        }
+
+        let currentValue = commandFilterInput.value;
+        if (currentValue.startsWith("/")) {
+          currentValue = currentValue.slice(1);
+          commandFilterInput.value = currentValue;
+        }
+        if (currentValue !== state.commandFilterText) {
+          state.commandFilterText = currentValue;
+          filterCommands(context);
+        }
+      }, 0);
     }
 
     if (filterInput.focused && state.currentView === "results" && state.results) {

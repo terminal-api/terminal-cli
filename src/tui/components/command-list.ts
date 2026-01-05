@@ -1,10 +1,31 @@
 import {
+  InputRenderable,
   SelectRenderable,
   type BoxRenderable,
   type CliRenderer,
   type SelectOption,
 } from "@opentui/core";
 import type { Theme } from "../theme.ts";
+
+export function createCommandFilterInput(
+  renderer: CliRenderer,
+  contentArea: BoxRenderable,
+  theme: Theme,
+): InputRenderable {
+  const commandFilterInput = new InputRenderable(renderer, {
+    id: "command-filter-input",
+    width: "100%",
+    height: 1,
+    placeholder: "Type to search commands...",
+    backgroundColor: theme.colors.inputBackground,
+    focusedBackgroundColor: theme.colors.inputFocusedBackground,
+    marginBottom: 1,
+    visible: false,
+  });
+  contentArea.add(commandFilterInput);
+
+  return commandFilterInput;
+}
 
 export function createCommandList(
   renderer: CliRenderer,

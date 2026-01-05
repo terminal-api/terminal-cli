@@ -29,8 +29,14 @@ export interface Config {
   environment: "prod" | "sandbox";
 }
 
-const CONFIG_DIR = join(homedir(), ".terminal");
-const CONFIG_FILE = join(CONFIG_DIR, "config.json");
+function getConfigDir(): string {
+  return process.env["TERMINAL_CONFIG_DIR"] ?? join(homedir(), ".terminal");
+}
+
+function getConfigFile(): string {
+  return join(getConfigDir(), "config.json");
+}
+
 const DEFAULT_PROFILE = "default";
 
 function getBaseUrl(environment: "prod" | "sandbox"): string {
@@ -40,9 +46,10 @@ function getBaseUrl(environment: "prod" | "sandbox"): string {
 }
 
 function loadConfigFile(): ConfigFile {
-  if (existsSync(CONFIG_FILE)) {
+  const configFile = getConfigFile();
+  if (existsSync(configFile)) {
     try {
-      return JSON.parse(readFileSync(CONFIG_FILE, "utf-8")) as ConfigFile;
+      return JSON.parse(readFileSync(configFile, "utf-8")) as ConfigFile;
     } catch {
       // Ignore invalid config file
     }
@@ -55,18 +62,21 @@ function loadConfigFile(): ConfigFile {
 }
 
 function saveConfigFile(configFile: ConfigFile): void {
-  if (!existsSync(CONFIG_DIR)) {
-    mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  const configDir = getConfigDir();
+  const configFilePath = getConfigFile();
+
+  if (!existsSync(configDir)) {
+    mkdirSync(configDir, { recursive: true, mode: 0o700 });
   }
   const serialized = JSON.stringify(configFile, null, 2);
-  const tempFile = join(CONFIG_DIR, `config.json.tmp-${process.pid}-${Date.now()}`);
+  const tempFile = join(configDir, `config.json.tmp-${process.pid}-${Date.now()}`);
 
   try {
     writeFileSync(tempFile, serialized, { mode: 0o600 });
-    renameSync(tempFile, CONFIG_FILE);
+    renameSync(tempFile, configFilePath);
   } catch {
     try {
-      writeFileSync(CONFIG_FILE, serialized, { mode: 0o600 });
+      writeFileSync(configFilePath, serialized, { mode: 0o600 });
     } finally {
       if (existsSync(tempFile)) {
         rmSync(tempFile);
@@ -75,7 +85,7 @@ function saveConfigFile(configFile: ConfigFile): void {
   }
 
   try {
-    chmodSync(CONFIG_FILE, 0o600);
+    chmodSync(configFilePath, 0o600);
   } catch {
     // Best effort on platforms without POSIX permissions.
   }
@@ -121,7 +131,7 @@ export function saveConfig(config: Partial<ProfileConfig>, profileName?: string)
 }
 
 export function getConfigPath(): string {
-  return CONFIG_FILE;
+  return getConfigFile();
 }
 
 // Profile management functions

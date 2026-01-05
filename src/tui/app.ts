@@ -13,7 +13,7 @@ import { createLayout } from "./components/layout.ts";
 import { createSidebar } from "./components/sidebar.ts";
 import { createTitle } from "./components/title.ts";
 import { createSearchInput, createResultsList } from "./components/results.ts";
-import { createCommandList } from "./components/command-list.ts";
+import { createCommandList, createCommandFilterInput } from "./components/command-list.ts";
 import { createDetailPanel } from "./components/detail.ts";
 import { createArgsInput } from "./components/args.ts";
 import { createStatusBar } from "./components/status.ts";
@@ -37,6 +37,7 @@ export async function startTui(profileName?: string): Promise<void> {
 
   const connectionDisplay = createSidebar(renderer, sidebar, theme);
   const titleDisplay = createTitle(renderer, contentArea, theme);
+  const commandFilterInput = createCommandFilterInput(renderer, contentArea, theme);
   const filterInput = createSearchInput(renderer, contentArea, theme);
   const commandSelect = createCommandList(renderer, contentArea, theme, getCommandOptions());
   const resultsSelect = createResultsList(renderer, contentArea, theme);
@@ -50,6 +51,7 @@ export async function startTui(profileName?: string): Promise<void> {
 
   const components: UiComponents = {
     commandSelect,
+    commandFilterInput,
     filterInput,
     resultsSelect,
     statusBar,

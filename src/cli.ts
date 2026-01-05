@@ -249,7 +249,7 @@ async function handleConfigCommand(
 
       if (!key) {
         printError("Usage: terminal config set <key> <value> [--profile <name>]");
-        printInfo("Available keys: api-key, connection-token, environment");
+        printInfo("Available keys: api-key, connection-token, base-url, environment");
         return;
       }
 
@@ -269,6 +269,10 @@ async function handleConfigCommand(
             `Connection token saved${profileName ? ` to profile '${profileName}'` : ""}`,
           );
           break;
+        case "base-url":
+          saveConfig({ baseUrl: value }, profileName);
+          printSuccess(`Base URL saved${profileName ? ` to profile '${profileName}'` : ""}`);
+          break;
         case "environment":
           if (value !== "prod" && value !== "sandbox") {
             printError("Environment must be 'prod' or 'sandbox'");
@@ -281,7 +285,7 @@ async function handleConfigCommand(
           break;
         default:
           printError(`Unknown config key: ${key}`);
-          printInfo("Available keys: api-key, connection-token, environment");
+          printInfo("Available keys: api-key, connection-token, base-url, environment");
       }
       break;
     }

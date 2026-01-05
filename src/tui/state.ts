@@ -6,6 +6,7 @@ export interface AppState {
   results: unknown[] | null;
   filteredResults: unknown[] | null;
   filterText: string;
+  commandFilterText: string;
   connectionInfo: Record<string, unknown> | null;
   loading: boolean;
   error: string | null;
@@ -23,6 +24,7 @@ export function createInitialState(): AppState {
     results: null,
     filteredResults: null,
     filterText: "",
+    commandFilterText: "",
     connectionInfo: null,
     loading: false,
     error: null,

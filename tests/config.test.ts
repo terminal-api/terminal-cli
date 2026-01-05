@@ -21,11 +21,15 @@ describe("config", () => {
     originalEnv.TERMINAL_CONNECTION_TOKEN = process.env.TERMINAL_CONNECTION_TOKEN;
     originalEnv.TERMINAL_BASE_URL = process.env.TERMINAL_BASE_URL;
     originalEnv.TERMINAL_ENVIRONMENT = process.env.TERMINAL_ENVIRONMENT;
+    originalEnv.TERMINAL_CONFIG_DIR = process.env.TERMINAL_CONFIG_DIR;
 
     delete process.env.TERMINAL_API_KEY;
     delete process.env.TERMINAL_CONNECTION_TOKEN;
     delete process.env.TERMINAL_BASE_URL;
     delete process.env.TERMINAL_ENVIRONMENT;
+
+    // Use test directory for config to avoid reading real user config
+    process.env.TERMINAL_CONFIG_DIR = testDir;
   });
 
   afterEach(() => {
@@ -102,23 +106,29 @@ describe("config", () => {
       expect(config.environment).toBe("prod");
     });
 
-    test("baseUrl is defined", async () => {
+    test("baseUrl defaults to production URL", async () => {
       const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
       const config = configModule.loadConfig();
 
-      // Should have a baseUrl (either from file or default)
-      expect(config.baseUrl).toBeDefined();
-      expect(config.baseUrl).toContain("withterminal.com");
+      // Should default to production URL when no config exists
+      expect(config.baseUrl).toBe("https://api.withterminal.com/tsp/v1");
     });
   });
 
   describe("config file path", () => {
-    test("getConfigPath returns path in home directory", async () => {
+    test("getConfigPath returns config.json path", async () => {
       const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
       const path = configModule.getConfigPath();
 
-      expect(path).toContain(".terminal");
       expect(path).toContain("config.json");
+    });
+
+    test("getConfigPath respects TERMINAL_CONFIG_DIR", async () => {
+      const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
+      const path = configModule.getConfigPath();
+
+      // Should use the test directory we set in beforeEach
+      expect(path).toContain(testDir);
     });
   });
 

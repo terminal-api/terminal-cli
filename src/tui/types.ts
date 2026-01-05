@@ -10,6 +10,7 @@ import type { AppState } from "./state.ts";
 
 export interface UiComponents {
   commandSelect: SelectRenderable;
+  commandFilterInput: InputRenderable;
   filterInput: InputRenderable;
   resultsSelect: SelectRenderable;
   statusBar: TextRenderable;

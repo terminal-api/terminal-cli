@@ -56,6 +56,7 @@ export function updateStatusBar(context: TuiContext): void {
     ];
   } else {
     hotkeys = [
+      { key: "/", action: "search" },
       { key: "enter", action: "select" },
       { key: "tab", action: "results" },
       { key: "ctrl+c", action: "quit" },
@@ -69,6 +70,7 @@ export function updateView(context: TuiContext): void {
   const { state, components } = context;
   const {
     commandSelect,
+    commandFilterInput,
     resultsSelect,
     filterInput,
     detailContainer,
@@ -78,6 +80,7 @@ export function updateView(context: TuiContext): void {
   } = components;
 
   commandSelect.visible = false;
+  commandFilterInput.visible = false;
   resultsSelect.visible = false;
   filterInput.visible = false;
   detailContainer.visible = false;
@@ -85,8 +88,11 @@ export function updateView(context: TuiContext): void {
 
   if (state.currentView === "commands") {
     titleDisplay.content = "Select Command";
+    commandFilterInput.visible = true;
     commandSelect.visible = true;
-    commandSelect.focus();
+    if (!commandFilterInput.focused) {
+      commandSelect.focus();
+    }
   } else if (state.currentView === "args") {
     const cmdName = state.selectedCommand?.name ?? "Command";
     const requiredArgs = state.selectedCommand ? getRequiredArgs(state.selectedCommand) : [];
