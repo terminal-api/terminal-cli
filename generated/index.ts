@@ -122,6 +122,50 @@ export const commandGroups = [
   },
 ];
 
+/**
+ * All command names as a const tuple for type-level validation.
+ * This enables compile-time checking that all API operations have commands.
+ */
+export const commandNames = [
+  "cancel-sync",
+  "get-current-connection",
+  "get-driver",
+  "get-event-camera-media",
+  "get-iftasummary",
+  "get-safety-event",
+  "get-sync-job-status",
+  "get-vehicle",
+  "get-vehicle-utilization",
+  "list-connections",
+  "list-devices",
+  "list-drivers",
+  "list-fault-code-events",
+  "list-groups",
+  "list-historical-vehicle-locations",
+  "list-historical-vehicle-stats",
+  "list-hosavailable-time",
+  "list-hosdaily-logs",
+  "list-hoslogs",
+  "list-issues",
+  "list-latest-trailer-locations",
+  "list-latest-vehicle-locations",
+  "list-providers",
+  "list-safety-events",
+  "list-sync-history",
+  "list-trailers",
+  "list-trips",
+  "list-vehicles",
+  "passthrough",
+  "public-token-exchange",
+  "request-sync",
+  "resolve-issue",
+  "retry-sync",
+  "update-current-connection",
+] as const;
+
+/** Type representing all implemented command names */
+export type ImplementedCommandName = (typeof commandNames)[number];
+
 export function findCommand(name: string) {
   return allCommands.find((cmd) => cmd.name === name);
 }

@@ -444,7 +444,7 @@ export const tagDescription = "${commands[0]?.tag ?? tag}";
 `;
 }
 
-function generateIndexFile(tags: string[]): string {
+function generateIndexFile(tags: string[], allCommandNames: string[]): string {
   const imports = tags.map((t) => `import * as ${toCamelCase(t)} from "./${t}.ts";`).join("\n");
 
   const commandsExport = tags.map((t) => `...${toCamelCase(t)}.commands`).join(",\n  ");
@@ -458,6 +458,9 @@ function generateIndexFile(tags: string[]): string {
   }`,
     )
     .join(",\n  ");
+
+  // Generate const array of command names for type checking
+  const commandNamesConst = allCommandNames.map((n) => `"${n}"`).join(",\n  ");
 
   return `// AUTO-GENERATED FILE - DO NOT EDIT
 // Generated from OpenAPI spec
@@ -474,6 +477,17 @@ export const commandGroups = [
   ${tagsExport}
 ];
 
+/**
+ * All command names as a const tuple for type-level validation.
+ * This enables compile-time checking that all API operations have commands.
+ */
+export const commandNames = [
+  ${commandNamesConst}
+] as const;
+
+/** Type representing all implemented command names */
+export type ImplementedCommandName = (typeof commandNames)[number];
+
 export function findCommand(name: string) {
   return allCommands.find(cmd => cmd.name === name);
 }
@@ -482,6 +496,46 @@ export function findCommandsByTag(tag: string) {
   const group = commandGroups.find(g => g.name === tag);
   return group?.commands ?? [];
 }
+`;
+}
+
+/**
+ * Generate spec.ts file that extracts operationIds and their expected command names.
+ * This serves as the source of truth from the OpenAPI spec.
+ */
+function generateSpecFile(commands: CommandDef[]): string {
+  const operationIds = commands
+    .map((c) => c.operationId)
+    .filter(Boolean)
+    .sort();
+  const commandNames = commands.map((c) => c.name).sort();
+
+  return `// AUTO-GENERATED FILE - DO NOT EDIT
+// Generated from OpenAPI spec - this is the source of truth for API coverage
+
+/**
+ * All operation IDs from the OpenAPI spec.
+ * This is automatically generated and represents what endpoints exist in the API.
+ */
+export const specOperationIds = [
+  ${operationIds.map((id) => `"${id}"`).join(",\n  ")}
+] as const;
+
+/** Type union of all operation IDs from the spec */
+export type SpecOperationId = (typeof specOperationIds)[number];
+
+/**
+ * Expected command names derived from the OpenAPI spec.
+ * Each operationId maps to a kebab-case command name.
+ * 
+ * This is the source of truth for what CLI commands should exist.
+ */
+export const expectedCommandNames = [
+  ${commandNames.map((n) => `"${n}"`).join(",\n  ")}
+] as const;
+
+/** Type union of all expected command names */
+export type ExpectedCommandName = (typeof expectedCommandNames)[number];
 `;
 }
 
@@ -515,9 +569,15 @@ async function main() {
 
     // Generate index file
     tags.sort();
-    const indexCode = generateIndexFile(tags);
+    const allCommandNames = commands.map((c) => c.name).sort();
+    const indexCode = generateIndexFile(tags, allCommandNames);
     writeFileSync(join(GENERATED_DIR, "index.ts"), indexCode);
     console.log(`Generated index.ts`);
+
+    // Generate spec.ts with operationIds and expected command names
+    const specCode = generateSpecFile(commands);
+    writeFileSync(join(GENERATED_DIR, "spec.ts"), specCode);
+    console.log(`Generated spec.ts`);
 
     // Save spec for reference
     writeFileSync(join(GENERATED_DIR, "openapi.json"), JSON.stringify(spec, null, 2));

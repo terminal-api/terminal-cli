@@ -1,0 +1,67 @@
+name: Sync OpenAPI Spec
+
+on:
+  schedule:
+    # Run daily at 9am UTC
+    - cron: "0 9 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Fetch latest OpenAPI spec
+        run: |
+          curl -s https://api.withterminal.com/tsp/openapi -o /tmp/openapi-new.json
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if ! diff -q generated/openapi.json /tmp/openapi-new.json > /dev/null 2>&1; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Regenerate commands
+        if: steps.diff.outputs.changed == 'true'
+        run: bun run generate
+
+      - name: Run checks
+        if: steps.diff.outputs.changed == 'true'
+        id: checks
+        continue-on-error: true
+        run: bun run check
+
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: sync OpenAPI spec"
+          title: "chore: sync OpenAPI spec from upstream"
+          body: |
+            This PR was automatically created because the upstream OpenAPI spec has changed.
+
+            **Source:** https://api.withterminal.com/tsp/openapi
+
+            **Checks status:** ${{ steps.checks.outcome == 'success' && 'Passing' || 'Failing - manual intervention required' }}
+
+            Please review the generated changes and ensure all commands are correctly updated.
+          branch: chore/sync-openapi-spec
+          delete-branch: true
+          labels: |
+            automated
+            openapi
