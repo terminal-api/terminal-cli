@@ -39,6 +39,7 @@ export async function list_connections(
       updatedAfter: args["updatedAfter"] as string | number | boolean | undefined,
       updatedBefore: args["updatedBefore"] as string | number | boolean | undefined,
       status: args["status"] as string | number | boolean | undefined,
+      provider: args["provider"] as string | number | boolean | undefined,
     },
     false,
   );
@@ -127,6 +128,12 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description: "Filter connections by status",
+      },
+      {
+        name: "provider",
+        type: "string",
+        required: false,
+        description: "Filter connections by provider",
       },
     ],
     handler: list_connections,

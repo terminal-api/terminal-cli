@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "bun --watch run src/cli.ts",
     "build": "bun build src/cli.ts --outdir dist --target bun",
-    "generate": "bun run scripts/generate.ts",
+    "generate": "bun run scripts/generate.ts && bun run format",
     "lint": "oxlint . --type-aware",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",

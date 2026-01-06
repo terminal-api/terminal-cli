@@ -1964,6 +1964,14 @@
               "$ref": "#/components/schemas/ConnectionStatus"
             },
             "description": "Filter connections by status"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ProviderCode"
+            },
+            "description": "Filter connections by provider"
           }
         ],
         "description": "List all of the connections you have for your application. Connections represent the authenticated access you have to your customer's TSP data."
