@@ -49,9 +49,9 @@ describe("CLI", () => {
       const { stdout, exitCode } = await runCli(["--help"]);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("Terminal CLI");
-      expect(stdout).toContain("USAGE:");
-      expect(stdout).toContain("GLOBAL OPTIONS:");
+      expect(stdout).toContain("CLI for the Terminal Telematics API");
+      expect(stdout).toContain("Usage:");
+      expect(stdout).toContain("Options:");
       expect(stdout).toContain("API COMMANDS:");
     });
 
@@ -59,14 +59,13 @@ describe("CLI", () => {
       const { stdout, exitCode } = await runCli(["-h"]);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("Terminal CLI");
+      expect(stdout).toContain("CLI for the Terminal Telematics API");
     });
 
     test("--version shows version", async () => {
       const { stdout, exitCode } = await runCli(["--version"]);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("terminal-cli");
       expect(stdout).toMatch(/\d+\.\d+\.\d+/);
     });
 
@@ -74,7 +73,7 @@ describe("CLI", () => {
       const { stdout, exitCode } = await runCli(["-v"]);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("terminal-cli");
+      expect(stdout).toMatch(/\d+\.\d+\.\d+/);
     });
   });
 
@@ -213,7 +212,7 @@ describe("CLI", () => {
       const { stderr, exitCode } = await runCli(["unknown-command"]);
 
       expect(exitCode).toBe(1);
-      expect(stderr).toContain("Unknown command");
+      expect(stderr).toContain("unknown command");
     });
 
     test("missing required argument shows error", async () => {
@@ -238,8 +237,9 @@ describe("CLI", () => {
 
       expect(exitCode).toBe(0);
       expect(stdout).toContain("list-vehicles");
-      expect(stdout).toContain("METHOD:");
-      expect(stdout).toContain("GET");
+      expect(stdout).toContain("List Vehicles");
+      expect(stdout).toContain("--cursor");
+      expect(stdout).toContain("--limit");
     });
   });
 });

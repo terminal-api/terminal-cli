@@ -19,7 +19,8 @@
     "check": "bun run typecheck && bun run lint && bun run format:check && bun test"
   },
   "dependencies": {
-    "@opentui/core": "^0.1.68"
+    "@opentui/core": "^0.1.68",
+    "commander": "^14.0.2"
   },
   "devDependencies": {
     "@types/bun": "latest",
