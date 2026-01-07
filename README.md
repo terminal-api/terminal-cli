@@ -2,21 +2,28 @@
 
 A CLI for the [Terminal Telematics API](https://withterminal.com), auto-generated from the OpenAPI spec.
 
-## Quick Start
+## Installation
 
 Requires [Bun](https://bun.sh) runtime.
 
 ```bash
-# Clone and install
+# Install globally from npm
+npm install -g @terminal-api/cli
+# or
+pnpm add -g @terminal-api/cli
+# or
+bun install -g @terminal-api/cli
+
+# Or install from source
 git clone https://github.com/terminal-api/terminal-cli.git
 cd terminal-cli
 bun install
-
-# Build and link globally
 bun run build && bun link
 ```
 
-After linking, the `terminal` command is available globally. Configure your API key:
+## Quick Start
+
+After installing, configure your API key:
 
 ```bash
 terminal config set api-key sk_prod_xxx
@@ -24,29 +31,19 @@ terminal config set api-key sk_prod_xxx
 
 Now you can make API calls or start the interactive TUI:
 
-API Calls
+**API Calls**
 
 ```bash
 terminal list-connections --format table
 ```
 
-TUI
+**Interactive TUI**
 
-```base
+```bash
 terminal
 ```
 
-To rebuild after making changes:
-
-```bash
-bun run build
-```
-
-To unlink:
-
-```bash
-bun unlink
-```
+Run `terminal` without arguments to launch the interactive terminal UI for browsing and executing API commands.
 
 ## Configuration
 
@@ -73,6 +70,28 @@ terminal config show
 terminal config path
 ```
 
+### Profiles
+
+Manage multiple configurations with profiles:
+
+```bash
+# Create a profile
+terminal profile create sandbox
+
+# Set values for a profile
+terminal config set api-key sk_sandbox_xxx --profile sandbox
+terminal config set environment sandbox --profile sandbox
+
+# Use a profile
+terminal list-vehicles --profile sandbox
+
+# Set default profile
+terminal profile use sandbox
+
+# List all profiles
+terminal profile list
+```
+
 ## Usage
 
 ```bash
@@ -86,6 +105,7 @@ terminal <command> [options]
 | `--format <format>`          | Output format: `json`, `pretty`, `table` (default: `json`) |
 | `--api-key <key>`            | API key override                                           |
 | `--connection-token <token>` | Connection token override                                  |
+| `--profile <name>`           | Use a specific config profile                              |
 | `--all`                      | Auto-paginate and fetch all results                        |
 | `--help`, `-h`               | Show help                                                  |
 | `--version`, `-v`            | Show version                                               |
@@ -107,6 +127,9 @@ terminal list-providers
 
 # Get current connection details
 terminal get-current-connection --format pretty
+
+# View response schema for a command
+terminal list-vehicles schema
 ```
 
 ### Available Commands
@@ -177,6 +200,7 @@ src/
     config.ts         # Config management (~/.terminal/config.json)
     output.ts         # Output formatting
     completions.ts    # Shell completion generators
+  tui/                # Interactive terminal UI
 
 scripts/
   generate.ts         # OpenAPI spec parser & code generator
@@ -189,3 +213,7 @@ generated/            # Auto-generated command files
 ```
 
 To add new commands, update the OpenAPI spec and run `bun run generate`.
+
+## License
+
+MIT

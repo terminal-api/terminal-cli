@@ -1,10 +1,37 @@
 {
-  "name": "terminal-cli",
+  "name": "@terminal-api/cli",
   "version": "0.1.0",
   "description": "CLI for the Terminal Telematics API",
+  "keywords": [
+    "api",
+    "cli",
+    "eld",
+    "fleet",
+    "logistics",
+    "telematics",
+    "terminal",
+    "trucking"
+  ],
+  "homepage": "https://withterminal.com",
+  "bugs": {
+    "url": "https://github.com/terminal-api/terminal-cli/issues"
+  },
+  "license": "MIT",
+  "author": "Terminal <support@withterminal.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/terminal-api/terminal-cli.git"
+  },
   "bin": {
     "terminal": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "generated",
+    "LICENSE",
+    "README.md",
+    "src"
+  ],
   "type": "module",
   "module": "src/cli.ts",
   "scripts": {
@@ -16,7 +43,8 @@
     "format:check": "oxfmt --check .",
     "typecheck": "tsgo --noEmit",
     "test": "bun test",
-    "check": "bun run typecheck && bun run lint && bun run format:check && bun test"
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun test",
+    "prepublishOnly": "bun run check && bun run build"
   },
   "dependencies": {
     "@opentui/core": "^0.1.68",
@@ -29,5 +57,8 @@
     "oxlint": "^1.37.0",
     "oxlint-tsgolint": "^0.10.1",
     "typescript": "^5"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
   }
 }
