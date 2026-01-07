@@ -17,6 +17,7 @@ import { createCommandList, createCommandFilterInput } from "./components/comman
 import { createDetailPanel } from "./components/detail.ts";
 import { createArgsInput } from "./components/args.ts";
 import { createStatusBar } from "./components/status.ts";
+import { createErrorPanel } from "./components/error.ts";
 import type { TuiContext, UiComponents } from "./types.ts";
 import { setupHandlers } from "./handlers.ts";
 import { updateConnectionDisplay, fetchConnectionInfo } from "./connection.ts";
@@ -42,7 +43,12 @@ export async function startTui(profileName?: string): Promise<void> {
   const commandSelect = createCommandList(renderer, contentArea, theme, getCommandOptions());
   const resultsSelect = createResultsList(renderer, contentArea, theme);
   const { detailContainer, detailPanel } = createDetailPanel(renderer, contentArea, theme);
-  const { argsContainer, argLabel, argInput, argEnumSelect } = createArgsInput(
+  const { argsContainer, argLabel, argInput, argEnumSelect, optionalArgsSelect } = createArgsInput(
+    renderer,
+    contentArea,
+    theme,
+  );
+  const { errorContainer, errorTitle, errorStatus, errorMessage, errorDetail } = createErrorPanel(
     renderer,
     contentArea,
     theme,
@@ -63,6 +69,12 @@ export async function startTui(profileName?: string): Promise<void> {
     argLabel,
     argInput,
     argEnumSelect,
+    optionalArgsSelect,
+    errorContainer,
+    errorTitle,
+    errorStatus,
+    errorMessage,
+    errorDetail,
   };
 
   const context: TuiContext = {

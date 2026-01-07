@@ -13,6 +13,11 @@ export const theme = {
     selectionBlue: "#1f6feb",
     selectionGreen: "#238636",
     border: "#30363d",
+    // Error colors
+    errorBackground: "#2d1f1f",
+    errorBorder: "#f85149",
+    errorText: "#f85149",
+    errorTextMuted: "#da3633",
   },
   sizes: {
     sidebarWidth: 32,

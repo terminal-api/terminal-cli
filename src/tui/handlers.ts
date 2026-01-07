@@ -7,7 +7,14 @@ import {
 import type { TuiContext } from "./types.ts";
 import { findCommandByName, filterCommandOptions } from "./commands.ts";
 import { executeCommand } from "./actions.ts";
-import { recordArgValue, showCurrentArgInput, getRequiredArgs } from "./args.ts";
+import {
+  cancelArgsFlow,
+  handleOptionalListSelection,
+  initArgsStateForCommand,
+  isUnsetEnumValue,
+  shouldPromptForArgs,
+  submitActiveArg,
+} from "./args.ts";
 import { setActiveConnection } from "./connection.ts";
 import { filterResults } from "./results.ts";
 import { updateStatusBar, updateView } from "./view.ts";
@@ -33,8 +40,14 @@ function filterCommands(context: TuiContext): void {
 
 function bindComponentHandlers(context: TuiContext): void {
   const { state, components } = context;
-  const { commandSelect, commandFilterInput, filterInput, resultsSelect, argInput, argEnumSelect } =
-    components;
+  const {
+    commandSelect,
+    commandFilterInput,
+    filterInput,
+    resultsSelect,
+    argEnumSelect,
+    optionalArgsSelect,
+  } = components;
 
   commandFilterInput.on(InputRenderableEvents.CHANGE, (value: string) => {
     state.commandFilterText = value;
@@ -54,11 +67,10 @@ function bindComponentHandlers(context: TuiContext): void {
     }
 
     state.selectedCommand = cmd;
-    state.collectedArgs = {};
-    state.currentArgIndex = 0;
+    state.error = null;
+    initArgsStateForCommand(state, cmd);
 
-    const requiredArgs = getRequiredArgs(cmd);
-    if (requiredArgs.length > 0) {
+    if (shouldPromptForArgs(cmd)) {
       state.currentView = "args";
       updateView(context);
     } else {
@@ -86,35 +98,50 @@ function bindComponentHandlers(context: TuiContext): void {
     updateView(context);
   });
 
-  argInput.on(InputRenderableEvents.CHANGE, (value: string) => {
-    if (!value.trim()) {
+  optionalArgsSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option) => {
+    state.optionalArgIndex = index;
+    const selection = handleOptionalListSelection(state, option.value);
+    if (selection.submit && state.selectedCommand) {
+      void executeCommand(context, state.selectedCommand);
       return;
     }
-    handleArgValue(context, value.trim());
+
+    updateView(context);
+    updateStatusBar(context);
   });
 
   argEnumSelect.on(SelectRenderableEvents.ITEM_SELECTED, (_index: number, option) => {
-    handleArgValue(context, option.value);
+    const rawValue = isUnsetEnumValue(option.value) ? "" : String(option.value);
+    handleArgSubmit(context, rawValue);
   });
 }
 
-function handleArgValue(context: TuiContext, value: unknown): void {
-  const { state, components } = context;
-  const result = recordArgValue(state, value);
+function handleArgSubmit(context: TuiContext, rawValue: string): void {
+  const { state } = context;
+  const result = submitActiveArg(state, rawValue);
 
-  if (result.done && state.selectedCommand) {
-    void executeCommand(context, state.selectedCommand);
+  if (result.kind === "error") {
+    state.error = { message: result.message };
+    updateStatusBar(context);
     return;
   }
 
-  showCurrentArgInput(state, components);
+  state.error = null;
+  updateView(context);
   updateStatusBar(context);
 }
 
 function setupKeyHandlers(context: TuiContext): void {
   const { renderer, state, components } = context;
-  const { commandFilterInput, filterInput, commandSelect, resultsSelect, argInput, statusBar } =
-    components;
+  const {
+    commandFilterInput,
+    filterInput,
+    commandSelect,
+    resultsSelect,
+    argInput,
+    statusBar,
+    optionalArgsSelect,
+  } = components;
 
   renderer.keyInput.on("paste", (event: PasteEvent) => {
     if (argInput.focused) {
@@ -146,6 +173,22 @@ function setupKeyHandlers(context: TuiContext): void {
         state.currentView = "results";
       }
       updateView(context);
+      return;
+    }
+
+    if (
+      key.name === "s" &&
+      state.currentView === "args" &&
+      state.argsPhase === "optional-list" &&
+      optionalArgsSelect.focused &&
+      state.selectedCommand
+    ) {
+      void executeCommand(context, state.selectedCommand);
+      return;
+    }
+
+    if (key.name === "return" && state.currentView === "args" && argInput.focused) {
+      handleArgSubmit(context, argInput.value);
       return;
     }
 
@@ -213,10 +256,18 @@ function setupKeyHandlers(context: TuiContext): void {
       } else if (filterInput.focused) {
         filterInput.blur();
         setTimeout(() => resultsSelect.focus(), 10);
-      } else if (argInput.focused || state.currentView === "args") {
+      } else if (state.currentView === "args") {
+        state.error = null;
+
+        if (state.argsPhase === "optional-edit") {
+          state.argsPhase = "optional-list";
+          state.editingOptionalArgName = null;
+          updateView(context);
+          return;
+        }
+
         state.currentView = "commands";
-        state.collectedArgs = {};
-        state.currentArgIndex = 0;
+        cancelArgsFlow(state);
         updateView(context);
       } else if (state.currentView === "detail") {
         state.currentView = "results";

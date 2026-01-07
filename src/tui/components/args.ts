@@ -16,6 +16,7 @@ export function createArgsInput(
   argLabel: TextRenderable;
   argInput: InputRenderable;
   argEnumSelect: SelectRenderable;
+  optionalArgsSelect: SelectRenderable;
 } {
   const argsContainer = new BoxRenderable(renderer, {
     id: "args-container",
@@ -31,11 +32,28 @@ export function createArgsInput(
     id: "arg-label",
     content: "",
     width: "100%",
-    height: 3,
+    height: 6,
     marginBottom: 1,
     fg: theme.colors.textMuted,
   });
   argsContainer.add(argLabel);
+
+  const optionalArgsSelect = new SelectRenderable(renderer, {
+    id: "optional-args-select",
+    width: "100%",
+    height: theme.sizes.enumListHeight,
+    options: [],
+    backgroundColor: theme.colors.panelBackground,
+    focusedBackgroundColor: theme.colors.panelFocusedBackground,
+    textColor: theme.colors.textPrimary,
+    focusedTextColor: theme.colors.textBright,
+    selectedBackgroundColor: theme.colors.selectionBlue,
+    selectedTextColor: theme.colors.textBright,
+    descriptionColor: theme.colors.textMuted,
+    showDescription: true,
+    visible: false,
+  });
+  argsContainer.add(optionalArgsSelect);
 
   const argInput = new InputRenderable(renderer, {
     id: "arg-input",
@@ -65,5 +83,5 @@ export function createArgsInput(
   });
   argsContainer.add(argEnumSelect);
 
-  return { argsContainer, argLabel, argInput, argEnumSelect };
+  return { argsContainer, argLabel, argInput, argEnumSelect, optionalArgsSelect };
 }

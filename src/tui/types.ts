@@ -22,6 +22,13 @@ export interface UiComponents {
   argLabel: TextRenderable;
   argInput: InputRenderable;
   argEnumSelect: SelectRenderable;
+  optionalArgsSelect: SelectRenderable;
+  // Error panel components
+  errorContainer: BoxRenderable;
+  errorTitle: TextRenderable;
+  errorStatus: TextRenderable;
+  errorMessage: TextRenderable;
+  errorDetail: TextRenderable;
 }
 
 export interface TuiContext {

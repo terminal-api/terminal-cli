@@ -76,7 +76,7 @@ export function setActiveConnection(
 ): void {
   const token = connection["token"] as string | undefined;
   if (!token) {
-    context.state.error = "Connection has no token";
+    context.state.error = { message: "Connection has no token" };
     return;
   }
 

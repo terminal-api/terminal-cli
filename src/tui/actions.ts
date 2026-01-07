@@ -1,4 +1,6 @@
 import type { Command } from "../../generated/index.ts";
+import { ClientError } from "../lib/client.ts";
+import type { ErrorInfo } from "./state.ts";
 import type { TuiContext } from "./types.ts";
 import { updateStatusBar, updateView } from "./view.ts";
 
@@ -45,7 +47,19 @@ export async function executeCommand(context: TuiContext, cmd: Command): Promise
     state.selectedResultIndex = 0;
     filterInput.value = "";
   } catch (error) {
-    state.error = error instanceof Error ? error.message : String(error);
+    if (error instanceof ClientError) {
+      const errorInfo: ErrorInfo = {
+        message: error.error.message,
+        status: error.status,
+        code: error.error.code,
+        detail: error.error.detail,
+      };
+      state.error = errorInfo;
+    } else {
+      state.error = {
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
     state.results = null;
     state.filteredResults = null;
   } finally {

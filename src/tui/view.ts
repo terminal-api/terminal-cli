@@ -1,7 +1,7 @@
 import { StyledText, dim, white } from "@opentui/core";
 import type { TuiContext } from "./types.ts";
 import { isConnectionsView } from "./constants.ts";
-import { getRequiredArgs, showCurrentArgInput } from "./args.ts";
+import { getOptionalArgs, getRequiredArgs, updateArgsView } from "./args.ts";
 import { resultsToOptions } from "./results.ts";
 import { formatDetail } from "./detail.ts";
 
@@ -26,18 +26,39 @@ export function updateStatusBar(context: TuiContext): void {
     return;
   }
   if (state.error) {
-    statusBar.content = `Error: ${state.error}`;
+    // Show hotkeys for error state - allow navigating back
+    const hotkeys = [
+      { key: "tab", action: "commands" },
+      { key: "esc", action: "back" },
+      { key: "ctrl+c", action: "quit" },
+    ];
+    statusBar.content = buildHotkeysContent(hotkeys);
     return;
   }
 
   let hotkeys: Array<{ key: string; action: string }>;
 
   if (state.currentView === "args") {
-    hotkeys = [
-      { key: "enter", action: "submit" },
-      { key: "esc", action: "cancel" },
-      { key: "ctrl+c", action: "quit" },
-    ];
+    if (state.argsPhase === "optional-list") {
+      hotkeys = [
+        { key: "s", action: "submit" },
+        { key: "enter", action: "edit" },
+        { key: "esc", action: "cancel" },
+        { key: "ctrl+c", action: "quit" },
+      ];
+    } else if (state.argsPhase === "optional-edit") {
+      hotkeys = [
+        { key: "enter", action: "save" },
+        { key: "esc", action: "back" },
+        { key: "ctrl+c", action: "quit" },
+      ];
+    } else {
+      hotkeys = [
+        { key: "enter", action: "next" },
+        { key: "esc", action: "cancel" },
+        { key: "ctrl+c", action: "quit" },
+      ];
+    }
   } else if (state.currentView === "detail") {
     hotkeys = [
       { key: "i", action: "copy id" },
@@ -66,6 +87,45 @@ export function updateStatusBar(context: TuiContext): void {
   statusBar.content = buildHotkeysContent(hotkeys);
 }
 
+function updateErrorPanel(context: TuiContext): void {
+  const { state, components } = context;
+  const { errorContainer, errorTitle, errorStatus, errorMessage, errorDetail } = components;
+
+  if (!state.error) {
+    errorContainer.visible = false;
+    return;
+  }
+
+  errorContainer.visible = true;
+  errorTitle.content = "Request Failed";
+
+  // Build status line with HTTP status and error code
+  const statusParts: string[] = [];
+  if (state.error.status) {
+    statusParts.push(`HTTP ${state.error.status}`);
+  }
+  if (state.error.code) {
+    statusParts.push(`Code: ${state.error.code}`);
+  }
+  errorStatus.content = statusParts.length > 0 ? statusParts.join("  |  ") : "";
+  errorStatus.visible = statusParts.length > 0;
+
+  // Show the error message
+  errorMessage.content = state.error.message;
+
+  // Show detail if available
+  if (state.error.detail) {
+    const detailStr =
+      typeof state.error.detail === "string"
+        ? state.error.detail
+        : JSON.stringify(state.error.detail, null, 2);
+    errorDetail.content = detailStr;
+    errorDetail.visible = true;
+  } else {
+    errorDetail.visible = false;
+  }
+}
+
 export function updateView(context: TuiContext): void {
   const { state, components } = context;
   const {
@@ -77,6 +137,7 @@ export function updateView(context: TuiContext): void {
     detailPanel,
     argsContainer,
     titleDisplay,
+    errorContainer,
   } = components;
 
   commandSelect.visible = false;
@@ -85,6 +146,7 @@ export function updateView(context: TuiContext): void {
   filterInput.visible = false;
   detailContainer.visible = false;
   argsContainer.visible = false;
+  errorContainer.visible = false;
 
   if (state.currentView === "commands") {
     titleDisplay.content = "Select Command";
@@ -96,15 +158,31 @@ export function updateView(context: TuiContext): void {
   } else if (state.currentView === "args") {
     const cmdName = state.selectedCommand?.name ?? "Command";
     const requiredArgs = state.selectedCommand ? getRequiredArgs(state.selectedCommand) : [];
-    titleDisplay.content = `${cmdName} - Argument ${state.currentArgIndex + 1}/${requiredArgs.length}`;
+    const optionalArgs = state.selectedCommand ? getOptionalArgs(state.selectedCommand) : [];
+
     argsContainer.visible = true;
-    showCurrentArgInput(state, components);
+    updateArgsView(state, components);
+
+    if (state.argsPhase === "required") {
+      titleDisplay.content = `${cmdName} - Required ${state.currentArgIndex + 1}/${Math.max(1, requiredArgs.length)}`;
+    } else if (state.argsPhase === "optional-edit") {
+      const argName = state.editingOptionalArgName ?? "Optional";
+      titleDisplay.content = `${cmdName} - Edit ${argName}`;
+    } else {
+      titleDisplay.content = `${cmdName} - Optional (${optionalArgs.length} fields)`;
+    }
   } else if (state.currentView === "results") {
     const cmdName = state.selectedCommand?.name ?? "Results";
     const connectionsHint = isConnectionsView(state) ? " | Enter: set as active connection" : "";
 
     if (state.loading) {
       titleDisplay.content = `${cmdName} - Loading...`;
+      resultsSelect.visible = false;
+      filterInput.visible = false;
+    } else if (state.error) {
+      // Show error panel in results area
+      titleDisplay.content = `${cmdName} - Error`;
+      updateErrorPanel(context);
       resultsSelect.visible = false;
       filterInput.visible = false;
     } else {
