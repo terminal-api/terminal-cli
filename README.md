@@ -1,10 +1,8 @@
 # terminal-cli
 
-A CLI for the [Terminal Telematics API](https://withterminal.com), auto-generated from the OpenAPI spec.
+A CLI for the [Terminal Telematics API](https://withterminal.com).
 
 ## Installation
-
-Requires [Bun](https://bun.sh) runtime.
 
 ```bash
 # Install globally from npm
@@ -13,12 +11,6 @@ npm install -g @terminal-api/cli
 pnpm add -g @terminal-api/cli
 # or
 bun install -g @terminal-api/cli
-
-# Or install from source
-git clone https://github.com/terminal-api/terminal-cli.git
-cd terminal-cli
-bun install
-bun run build && bun link
 ```
 
 ## Quick Start
@@ -186,11 +178,14 @@ bun test
 
 # Build
 bun run build
+
+# Link to use globally
+bun link
 ```
 
 ## Architecture
 
-The CLI is entirely driven by the OpenAPI spec at `https://api.withterminal.com/tsp/openapi`:
+The CLI is primarily driven by the OpenAPI spec at `https://api.withterminal.com/tsp/openapi`:
 
 ```
 src/
@@ -213,7 +208,3 @@ generated/            # Auto-generated command files
 ```
 
 To add new commands, update the OpenAPI spec and run `bun run generate`.
-
-## License
-
-MIT
