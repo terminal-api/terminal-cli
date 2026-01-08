@@ -158,6 +158,24 @@ eval "$(terminal completions zsh)"
 terminal completions fish > ~/.config/fish/completions/terminal.fish
 ```
 
+## AI Agent Skills & Commands
+
+The `ai/` folder contains ready-to-use skills and commands for AI coding assistants. These help you query Terminal API data using natural language.
+
+| Tool        | Type    | Install Command                              |
+| ----------- | ------- | -------------------------------------------- |
+| Cursor      | Command | `cp -r ai/cursor/commands .cursor/commands`  |
+| Claude Code | Skill   | `cp -r ai/claude-code/skills .claude/skills` |
+| OpenCode    | Skill   | `cp -r ai/opencode/skill .opencode/skill`    |
+
+Example queries:
+
+- "How many safety events for driver X this week?"
+- "Where was vehicle ABC on January 2nd?"
+- "Which vehicles have active movement?"
+
+See [`ai/README.md`](ai/README.md) for full setup instructions.
+
 ## Development
 
 ```bash
