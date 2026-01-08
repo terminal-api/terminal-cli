@@ -5,7 +5,7 @@
     "": {
       "name": "terminal-cli",
       "dependencies": {
-        "@opentui/core": "^0.1.68",
+        "@opentui/core": "0.1.68",
         "commander": "^14.0.2",
       },
       "devDependencies": {

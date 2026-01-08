@@ -37,6 +37,10 @@
   "scripts": {
     "dev": "bun --watch run src/cli.ts",
     "build": "bun build src/cli.ts --outdir dist --target bun",
+    "build:binaries": "bun run scripts/build-binaries.ts",
+    "build:npm": "bun run scripts/build-npm-packages.ts",
+    "build:release": "bun run build:binaries && bun run build:npm",
+    "publish:npm": "bun run scripts/publish.ts",
     "generate": "bun run scripts/generate.ts && bun run format",
     "lint": "oxlint . --type-aware",
     "format": "oxfmt --write .",
@@ -47,7 +51,7 @@
     "prepublishOnly": "bun run check && bun run build"
   },
   "dependencies": {
-    "@opentui/core": "^0.1.68",
+    "@opentui/core": "0.1.68",
     "commander": "^14.0.2"
   },
   "devDependencies": {
