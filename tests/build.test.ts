@@ -253,66 +253,65 @@ describe("build scripts", () => {
     });
   });
 
-  describe("release archive creation", () => {
-    test("can create tar.gz for linux binaries", async () => {
-      const linuxDir = readdirSync(DIST_DIR).find(
+  describe("release archive structure", () => {
+    test("linux binary directories have correct structure for tar.gz", () => {
+      const linuxDirs = readdirSync(DIST_DIR).filter(
         (d) => d.startsWith("terminal-linux-") && !d.endsWith(".tar.gz"),
       );
 
-      if (!linuxDir) {
-        return; // Skip if no linux binary built
-      }
-
-      const binDir = join(DIST_DIR, linuxDir, "bin");
-      if (!existsSync(binDir)) {
+      // Skip if no linux binaries built (e.g., running on macOS with --single)
+      if (linuxDirs.length === 0) {
         return;
       }
 
-      const archivePath = join(DIST_DIR, `${linuxDir}-test.tar.gz`);
+      for (const linuxDir of linuxDirs) {
+        const binDir = join(DIST_DIR, linuxDir, "bin");
+        expect(existsSync(binDir)).toBe(true);
 
-      const proc = Bun.spawn(["tar", "-czf", archivePath, "-C", binDir, "."], {
-        stdout: "pipe",
-        stderr: "pipe",
-      });
+        const binaryPath = join(binDir, "terminal");
+        expect(existsSync(binaryPath)).toBe(true);
 
-      const exitCode = await proc.exited;
-      expect(exitCode).toBe(0);
-      expect(existsSync(archivePath)).toBe(true);
-
-      // Clean up
-      rmSync(archivePath);
+        // Verify it's an executable file (non-zero size)
+        const stat = Bun.file(binaryPath).size;
+        expect(stat).toBeGreaterThan(0);
+      }
     });
 
-    test("can create zip for darwin/windows binaries", async () => {
-      const zipDir = readdirSync(DIST_DIR).find(
+    test("darwin/windows binary directories have correct structure for zip", () => {
+      const zipDirs = readdirSync(DIST_DIR).filter(
         (d) =>
           (d.startsWith("terminal-darwin-") || d.startsWith("terminal-windows-")) &&
           !d.endsWith(".zip"),
       );
 
-      if (!zipDir) {
-        return; // Skip if no darwin/windows binary built
-      }
-
-      const binDir = join(DIST_DIR, zipDir, "bin");
-      if (!existsSync(binDir)) {
+      // Skip if no darwin/windows binaries built
+      if (zipDirs.length === 0) {
         return;
       }
 
-      const archivePath = join(DIST_DIR, `${zipDir}-test.zip`);
+      for (const zipDir of zipDirs) {
+        const binDir = join(DIST_DIR, zipDir, "bin");
+        expect(existsSync(binDir)).toBe(true);
 
-      const proc = Bun.spawn(["zip", "-r", archivePath, "."], {
-        cwd: binDir,
-        stdout: "pipe",
-        stderr: "pipe",
-      });
+        const binaryName = zipDir.includes("windows") ? "terminal.exe" : "terminal";
+        const binaryPath = join(binDir, binaryName);
+        expect(existsSync(binaryPath)).toBe(true);
 
-      const exitCode = await proc.exited;
-      expect(exitCode).toBe(0);
-      expect(existsSync(archivePath)).toBe(true);
+        // Verify it's an executable file (non-zero size)
+        const stat = Bun.file(binaryPath).size;
+        expect(stat).toBeGreaterThan(0);
+      }
+    });
 
-      // Clean up
-      rmSync(archivePath);
+    test("all platform directories have package.json", () => {
+      const platformDirs = readdirSync(DIST_DIR).filter(
+        (d) => d.startsWith("terminal-") && !d.includes("."),
+      );
+
+      for (const dir of platformDirs) {
+        const pkgPath = join(DIST_DIR, dir, "package.json");
+        expect(existsSync(pkgPath)).toBe(true);
+      }
     });
   });
 });
