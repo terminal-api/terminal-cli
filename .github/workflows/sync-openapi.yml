@@ -20,6 +20,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TERMINAL_BOT_PAT }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
