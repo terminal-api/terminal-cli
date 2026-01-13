@@ -7049,6 +7049,33 @@
           },
           {
             "type": "object",
+            "title": "Omega ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["omega-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "Omnitracs",
             "properties": {
               "provider": {
@@ -9567,6 +9594,38 @@
                   }
                 },
                 "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "US Power ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["uspower-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  },
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  }
+                },
+                "required": ["username", "password", "apiKey"]
               }
             },
             "required": ["provider", "credentials"]
