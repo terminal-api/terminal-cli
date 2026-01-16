@@ -472,7 +472,7 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description: "Expand resources in the returned response",
-        enum: ["groups"],
+        enum: ["groups", "devices", "devices,groups", "groups,devices"],
       },
     ],
     handler: get_vehicle,

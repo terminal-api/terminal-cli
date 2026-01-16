@@ -228,7 +228,7 @@
             "name": "expand",
             "schema": {
               "type": "string",
-              "enum": ["groups"]
+              "enum": ["groups", "devices", "devices,groups", "groups,devices"]
             },
             "in": "query",
             "description": "Expand resources in the returned response"
@@ -4225,6 +4225,33 @@
           },
           {
             "type": "object",
+            "title": "Dragon ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["dragon-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "Dream ELD",
             "properties": {
               "provider": {
@@ -7849,6 +7876,33 @@
                   }
                 },
                 "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "Raven Connected",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["raven-connected"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  },
+                  "apiSecret": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Secret"
+                  }
+                },
+                "required": ["apiKey", "apiSecret"]
               }
             },
             "required": ["provider", "credentials"]
@@ -13387,6 +13441,246 @@
         },
         "required": ["id", "type", "timestamp", "detail"],
         "x-description": "Emitted when a connection's first successful sync completes."
+      },
+      "BasicDestination": {
+        "type": "object",
+        "title": "Basic Destination",
+        "description": "Basic destination details to be able to reference destinations from webhook events",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "dst_01D8ZQFGHVJ858NBF2Q7DV9MNC"
+          },
+          "type": {
+            "type": "string",
+            "example": "s3"
+          }
+        },
+        "required": ["id", "type"]
+      },
+      "DeliveryRequested": {
+        "type": "object",
+        "title": "delivery.requested",
+        "x-tags": ["Webhook Events"],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/EventId"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["delivery.requested"]
+          },
+          "timestamp": {
+            "$ref": "#/components/schemas/ISODateTime"
+          },
+          "detail": {
+            "type": "object",
+            "required": ["destination", "delivery"],
+            "properties": {
+              "destination": {
+                "$ref": "#/components/schemas/BasicDestination"
+              },
+              "delivery": {
+                "type": "object",
+                "required": ["id", "status", "requestedAt"],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["requested"]
+                  },
+                  "connectionIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "requestedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["id", "type", "timestamp", "detail"],
+        "x-description": "Emitted when a delivery is requested."
+      },
+      "DeliveryStarted": {
+        "type": "object",
+        "title": "delivery.started",
+        "x-tags": ["Webhook Events"],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/EventId"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["delivery.started"]
+          },
+          "timestamp": {
+            "$ref": "#/components/schemas/ISODateTime"
+          },
+          "detail": {
+            "type": "object",
+            "required": ["destination", "delivery"],
+            "properties": {
+              "destination": {
+                "$ref": "#/components/schemas/BasicDestination"
+              },
+              "delivery": {
+                "type": "object",
+                "required": ["id", "status", "requestedAt", "startedAt"],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["in_progress"]
+                  },
+                  "connectionIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "startedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "requestedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["id", "type", "timestamp", "detail"],
+        "x-description": "Emitted when a delivery starts processing."
+      },
+      "DeliveryFailed": {
+        "type": "object",
+        "title": "delivery.failed",
+        "x-tags": ["Webhook Events"],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/EventId"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["delivery.failed"]
+          },
+          "timestamp": {
+            "$ref": "#/components/schemas/ISODateTime"
+          },
+          "detail": {
+            "type": "object",
+            "required": ["destination", "delivery"],
+            "properties": {
+              "destination": {
+                "$ref": "#/components/schemas/BasicDestination"
+              },
+              "delivery": {
+                "type": "object",
+                "required": ["id", "status", "requestedAt", "failedAt"],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["failed"]
+                  },
+                  "connectionIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "failedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "startedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "requestedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["id", "type", "timestamp", "detail"],
+        "x-description": "Emitted when a delivery fails."
+      },
+      "DeliveryCompleted": {
+        "type": "object",
+        "title": "delivery.completed",
+        "x-tags": ["Webhook Events"],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/EventId"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["delivery.completed"]
+          },
+          "timestamp": {
+            "$ref": "#/components/schemas/ISODateTime"
+          },
+          "detail": {
+            "type": "object",
+            "required": ["destination", "delivery"],
+            "properties": {
+              "destination": {
+                "$ref": "#/components/schemas/BasicDestination"
+              },
+              "delivery": {
+                "type": "object",
+                "required": ["id", "status", "requestedAt", "completedAt"],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["completed"]
+                  },
+                  "connectionIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "startedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "requestedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "completedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["id", "type", "timestamp", "detail"],
+        "x-description": "Emitted when a delivery completes successfully."
       },
       "IssueId": {
         "type": "string",
