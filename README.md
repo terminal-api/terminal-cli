@@ -1,6 +1,8 @@
-# terminal-cli
+# Terminal CLI
 
 A CLI for the [Terminal Telematics API](https://withterminal.com).
+
+Note: This CLI is still experimental and we may change the command structure or naming before a 1.0 release.
 
 ## Installation
 
