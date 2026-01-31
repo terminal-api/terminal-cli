@@ -4912,6 +4912,87 @@
           },
           {
             "type": "object",
+            "title": "ELD99",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["eld99"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "ELDRoad",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["eldroad"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "ELDTREX",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["eldtrex"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "Elog42",
             "properties": {
               "provider": {
@@ -5445,6 +5526,33 @@
               "provider": {
                 "type": "string",
                 "enum": ["fleetsharp"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "FLEX ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["flex-eld"]
               },
               "credentials": {
                 "type": "object",
@@ -6555,6 +6663,28 @@
                   }
                 },
                 "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "loopELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["loop-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  }
+                },
+                "required": ["apiKey"]
               }
             },
             "required": ["provider", "credentials"]
@@ -9244,6 +9374,33 @@
               "provider": {
                 "type": "string",
                 "enum": ["track-truck-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "Trackease",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["trackease"]
               },
               "credentials": {
                 "type": "object",
@@ -11966,7 +12123,7 @@
                 "description": "The source address of the fault code"
               }
             },
-            "required": ["fmi", "spn"]
+            "required": ["spn"]
           },
           "metadata": {
             "$ref": "#/components/schemas/EntityMetadata"
