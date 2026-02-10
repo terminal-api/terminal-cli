@@ -3616,6 +3616,33 @@
           },
           {
             "type": "object",
+            "title": "AUTOGRI ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["autogri-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "AwareGPS",
             "properties": {
               "provider": {
@@ -4912,6 +4939,87 @@
           },
           {
             "type": "object",
+            "title": "ELD99",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["eld99"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "ELDRoad",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["eldroad"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "ELDTREX",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["eldtrex"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "Elog42",
             "properties": {
               "provider": {
@@ -5440,11 +5548,65 @@
           },
           {
             "type": "object",
+            "title": "FleetPulse",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["fleet-pulse"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "FleetSharp",
             "properties": {
               "provider": {
                 "type": "string",
                 "enum": ["fleetsharp"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "FLEX ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["flex-eld"]
               },
               "credentials": {
                 "type": "object",
@@ -5979,6 +6141,33 @@
                     "type": "string",
                     "minLength": 1,
                     "description": "Database"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "Highest ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["highest-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
                   }
                 },
                 "required": ["username", "password"]
@@ -6561,6 +6750,28 @@
           },
           {
             "type": "object",
+            "title": "loopELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["loop-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  }
+                },
+                "required": ["apiKey"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "Lucid ELD",
             "properties": {
               "provider": {
@@ -6625,6 +6836,33 @@
               "provider": {
                 "type": "string",
                 "enum": ["maestral-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "Map ELOG Corp",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["map-elog-corp"]
               },
               "credentials": {
                 "type": "object",
@@ -7369,6 +7607,33 @@
               "provider": {
                 "type": "string",
                 "enum": ["paragon-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "PDSINC ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["pdsinc-eld"]
               },
               "credentials": {
                 "type": "object",
@@ -8314,6 +8579,38 @@
           },
           {
             "type": "object",
+            "title": "Safe Lane ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["safe-lane-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  },
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  }
+                },
+                "required": ["username", "password", "apiKey"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "Samsara",
             "properties": {
               "provider": {
@@ -8861,6 +9158,38 @@
           },
           {
             "type": "object",
+            "title": "State ELOG Beta",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["state-elog-v2"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  },
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  }
+                },
+                "required": ["username", "password", "apiKey"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "Sunset Logbook",
             "properties": {
               "provider": {
@@ -9266,6 +9595,33 @@
           },
           {
             "type": "object",
+            "title": "Trackease",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["trackease"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "TrackEnsure",
             "properties": {
               "provider": {
@@ -9389,6 +9745,33 @@
               "provider": {
                 "type": "string",
                 "enum": ["trimble"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "Truckford ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["truckford-eld"]
               },
               "credentials": {
                 "type": "object",
@@ -10050,6 +10433,28 @@
           },
           {
             "type": "object",
+            "title": "Wizefleet ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["wizefleet-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  }
+                },
+                "required": ["apiKey"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
             "title": "XELD",
             "properties": {
               "provider": {
@@ -10206,6 +10611,38 @@
                   }
                 },
                 "required": ["username", "password"]
+              }
+            },
+            "required": ["provider", "credentials"]
+          },
+          {
+            "type": "object",
+            "title": "Zero ELD",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": ["zero-eld"]
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password"
+                  },
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API Key"
+                  }
+                },
+                "required": ["username", "password", "apiKey"]
               }
             },
             "required": ["provider", "credentials"]
@@ -11966,7 +12403,7 @@
                 "description": "The source address of the fault code"
               }
             },
-            "required": ["fmi", "spn"]
+            "required": ["spn"]
           },
           "metadata": {
             "$ref": "#/components/schemas/EntityMetadata"
@@ -12653,6 +13090,10 @@
             "description": "If the sync failed, this will contain the reason",
             "example": "Reason for failure if sync status is 'failed'"
           },
+          "progress": {
+            "$ref": "#/components/schemas/Percentage",
+            "description": "Current sync progress as a percentage between 0 and 100."
+          },
           "issues": {
             "type": "array",
             "description": "Issues are problems encountered with a connection that did not result in a failed sync but may require manual intervention. You can see the issues for a given sync by providing `issues` to the `expand` parameter.",
@@ -12733,6 +13174,50 @@
         "example": "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
         "description": "Cursor used for pagination.",
         "format": "cursor"
+      },
+      "RowCountGroupBy": {
+        "type": "string",
+        "title": "Row Count Group By",
+        "enum": ["connection", "vehicle"],
+        "description": "How to aggregate row counts. Use 'connection' for totals across the entire connection, or 'vehicle' for per-vehicle breakdowns."
+      },
+      "RowCountModel": {
+        "type": "string",
+        "title": "Row Count Model",
+        "enum": [
+          "VehicleLocation",
+          "VehicleStatLog",
+          "Trip",
+          "SafetyEvent",
+          "HOSLog",
+          "HOSDailyLog",
+          "VehicleUtilizationDay",
+          "FaultCodeEvent",
+          "IFTAVehicleMonth"
+        ],
+        "description": "Common model name used for row count aggregation."
+      },
+      "RowCountEntry": {
+        "type": "object",
+        "title": "Row Count Entry",
+        "properties": {
+          "model": {
+            "$ref": "#/components/schemas/RowCountModel"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "UTC date for the aggregation window."
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "vehicle": {
+            "$ref": "#/components/schemas/VehicleId"
+          }
+        },
+        "required": ["model", "date", "count"]
       },
       "DurationInMS": {
         "type": "integer",
@@ -13491,6 +13976,11 @@
                     "type": "string",
                     "enum": ["requested"]
                   },
+                  "trigger": {
+                    "type": "string",
+                    "enum": ["manual", "schedule", "backfill"],
+                    "description": "What triggered this delivery."
+                  },
                   "connectionIds": {
                     "type": "array",
                     "items": {
@@ -13541,6 +14031,11 @@
                   "status": {
                     "type": "string",
                     "enum": ["in_progress"]
+                  },
+                  "trigger": {
+                    "type": "string",
+                    "enum": ["manual", "schedule", "backfill"],
+                    "description": "What triggered this delivery."
                   },
                   "connectionIds": {
                     "type": "array",
@@ -13596,6 +14091,11 @@
                   "status": {
                     "type": "string",
                     "enum": ["failed"]
+                  },
+                  "trigger": {
+                    "type": "string",
+                    "enum": ["manual", "schedule", "backfill"],
+                    "description": "What triggered this delivery."
                   },
                   "connectionIds": {
                     "type": "array",
@@ -13655,6 +14155,11 @@
                   "status": {
                     "type": "string",
                     "enum": ["completed"]
+                  },
+                  "trigger": {
+                    "type": "string",
+                    "enum": ["manual", "schedule", "backfill"],
+                    "description": "What triggered this delivery."
                   },
                   "connectionIds": {
                     "type": "array",

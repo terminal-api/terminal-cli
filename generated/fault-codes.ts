@@ -234,7 +234,7 @@ export const commands: Command[] = [
                     description: "The source address of the fault code",
                   },
                 },
-                required: ["fmi", "spn"],
+                required: ["spn"],
               },
               metadata: {
                 type: "object",
