@@ -164,6 +164,14 @@ export const commands: Command[] = [
                 description: "If the sync failed, this will contain the reason",
                 example: "Reason for failure if sync status is 'failed'",
               },
+              progress: {
+                type: "number",
+                title: "Percentage",
+                description: "Percentage value between 0 and 100, rounded to 2 decimal places.",
+                example: 85,
+                minimum: 0,
+                maximum: 100,
+              },
               issues: {
                 type: "array",
                 description:
@@ -288,6 +296,14 @@ export const commands: Command[] = [
           type: "string",
           description: "If the sync failed, this will contain the reason",
           example: "Reason for failure if sync status is 'failed'",
+        },
+        progress: {
+          type: "number",
+          title: "Percentage",
+          description: "Percentage value between 0 and 100, rounded to 2 decimal places.",
+          example: 85,
+          minimum: 0,
+          maximum: 100,
         },
         issues: {
           type: "array",
