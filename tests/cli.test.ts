@@ -179,6 +179,27 @@ describe("CLI", () => {
       const response = JSON.parse(stdout);
       expect(response.results).toBeDefined();
     });
+
+    test("update-current-connection parses object arguments as JSON", async () => {
+      const filters = {
+        vehicles: {
+          includeIds: ["vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC"],
+        },
+        drivers: {
+          includeIds: ["drv_01D8ZQFGHVJ858NBF2Q7DV9MNC"],
+        },
+      };
+
+      const { stdout, exitCode } = await runCli([
+        "update-current-connection",
+        "--filters",
+        JSON.stringify(filters),
+      ]);
+
+      expect(exitCode).toBe(0);
+      const response = JSON.parse(stdout);
+      expect(response.filters).toEqual(filters);
+    });
   });
 
   describe("output formats", () => {

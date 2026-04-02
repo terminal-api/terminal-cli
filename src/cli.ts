@@ -92,6 +92,32 @@ interface PaginatedResponse {
   next?: string;
 }
 
+function parseStructuredArgValue(arg: ApiCommand["args"][number], value: string | boolean) {
+  if (typeof value !== "string") {
+    printError(`Argument --${arg.name} must be provided as JSON text`);
+    process.exit(1);
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    if (arg.type === "object" && (!parsed || typeof parsed !== "object" || Array.isArray(parsed))) {
+      printError(`Argument --${arg.name} must be a JSON object`);
+      process.exit(1);
+    }
+
+    if (arg.type === "array" && !Array.isArray(parsed)) {
+      printError(`Argument --${arg.name} must be a JSON array`);
+      process.exit(1);
+    }
+
+    return parsed;
+  } catch {
+    printError(`Argument --${arg.name} must be valid JSON`);
+    process.exit(1);
+  }
+}
+
 function isPaginatedResponse(result: unknown): result is PaginatedResponse {
   return (
     typeof result === "object" &&
@@ -120,6 +146,10 @@ async function handleApiCommand(
           break;
         case "boolean":
           args[arg.name] = value === true || value === "true";
+          break;
+        case "object":
+        case "array":
+          args[arg.name] = parseStructuredArgValue(arg, value);
           break;
         default:
           args[arg.name] = value;
