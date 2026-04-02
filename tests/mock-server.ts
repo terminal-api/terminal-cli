@@ -87,7 +87,7 @@ interface MockServerOptions {
 }
 
 interface RouteHandler {
-  (req: Request, params: Record<string, string>): Response;
+  (req: Request, params: Record<string, string>): Response | Promise<Response>;
 }
 
 interface Route {
@@ -179,7 +179,15 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
     // Get current connection
     {
       pattern: /^\/tsp\/v1\/connections\/current$/,
-      handler: () => {
+      handler: async (req) => {
+        if (req.method === "PATCH") {
+          const body = (await req.json()) as Record<string, unknown>;
+          return Response.json({
+            ...mockData.connections[0],
+            ...body,
+          });
+        }
+
         return Response.json(mockData.connections[0]);
       },
     },
