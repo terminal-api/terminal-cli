@@ -107,10 +107,19 @@ async function fetchGoogleTokens(
 }
 
 function computeExpiresAt(expiresInSeconds?: number): string | undefined {
-  if (!expiresInSeconds || !Number.isFinite(expiresInSeconds)) {
+  if (expiresInSeconds === undefined || !Number.isFinite(expiresInSeconds)) {
     return undefined;
   }
   return new Date(Date.now() + expiresInSeconds * 1000).toISOString();
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function extractEmail(idToken?: string): string | undefined {
@@ -274,7 +283,7 @@ export async function loginWithGoogle(
 
       if (error) {
         rejectCallback?.(new Error(`Google login failed: ${error}`));
-        return new Response(`<h1>Authentication failed</h1><p>${error}</p>`, {
+        return new Response(`<h1>Authentication failed</h1><p>${escapeHtml(error)}</p>`, {
           status: 400,
           headers: { "Content-Type": "text/html; charset=utf-8" },
         });

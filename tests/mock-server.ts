@@ -221,6 +221,15 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
         const grantType = body.get("grant_type");
 
         if (grantType === "refresh_token") {
+          if (body.get("refresh_token") === "zero-expiry-refresh-token") {
+            return Response.json({
+              access_token: "google-access-token-zero-expiry",
+              expires_in: 0,
+              refresh_token: body.get("refresh_token"),
+              token_type: "Bearer",
+            });
+          }
+
           return Response.json({
             access_token: "google-access-token-refreshed",
             expires_in: 3600,

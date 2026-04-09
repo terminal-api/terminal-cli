@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } fr
 import { existsSync, mkdirSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { isAdminSessionExpired, refreshAdminSession } from "../src/lib/admin-auth";
 import { TerminalClient, ClientError } from "../src/lib/client";
 import { createMockServer, getServerUrl, mockData } from "./mock-server";
 
@@ -164,6 +165,25 @@ describe("TerminalClient", () => {
       );
 
       expect(result.authorization).toBe("Bearer google-access-token-refreshed");
+    });
+
+    test("treats zero-second Google token lifetimes as immediately expired", async () => {
+      process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = `http://localhost:${server.port}/google/token`;
+
+      const session = await refreshAdminSession({
+        authMode: "google",
+        adminApplicationId: "app_admin_123",
+        adminEmail: "employee@withterminal.com",
+        adminGoogleClientId: "google-client-id",
+        adminRefreshToken: "zero-expiry-refresh-token",
+        profileName: "employee",
+      });
+
+      expect(session.accessToken).toBe("google-access-token-zero-expiry");
+      expect(session.accessTokenExpiresAt).toBeDefined();
+      expect(
+        isAdminSessionExpired({ adminAccessTokenExpiresAt: session.accessTokenExpiresAt }),
+      ).toBe(true);
     });
 
     test("admin auth requires an application ID", async () => {
