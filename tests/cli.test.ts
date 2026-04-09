@@ -112,6 +112,22 @@ describe("CLI", () => {
       expect(stdout).toContain("apiKey");
     });
 
+    test("profile show masks short secrets without exposing them", async () => {
+      const profileName = "short-secret";
+
+      let result = await runCli(["profile", "create", profileName]);
+      expect(result.exitCode).toBe(0);
+
+      result = await runCli(["config", "set", "api-key", "abc", "--profile", profileName]);
+      expect(result.exitCode).toBe(0);
+
+      const { stdout, exitCode } = await runCli(["profile", "show", profileName]);
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain('"apiKey": "***"');
+      expect(stdout).not.toContain('"apiKey": "abc..."');
+    });
+
     test("config path shows config file path", async () => {
       const { stdout, exitCode } = await runCli(["config", "path"]);
 

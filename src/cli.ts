@@ -19,12 +19,7 @@ import {
   setDefaultProfile,
   copyProfile,
 } from "./lib/config.ts";
-import {
-  getDefaultAdminApplicationId,
-  getDefaultAdminGoogleClientId,
-  isAdminFeatureEnabled,
-  loginWithGoogle,
-} from "./lib/admin-auth.ts";
+import { isAdminFeatureEnabled, loginWithGoogle } from "./lib/admin-auth.ts";
 import { print, printError, printSuccess, printInfo, type OutputFormat } from "./lib/output.ts";
 import { commandGroups, allCommands, type Command as ApiCommand } from "../generated/index.ts";
 import {
@@ -57,7 +52,15 @@ async function getCliVersion(): Promise<{ name: string; version: string }> {
 }
 
 function maskSecret(value: string | undefined, visibleChars: number): string | undefined {
-  return value ? value.slice(0, visibleChars) + "..." : undefined;
+  if (!value) {
+    return undefined;
+  }
+
+  if (value.length <= visibleChars) {
+    return "*".repeat(value.length);
+  }
+
+  return value.slice(0, visibleChars) + "...";
 }
 
 function maskConfigDisplay<
@@ -463,11 +466,9 @@ async function main(): Promise<void> {
         async (options: { clientId?: string; clientSecret?: string; applicationId?: string }) => {
           const config = loadConfig(program.opts().profile as string | undefined);
           const profileName = config.profileName;
-          const clientId =
-            options.clientId ?? config.adminGoogleClientId ?? getDefaultAdminGoogleClientId();
+          const clientId = options.clientId ?? config.adminGoogleClientId;
           const clientSecret = options.clientSecret ?? config.adminGoogleClientSecret;
-          const applicationId =
-            options.applicationId ?? config.adminApplicationId ?? getDefaultAdminApplicationId();
+          const applicationId = options.applicationId ?? config.adminApplicationId;
 
           if (!clientId) {
             printError(

@@ -33,14 +33,6 @@ function getGoogleTokenUrl(): string {
   return process.env["TERMINAL_ADMIN_GOOGLE_TOKEN_URL"] ?? GOOGLE_TOKEN_URL;
 }
 
-export function getDefaultAdminGoogleClientId(): string | undefined {
-  return process.env["TERMINAL_ADMIN_GOOGLE_CLIENT_ID"];
-}
-
-export function getDefaultAdminApplicationId(): string | undefined {
-  return process.env["TERMINAL_ADMIN_APPLICATION_ID"];
-}
-
 function base64UrlEncode(input: ArrayBuffer | Uint8Array): string {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   return Buffer.from(bytes)
