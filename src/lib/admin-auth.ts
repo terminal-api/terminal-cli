@@ -7,8 +7,6 @@ const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const OAUTH_CALLBACK_PATH = "/oauth/callback";
 const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 const TOKEN_EXPIRY_BUFFER_MS = 60 * 1000;
-const DEFAULT_ADMIN_APPLICATION_ID = "app_01GVCFVY4B0NWK6JYK87JP2WRP";
-
 interface GoogleTokenResponse {
   access_token?: string;
   expires_in?: number;
@@ -40,7 +38,7 @@ export function getDefaultAdminGoogleClientId(): string | undefined {
 }
 
 export function getDefaultAdminApplicationId(): string | undefined {
-  return process.env["TERMINAL_ADMIN_APPLICATION_ID"] ?? DEFAULT_ADMIN_APPLICATION_ID;
+  return process.env["TERMINAL_ADMIN_APPLICATION_ID"];
 }
 
 function base64UrlEncode(input: ArrayBuffer | Uint8Array): string {
