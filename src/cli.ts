@@ -461,11 +461,8 @@ async function main(): Promise<void> {
       .option("--application-id <applicationId>", "Default Admin-Application-Id for this profile")
       .action(
         async (options: { clientId?: string; clientSecret?: string; applicationId?: string }) => {
-          const profileName =
-            (program.opts().profile as string | undefined) ??
-            process.env["TERMINAL_PROFILE"] ??
-            "prod";
-          const config = loadConfig(profileName);
+          const config = loadConfig(program.opts().profile as string | undefined);
+          const profileName = config.profileName;
           const clientId =
             options.clientId ?? config.adminGoogleClientId ?? getDefaultAdminGoogleClientId();
           const clientSecret = options.clientSecret ?? config.adminGoogleClientSecret;
@@ -523,10 +520,7 @@ async function main(): Promise<void> {
       .command("logout")
       .description("Clear stored employee tokens from the active profile")
       .action(() => {
-        const profileName =
-          (program.opts().profile as string | undefined) ??
-          process.env["TERMINAL_PROFILE"] ??
-          "prod";
+        const profileName = loadConfig(program.opts().profile as string | undefined).profileName;
         const profile = getProfile(profileName);
         if (!profile) {
           printError(`Profile '${profileName}' not found`);
@@ -551,11 +545,8 @@ async function main(): Promise<void> {
       .command("whoami")
       .description("Show the current employee auth state for the active profile")
       .action(() => {
-        const profileName =
-          (program.opts().profile as string | undefined) ??
-          process.env["TERMINAL_PROFILE"] ??
-          "prod";
-        const config = loadConfig(profileName);
+        const config = loadConfig(program.opts().profile as string | undefined);
+        const profileName = config.profileName;
         console.log(
           JSON.stringify(
             {

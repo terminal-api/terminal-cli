@@ -30,26 +30,34 @@ describe("CLI", () => {
     stderr: string;
     exitCode: number;
   }> {
+    const childEnv: Record<string, string | undefined> = {
+      ...process.env,
+      TERMINAL_API_KEY: "test-api-key",
+      TERMINAL_CONNECTION_TOKEN: "test-token",
+      TERMINAL_BASE_URL: baseUrl,
+      TERMINAL_CONFIG_DIR: testConfigDir,
+      TERMINAL_PROFILE: "",
+      TERMINAL_ENABLE_ADMIN: "",
+      TERMINAL_AUTH_MODE: "",
+      TERMINAL_ADMIN_ACCESS_TOKEN: "",
+      TERMINAL_ADMIN_REFRESH_TOKEN: "",
+      TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT: "",
+      TERMINAL_ADMIN_GOOGLE_CLIENT_ID: "",
+      TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET: "",
+      TERMINAL_ADMIN_EMAIL: "",
+      TERMINAL_ADMIN_APPLICATION_ID: "",
+      ...env,
+    };
+
+    for (const [key, value] of Object.entries(childEnv)) {
+      if (value === "") {
+        delete childEnv[key];
+      }
+    }
+
     const proc = Bun.spawn(["bun", "run", "src/cli.ts", ...args], {
       cwd: import.meta.dir + "/..",
-      env: {
-        ...process.env,
-        TERMINAL_API_KEY: "test-api-key",
-        TERMINAL_CONNECTION_TOKEN: "test-token",
-        TERMINAL_BASE_URL: baseUrl,
-        TERMINAL_CONFIG_DIR: testConfigDir,
-        TERMINAL_PROFILE: "",
-        TERMINAL_ENABLE_ADMIN: "",
-        TERMINAL_AUTH_MODE: "",
-        TERMINAL_ADMIN_ACCESS_TOKEN: "",
-        TERMINAL_ADMIN_REFRESH_TOKEN: "",
-        TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT: "",
-        TERMINAL_ADMIN_GOOGLE_CLIENT_ID: "",
-        TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET: "",
-        TERMINAL_ADMIN_EMAIL: "",
-        TERMINAL_ADMIN_APPLICATION_ID: "",
-        ...env,
-      },
+      env: childEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -302,6 +310,32 @@ describe("CLI", () => {
       expect(stdout).toContain("Sign in with Google");
       expect(stdout).toContain("--client-id");
       expect(stdout).toContain("--application-id");
+    });
+
+    test("admin commands use the configured default profile", async () => {
+      const profileName = "employee-default";
+
+      let result = await runCli(["profile", "create", profileName]);
+      expect(result.exitCode).toBe(0);
+
+      result = await runCli(
+        ["config", "set", "application-id", "app_test_employee", "--profile", profileName],
+        {
+          TERMINAL_ENABLE_ADMIN: "1",
+        },
+      );
+      expect(result.exitCode).toBe(0);
+
+      result = await runCli(["profile", "use", profileName]);
+      expect(result.exitCode).toBe(0);
+
+      const { stdout, exitCode } = await runCli(["admin", "whoami"], {
+        TERMINAL_ENABLE_ADMIN: "1",
+      });
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain(`"profileName": "${profileName}"`);
+      expect(stdout).toContain('"adminApplicationId": "app_test_employee"');
     });
   });
 });
