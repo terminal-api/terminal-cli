@@ -1,4 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { mkdirSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { createMockServer, getServerUrl } from "./mock-server";
 
 type BunServer = ReturnType<typeof Bun.serve>;
@@ -6,14 +9,17 @@ type BunServer = ReturnType<typeof Bun.serve>;
 describe("CLI", () => {
   let server: BunServer;
   let baseUrl: string;
+  const testConfigDir = join(tmpdir(), `terminal-cli-cli-test-${Date.now()}`);
 
   beforeAll(() => {
+    mkdirSync(testConfigDir, { recursive: true });
     server = createMockServer();
     baseUrl = getServerUrl(server);
   });
 
   afterAll(async () => {
     await server.stop();
+    rmSync(testConfigDir, { recursive: true, force: true });
   });
 
   async function runCli(
@@ -31,6 +37,17 @@ describe("CLI", () => {
         TERMINAL_API_KEY: "test-api-key",
         TERMINAL_CONNECTION_TOKEN: "test-token",
         TERMINAL_BASE_URL: baseUrl,
+        TERMINAL_CONFIG_DIR: testConfigDir,
+        TERMINAL_PROFILE: "",
+        TERMINAL_ENABLE_ADMIN: "",
+        TERMINAL_AUTH_MODE: "",
+        TERMINAL_ADMIN_ACCESS_TOKEN: "",
+        TERMINAL_ADMIN_REFRESH_TOKEN: "",
+        TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT: "",
+        TERMINAL_ADMIN_GOOGLE_CLIENT_ID: "",
+        TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET: "",
+        TERMINAL_ADMIN_EMAIL: "",
+        TERMINAL_ADMIN_APPLICATION_ID: "",
         ...env,
       },
       stdout: "pipe",
@@ -53,6 +70,7 @@ describe("CLI", () => {
       expect(stdout).toContain("Usage:");
       expect(stdout).toContain("Options:");
       expect(stdout).toContain("API COMMANDS:");
+      expect(stdout).not.toContain("admin");
     });
 
     test("-h also shows help", async () => {
@@ -90,7 +108,7 @@ describe("CLI", () => {
       const { stdout, exitCode } = await runCli(["config", "path"]);
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain(".terminal");
+      expect(stdout).toContain(testConfigDir);
       expect(stdout).toContain("config.json");
     });
   });
@@ -261,6 +279,29 @@ describe("CLI", () => {
       expect(stdout).toContain("List Vehicles");
       expect(stdout).toContain("--cursor");
       expect(stdout).toContain("--limit");
+    });
+  });
+
+  describe("admin feature flag", () => {
+    test("admin commands are exposed when enabled", async () => {
+      const { stdout, exitCode } = await runCli(["--help"], {
+        TERMINAL_ENABLE_ADMIN: "1",
+      });
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("admin");
+      expect(stdout).toContain("terminal admin login");
+    });
+
+    test("admin login help is available when enabled", async () => {
+      const { stdout, exitCode } = await runCli(["admin", "login", "--help"], {
+        TERMINAL_ENABLE_ADMIN: "1",
+      });
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Sign in with Google");
+      expect(stdout).toContain("--client-id");
+      expect(stdout).toContain("--application-id");
     });
   });
 });

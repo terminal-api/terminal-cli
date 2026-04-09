@@ -1,4 +1,7 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
+import { existsSync, mkdirSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { TerminalClient, ClientError } from "../src/lib/client";
 import { createMockServer, getServerUrl, mockData } from "./mock-server";
 
@@ -7,13 +10,73 @@ type BunServer = ReturnType<typeof Bun.serve>;
 describe("TerminalClient", () => {
   let server: BunServer;
   let baseUrl: string;
+  const originalEnv: Record<string, string | undefined> = {};
+  const testConfigDir = join(tmpdir(), `terminal-cli-client-test-${Date.now()}`);
 
   beforeAll(() => {
     server = createMockServer();
     baseUrl = getServerUrl(server);
+    originalEnv.TERMINAL_ENABLE_ADMIN = process.env.TERMINAL_ENABLE_ADMIN;
+    originalEnv.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL;
+    originalEnv.TERMINAL_CONFIG_DIR = process.env.TERMINAL_CONFIG_DIR;
+    originalEnv.TERMINAL_PROFILE = process.env.TERMINAL_PROFILE;
+    originalEnv.TERMINAL_AUTH_MODE = process.env.TERMINAL_AUTH_MODE;
+    originalEnv.TERMINAL_ADMIN_ACCESS_TOKEN = process.env.TERMINAL_ADMIN_ACCESS_TOKEN;
+    originalEnv.TERMINAL_ADMIN_REFRESH_TOKEN = process.env.TERMINAL_ADMIN_REFRESH_TOKEN;
+    originalEnv.TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT =
+      process.env.TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT;
+    originalEnv.TERMINAL_ADMIN_GOOGLE_CLIENT_ID = process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_ID;
+    originalEnv.TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET =
+      process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET;
+    originalEnv.TERMINAL_ADMIN_EMAIL = process.env.TERMINAL_ADMIN_EMAIL;
+    originalEnv.TERMINAL_ADMIN_APPLICATION_ID = process.env.TERMINAL_ADMIN_APPLICATION_ID;
+  });
+
+  beforeEach(() => {
+    if (existsSync(testConfigDir)) {
+      rmSync(testConfigDir, { recursive: true, force: true });
+    }
+    mkdirSync(testConfigDir, { recursive: true });
+    process.env.TERMINAL_CONFIG_DIR = testConfigDir;
+    delete process.env.TERMINAL_PROFILE;
+    delete process.env.TERMINAL_ENABLE_ADMIN;
+    delete process.env.TERMINAL_AUTH_MODE;
+    delete process.env.TERMINAL_ADMIN_ACCESS_TOKEN;
+    delete process.env.TERMINAL_ADMIN_REFRESH_TOKEN;
+    delete process.env.TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT;
+    delete process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_ID;
+    delete process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET;
+    delete process.env.TERMINAL_ADMIN_EMAIL;
+    delete process.env.TERMINAL_ADMIN_APPLICATION_ID;
+    delete process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL;
+  });
+
+  afterEach(() => {
+    if (originalEnv.TERMINAL_ENABLE_ADMIN === undefined) {
+      delete process.env.TERMINAL_ENABLE_ADMIN;
+    } else {
+      process.env.TERMINAL_ENABLE_ADMIN = originalEnv.TERMINAL_ENABLE_ADMIN;
+    }
+
+    if (originalEnv.TERMINAL_ADMIN_GOOGLE_TOKEN_URL === undefined) {
+      delete process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL;
+    } else {
+      process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = originalEnv.TERMINAL_ADMIN_GOOGLE_TOKEN_URL;
+    }
+
+    if (existsSync(testConfigDir)) {
+      rmSync(testConfigDir, { recursive: true, force: true });
+    }
   });
 
   afterAll(async () => {
+    for (const [key, value] of Object.entries(originalEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
     await server.stop();
   });
 
@@ -38,6 +101,85 @@ describe("TerminalClient", () => {
       // This should work since we have a valid bearer token format
       const result = await client.get("/vehicles");
       expect(result).toBeDefined();
+    });
+
+    test("admin auth is disabled unless feature flag is enabled", async () => {
+      delete process.env.TERMINAL_ENABLE_ADMIN;
+
+      const client = new TerminalClient({
+        authMode: "google",
+        adminAccessToken: "google-access-token",
+        adminGoogleClientId: "google-client-id",
+        adminApplicationId: "app_01GVCFVY4B0NWK6JYK87JP2WRP",
+        baseUrl,
+        connectionToken: "test-token",
+        profileName: "employee",
+      });
+
+      expect(client.get("/vehicles")).rejects.toThrow("Admin mode is disabled");
+    });
+
+    test("uses stored Google access token when admin mode is enabled", async () => {
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+
+      const client = new TerminalClient({
+        authMode: "google",
+        adminAccessToken: "google-access-token",
+        adminGoogleClientId: "google-client-id",
+        adminApplicationId: "app_admin_123",
+        baseUrl,
+        profileName: "employee",
+      });
+
+      const result = await client.get<{
+        authorization: string;
+        applicationId: string;
+        adminApplicationId: string;
+      }>("/debug/headers", undefined, false);
+
+      expect(result.authorization).toBe("Bearer google-access-token");
+      expect(result.applicationId).toBe("app_admin_123");
+      expect(result.adminApplicationId).toBe("app_admin_123");
+    });
+
+    test("refreshes expired Google access tokens", async () => {
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+      process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = `http://localhost:${server.port}/google/token`;
+
+      const client = new TerminalClient({
+        authMode: "google",
+        adminAccessToken: "expired-google-access-token",
+        adminAccessTokenExpiresAt: "2000-01-01T00:00:00.000Z",
+        adminRefreshToken: "google-refresh-token",
+        adminGoogleClientId: "google-client-id",
+        adminApplicationId: "app_01GVCFVY4B0NWK6JYK87JP2WRP",
+        baseUrl,
+        profileName: "employee",
+      });
+
+      const result = await client.get<{ authorization: string }>(
+        "/debug/headers",
+        undefined,
+        false,
+      );
+
+      expect(result.authorization).toBe("Bearer google-access-token-refreshed");
+    });
+
+    test("admin auth requires an application ID", async () => {
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+
+      const client = new TerminalClient({
+        authMode: "google",
+        adminAccessToken: "google-access-token",
+        adminGoogleClientId: "google-client-id",
+        baseUrl,
+        profileName: "employee",
+      });
+
+      return expect(client.get("/debug/headers", undefined, false)).rejects.toThrow(
+        "Application ID is required for admin mode",
+      );
     });
   });
 

@@ -22,11 +22,27 @@ describe("config", () => {
     originalEnv.TERMINAL_BASE_URL = process.env.TERMINAL_BASE_URL;
     originalEnv.TERMINAL_ENVIRONMENT = process.env.TERMINAL_ENVIRONMENT;
     originalEnv.TERMINAL_CONFIG_DIR = process.env.TERMINAL_CONFIG_DIR;
+    originalEnv.TERMINAL_ADMIN_ACCESS_TOKEN = process.env.TERMINAL_ADMIN_ACCESS_TOKEN;
+    originalEnv.TERMINAL_ADMIN_REFRESH_TOKEN = process.env.TERMINAL_ADMIN_REFRESH_TOKEN;
+    originalEnv.TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT =
+      process.env.TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT;
+    originalEnv.TERMINAL_ADMIN_GOOGLE_CLIENT_ID = process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_ID;
+    originalEnv.TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET =
+      process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET;
+    originalEnv.TERMINAL_ADMIN_EMAIL = process.env.TERMINAL_ADMIN_EMAIL;
+    originalEnv.TERMINAL_ADMIN_APPLICATION_ID = process.env.TERMINAL_ADMIN_APPLICATION_ID;
 
     delete process.env.TERMINAL_API_KEY;
     delete process.env.TERMINAL_CONNECTION_TOKEN;
     delete process.env.TERMINAL_BASE_URL;
     delete process.env.TERMINAL_ENVIRONMENT;
+    delete process.env.TERMINAL_ADMIN_ACCESS_TOKEN;
+    delete process.env.TERMINAL_ADMIN_REFRESH_TOKEN;
+    delete process.env.TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT;
+    delete process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_ID;
+    delete process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET;
+    delete process.env.TERMINAL_ADMIN_EMAIL;
+    delete process.env.TERMINAL_ADMIN_APPLICATION_ID;
 
     // Use test directory for config to avoid reading real user config
     process.env.TERMINAL_CONFIG_DIR = testDir;
@@ -105,6 +121,13 @@ describe("config", () => {
       // Should default to production URL when no config exists
       expect(config.baseUrl).toBe("https://api.withterminal.com/tsp/v1");
     });
+
+    test("authMode defaults to api-key", async () => {
+      const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
+      const config = configModule.loadConfig();
+
+      expect(config.authMode).toBe("api-key");
+    });
   });
 
   describe("config file path", () => {
@@ -142,6 +165,22 @@ describe("config", () => {
       const config = configModule.loadConfig();
 
       expect(config.connectionToken).toBe("env-override-token");
+    });
+
+    test("admin env vars do not switch auth mode by themselves", async () => {
+      process.env.TERMINAL_ADMIN_ACCESS_TOKEN = "google-access-token";
+      process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_ID = "google-client-id";
+      process.env.TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET = "google-client-secret";
+      process.env.TERMINAL_ADMIN_APPLICATION_ID = "app_admin_123";
+
+      const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
+      const config = configModule.loadConfig();
+
+      expect(config.authMode).toBe("api-key");
+      expect(config.adminAccessToken).toBe("google-access-token");
+      expect(config.adminGoogleClientId).toBe("google-client-id");
+      expect(config.adminGoogleClientSecret).toBe("google-client-secret");
+      expect(config.adminApplicationId).toBe("app_admin_123");
     });
   });
 });

@@ -1,4 +1,5 @@
 import { loadConfig, type Config } from "./config.ts";
+import { isAdminFeatureEnabled, resolveAdminAccessToken } from "./admin-auth.ts";
 
 export interface RequestOptions {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -22,7 +23,60 @@ export class TerminalClient {
   private config: Config;
 
   constructor(config?: Partial<Config>) {
-    this.config = { ...loadConfig(), ...config };
+    this.config = { ...loadConfig(config?.profileName), ...config };
+  }
+
+  private assertAuthorizationConfigured(): void {
+    if (this.config.authMode === "google") {
+      if (!isAdminFeatureEnabled()) {
+        throw new Error(
+          "Admin mode is disabled in this build. Set TERMINAL_ENABLE_ADMIN=1 to enable employee login.",
+        );
+      }
+      if (!this.config.adminApplicationId) {
+        throw new Error(
+          "Application ID is required for admin mode. Run: terminal admin login --application-id <app_id>",
+        );
+      }
+      if (!this.config.adminAccessToken && !this.config.adminRefreshToken) {
+        throw new Error(
+          "Admin login is required. Run: terminal admin login" +
+            (this.config.profileName ? ` --profile ${this.config.profileName}` : ""),
+        );
+      }
+      return;
+    }
+
+    if (!this.config.apiKey) {
+      throw new Error(
+        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>",
+      );
+    }
+  }
+
+  private async getAuthorizationToken(): Promise<string> {
+    if (this.config.authMode === "google") {
+      const session = await resolveAdminAccessToken(this.config);
+      this.config = {
+        ...this.config,
+        adminAccessToken: session.accessToken,
+        adminRefreshToken: session.refreshToken,
+        adminAccessTokenExpiresAt: session.accessTokenExpiresAt,
+        adminEmail: session.email,
+        adminGoogleClientId: session.clientId ?? this.config.adminGoogleClientId,
+        adminGoogleClientSecret: session.clientSecret ?? this.config.adminGoogleClientSecret,
+      };
+      return session.accessToken;
+    }
+
+    const apiKey = this.config.apiKey;
+    if (!apiKey) {
+      throw new Error(
+        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>",
+      );
+    }
+
+    return apiKey;
   }
 
   async request<T>(options: RequestOptions): Promise<T> {
@@ -54,13 +108,13 @@ export class TerminalClient {
       ...headers,
     };
 
-    // Add authorization
-    if (!this.config.apiKey) {
-      throw new Error(
-        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>",
-      );
+    this.assertAuthorizationConfigured();
+    requestHeaders["Authorization"] = `Bearer ${await this.getAuthorizationToken()}`;
+
+    if (this.config.authMode === "google" && this.config.adminApplicationId) {
+      requestHeaders["X-Application-Id"] = this.config.adminApplicationId;
+      requestHeaders["Admin-Application-Id"] = this.config.adminApplicationId;
     }
-    requestHeaders["Authorization"] = `Bearer ${this.config.apiKey}`;
 
     // Add connection token if required
     if (requiresConnectionToken) {

@@ -19,6 +19,12 @@ import {
   setDefaultProfile,
   copyProfile,
 } from "./lib/config.ts";
+import {
+  getDefaultAdminApplicationId,
+  getDefaultAdminGoogleClientId,
+  isAdminFeatureEnabled,
+  loginWithGoogle,
+} from "./lib/admin-auth.ts";
 import { print, printError, printSuccess, printInfo, type OutputFormat } from "./lib/output.ts";
 import { commandGroups, allCommands, type Command as ApiCommand } from "../generated/index.ts";
 import {
@@ -48,6 +54,45 @@ async function getCliVersion(): Promise<{ name: string; version: string }> {
   } catch {
     return { name: "terminal-cli", version: "unknown" };
   }
+}
+
+function maskSecret(value: string | undefined, visibleChars: number): string | undefined {
+  return value ? value.slice(0, visibleChars) + "..." : undefined;
+}
+
+function maskConfigDisplay<
+  T extends {
+    apiKey?: string;
+    connectionToken?: string;
+    adminAccessToken?: string;
+    adminRefreshToken?: string;
+    adminGoogleClientSecret?: string;
+  },
+>(config: T): Record<string, unknown> {
+  return {
+    ...config,
+    apiKey: maskSecret(config.apiKey, 10),
+    connectionToken: maskSecret(config.connectionToken, 15),
+    adminAccessToken: maskSecret(config.adminAccessToken, 15),
+    adminRefreshToken: maskSecret(config.adminRefreshToken, 15),
+    adminGoogleClientSecret: maskSecret(config.adminGoogleClientSecret, 8),
+  };
+}
+
+function getConfigSetDescription(): string {
+  const keys = isAdminFeatureEnabled()
+    ? "api-key, connection-token, base-url, environment, application-id, admin-application-id, admin-google-client-id, admin-google-client-secret"
+    : "api-key, connection-token, base-url, environment";
+  return `Set a config value (keys: ${keys})`;
+}
+
+function showUnknownConfigKey(key: string): never {
+  printError(`Unknown config key: ${key}`);
+  const keys = isAdminFeatureEnabled()
+    ? "api-key, connection-token, base-url, environment, application-id, admin-application-id, admin-google-client-id, admin-google-client-secret"
+    : "api-key, connection-token, base-url, environment";
+  printInfo(`Available keys: ${keys}`);
+  process.exit(1);
 }
 
 function showCommandHelp(cmd: ApiCommand): void {
@@ -163,10 +208,10 @@ async function handleApiCommand(
 
   // Load config from profile, then apply CLI overrides
   const profileConfig = loadConfig(globalOptions.profile);
-  const clientConfig: Record<string, string | undefined> = {
+  const clientConfig = {
+    ...profileConfig,
     apiKey: globalOptions.apiKey ?? profileConfig.apiKey,
     connectionToken: globalOptions.connectionToken ?? profileConfig.connectionToken,
-    baseUrl: profileConfig.baseUrl,
   };
 
   const client = new TerminalClient(clientConfig);
@@ -256,20 +301,12 @@ async function main(): Promise<void> {
     .action(() => {
       const profileName = program.opts().profile as string | undefined;
       const config = loadConfig(profileName);
-      // Mask sensitive values
-      const displayConfig = {
-        ...config,
-        apiKey: config.apiKey ? config.apiKey.slice(0, 10) + "..." : undefined,
-        connectionToken: config.connectionToken
-          ? config.connectionToken.slice(0, 15) + "..."
-          : undefined,
-      };
-      console.log(JSON.stringify(displayConfig, null, 2));
+      console.log(JSON.stringify(maskConfigDisplay(config), null, 2));
     });
 
   configCmd
     .command("set <key> <value>")
-    .description("Set a config value (keys: api-key, connection-token, base-url, environment)")
+    .description(getConfigSetDescription())
     .action((key: string, value: string) => {
       const profileName = program.opts().profile as string | undefined;
       switch (key) {
@@ -297,10 +334,36 @@ async function main(): Promise<void> {
             `Environment set to ${value}${profileName ? ` for profile '${profileName}'` : ""}`,
           );
           break;
+        case "application-id":
+        case "admin-application-id":
+          if (!isAdminFeatureEnabled()) {
+            showUnknownConfigKey(key);
+          }
+          saveConfig({ adminApplicationId: value }, profileName);
+          printSuccess(
+            `Admin application ID saved${profileName ? ` to profile '${profileName}'` : ""}`,
+          );
+          break;
+        case "admin-google-client-id":
+          if (!isAdminFeatureEnabled()) {
+            showUnknownConfigKey(key);
+          }
+          saveConfig({ adminGoogleClientId: value }, profileName);
+          printSuccess(
+            `Google client ID saved${profileName ? ` to profile '${profileName}'` : ""}`,
+          );
+          break;
+        case "admin-google-client-secret":
+          if (!isAdminFeatureEnabled()) {
+            showUnknownConfigKey(key);
+          }
+          saveConfig({ adminGoogleClientSecret: value }, profileName);
+          printSuccess(
+            `Google client secret saved${profileName ? ` to profile '${profileName}'` : ""}`,
+          );
+          break;
         default:
-          printError(`Unknown config key: ${key}`);
-          printInfo("Available keys: api-key, connection-token, base-url, environment");
-          process.exit(1);
+          showUnknownConfigKey(key);
       }
     });
 
@@ -335,15 +398,7 @@ async function main(): Promise<void> {
         process.exit(1);
       }
 
-      // Mask sensitive values
-      const displayProfile = {
-        ...profile,
-        apiKey: profile.apiKey ? profile.apiKey.slice(0, 10) + "..." : undefined,
-        connectionToken: profile.connectionToken
-          ? profile.connectionToken.slice(0, 15) + "..."
-          : undefined,
-      };
-      console.log(JSON.stringify(displayProfile, null, 2));
+      console.log(JSON.stringify(maskConfigDisplay(profile), null, 2));
     });
 
   profileCmd
@@ -394,6 +449,130 @@ async function main(): Promise<void> {
         process.exit(1);
       }
     });
+
+  if (isAdminFeatureEnabled()) {
+    const adminCmd = program.command("admin").description("Employee admin authentication");
+
+    adminCmd
+      .command("login")
+      .description("Sign in with Google and save the employee session to the active profile")
+      .option("--client-id <clientId>", "Google OAuth client ID")
+      .option("--client-secret <clientSecret>", "Google OAuth client secret")
+      .option("--application-id <applicationId>", "Default Admin-Application-Id for this profile")
+      .action(
+        async (options: { clientId?: string; clientSecret?: string; applicationId?: string }) => {
+          const profileName =
+            (program.opts().profile as string | undefined) ??
+            process.env["TERMINAL_PROFILE"] ??
+            "prod";
+          const config = loadConfig(profileName);
+          const clientId =
+            options.clientId ?? config.adminGoogleClientId ?? getDefaultAdminGoogleClientId();
+          const clientSecret = options.clientSecret ?? config.adminGoogleClientSecret;
+          const applicationId =
+            options.applicationId ?? config.adminApplicationId ?? getDefaultAdminApplicationId();
+
+          if (!clientId) {
+            printError(
+              "Google OAuth client ID is required. Pass --client-id or run: terminal config set admin-google-client-id <client-id> --profile " +
+                profileName,
+            );
+            process.exit(1);
+          }
+
+          if (!applicationId) {
+            printError(
+              "Application ID is required for admin mode. Pass --application-id or run: terminal config set application-id <app_id> --profile " +
+                profileName,
+            );
+            process.exit(1);
+          }
+
+          printInfo("Opening Google sign-in in your browser...");
+          const session = await loginWithGoogle(clientId, clientSecret);
+
+          saveConfig(
+            {
+              authMode: "google",
+              adminAccessToken: session.accessToken,
+              adminRefreshToken: session.refreshToken,
+              adminAccessTokenExpiresAt: session.accessTokenExpiresAt,
+              adminGoogleClientId: session.clientId,
+              adminGoogleClientSecret: session.clientSecret,
+              adminEmail: session.email,
+              adminApplicationId: applicationId,
+            },
+            profileName,
+          );
+
+          printSuccess(
+            `Admin login saved to profile '${profileName}'${
+              session.email ? ` for ${session.email}` : ""
+            }`,
+          );
+
+          if (!session.refreshToken) {
+            printInfo(
+              "Google did not return a refresh token. The session will expire and need another login.",
+            );
+          }
+        },
+      );
+
+    adminCmd
+      .command("logout")
+      .description("Clear stored employee tokens from the active profile")
+      .action(() => {
+        const profileName =
+          (program.opts().profile as string | undefined) ??
+          process.env["TERMINAL_PROFILE"] ??
+          "prod";
+        const profile = getProfile(profileName);
+        if (!profile) {
+          printError(`Profile '${profileName}' not found`);
+          process.exit(1);
+        }
+
+        saveConfig(
+          {
+            authMode: profile.apiKey ? "api-key" : undefined,
+            adminAccessToken: undefined,
+            adminRefreshToken: undefined,
+            adminAccessTokenExpiresAt: undefined,
+            adminEmail: undefined,
+          },
+          profileName,
+        );
+
+        printSuccess(`Admin session cleared from profile '${profileName}'`);
+      });
+
+    adminCmd
+      .command("whoami")
+      .description("Show the current employee auth state for the active profile")
+      .action(() => {
+        const profileName =
+          (program.opts().profile as string | undefined) ??
+          process.env["TERMINAL_PROFILE"] ??
+          "prod";
+        const config = loadConfig(profileName);
+        console.log(
+          JSON.stringify(
+            {
+              profileName,
+              authMode: config.authMode,
+              adminEmail: config.adminEmail,
+              adminApplicationId: config.adminApplicationId,
+              adminAccessToken: maskSecret(config.adminAccessToken, 15),
+              adminRefreshToken: maskSecret(config.adminRefreshToken, 15),
+              adminAccessTokenExpiresAt: config.adminAccessTokenExpiresAt,
+            },
+            null,
+            2,
+          ),
+        );
+      });
+  }
 
   // Completions commands
   const completionsCmd = program.command("completions").description("Generate shell completions");
@@ -498,6 +677,9 @@ async function main(): Promise<void> {
   terminal list-drivers --limit 10
   terminal list-vehicles schema
 `;
+    if (isAdminFeatureEnabled()) {
+      helpText += "  terminal admin login --profile employee --client-id <google-client-id>\n";
+    }
     return helpText;
   });
 

@@ -1,4 +1,4 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import {
   generateBashCompletions,
   generateZshCompletions,
@@ -7,6 +7,20 @@ import {
 import { allCommands } from "../generated/index";
 
 describe("shell completions", () => {
+  const originalAdminFlag = process.env.TERMINAL_ENABLE_ADMIN;
+
+  beforeEach(() => {
+    delete process.env.TERMINAL_ENABLE_ADMIN;
+  });
+
+  afterEach(() => {
+    if (originalAdminFlag === undefined) {
+      delete process.env.TERMINAL_ENABLE_ADMIN;
+    } else {
+      process.env.TERMINAL_ENABLE_ADMIN = originalAdminFlag;
+    }
+  });
+
   describe("bash completions", () => {
     test("generates valid bash completion script", () => {
       const result = generateBashCompletions();
@@ -73,6 +87,12 @@ describe("shell completions", () => {
       expect(result).toContain("--all");
       expect(result).toContain("--help");
       expect(result).toContain("--version");
+    });
+
+    test("does not include admin commands by default", () => {
+      const result = generateBashCompletions();
+
+      expect(result).not.toContain("admin)");
     });
   });
 
@@ -231,6 +251,25 @@ describe("shell completions", () => {
       for (const cmd of allCommands) {
         expect(fish).toContain(cmd.name);
       }
+    });
+
+    test("admin completions are included when feature flag is enabled", () => {
+      const original = process.env.TERMINAL_ENABLE_ADMIN;
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+
+      const bash = generateBashCompletions();
+      const zsh = generateZshCompletions();
+      const fish = generateFishCompletions();
+
+      if (original === undefined) {
+        delete process.env.TERMINAL_ENABLE_ADMIN;
+      } else {
+        process.env.TERMINAL_ENABLE_ADMIN = original;
+      }
+
+      expect(bash).toContain("admin");
+      expect(zsh).toContain("'admin:Employee admin authentication'");
+      expect(fish).toContain("-a admin -d 'Employee admin authentication'");
     });
   });
 });

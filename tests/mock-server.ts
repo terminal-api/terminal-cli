@@ -199,6 +199,58 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
         return Response.json({ results: mockData.groups });
       },
     },
+
+    // Echo request headers for auth assertions
+    {
+      pattern: /^\/tsp\/v1\/debug\/headers$/,
+      handler: (req) => {
+        return Response.json({
+          authorization: req.headers.get("Authorization"),
+          connectionToken: req.headers.get("Connection-Token"),
+          applicationId: req.headers.get("X-Application-Id"),
+          adminApplicationId: req.headers.get("Admin-Application-Id"),
+        });
+      },
+    },
+
+    // Mock Google token endpoint for refresh/login tests
+    {
+      pattern: /^\/google\/token$/,
+      handler: async (req) => {
+        const body = await req.formData();
+        const grantType = body.get("grant_type");
+
+        if (grantType === "refresh_token") {
+          return Response.json({
+            access_token: "google-access-token-refreshed",
+            expires_in: 3600,
+            refresh_token: body.get("refresh_token"),
+            token_type: "Bearer",
+          });
+        }
+
+        if (grantType === "authorization_code") {
+          return Response.json({
+            access_token: "google-access-token-login",
+            refresh_token: "google-refresh-token-login",
+            expires_in: 3600,
+            id_token: [
+              "header",
+              Buffer.from(JSON.stringify({ email: "employee@withterminal.com" })).toString(
+                "base64url",
+              ),
+              "signature",
+            ].join("."),
+            token_type: "Bearer",
+          });
+        }
+
+        return Response.json(
+          { error: "unsupported_grant_type", error_description: "Unsupported grant type" },
+          { status: 400 },
+        );
+      },
+    },
   ];
 
   const server = Bun.serve({
@@ -206,6 +258,15 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
     fetch(req) {
       const url = new URL(req.url);
       const path = url.pathname;
+
+      if (path === "/google/token") {
+        for (const route of routes) {
+          const match = path.match(route.pattern);
+          if (match) {
+            return route.handler(req, {});
+          }
+        }
+      }
 
       // Check authorization
       const authHeader = req.headers.get("Authorization");
@@ -217,9 +278,11 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
       }
 
       // Check for endpoints that require connection token
-      const requiresConnectionToken = !["/tsp/v1/providers", "/tsp/v1/connections"].some(
-        (p) => path === p,
-      );
+      const requiresConnectionToken = ![
+        "/tsp/v1/providers",
+        "/tsp/v1/connections",
+        "/tsp/v1/debug/headers",
+      ].some((p) => path === p);
 
       if (requiresConnectionToken) {
         const connectionToken = req.headers.get("Connection-Token");

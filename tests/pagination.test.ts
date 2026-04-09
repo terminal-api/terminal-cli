@@ -1,4 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { mkdirSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { createMockServer, getServerUrl } from "./mock-server";
 
 type BunServer = ReturnType<typeof Bun.serve>;
@@ -6,14 +9,17 @@ type BunServer = ReturnType<typeof Bun.serve>;
 describe("--all pagination flag", () => {
   let server: BunServer;
   let baseUrl: string;
+  const testConfigDir = join(tmpdir(), `terminal-cli-pagination-test-${Date.now()}`);
 
   beforeAll(() => {
+    mkdirSync(testConfigDir, { recursive: true });
     server = createMockServer();
     baseUrl = getServerUrl(server);
   });
 
   afterAll(async () => {
     await server.stop();
+    rmSync(testConfigDir, { recursive: true, force: true });
   });
 
   async function runCli(
@@ -31,6 +37,17 @@ describe("--all pagination flag", () => {
         TERMINAL_API_KEY: "test-api-key",
         TERMINAL_CONNECTION_TOKEN: "test-token",
         TERMINAL_BASE_URL: baseUrl,
+        TERMINAL_CONFIG_DIR: testConfigDir,
+        TERMINAL_PROFILE: "",
+        TERMINAL_ENABLE_ADMIN: "",
+        TERMINAL_AUTH_MODE: "",
+        TERMINAL_ADMIN_ACCESS_TOKEN: "",
+        TERMINAL_ADMIN_REFRESH_TOKEN: "",
+        TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT: "",
+        TERMINAL_ADMIN_GOOGLE_CLIENT_ID: "",
+        TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET: "",
+        TERMINAL_ADMIN_EMAIL: "",
+        TERMINAL_ADMIN_APPLICATION_ID: "",
         ...env,
       },
       stdout: "pipe",
