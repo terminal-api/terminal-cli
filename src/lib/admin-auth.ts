@@ -121,7 +121,7 @@ function extractEmail(idToken?: string): string | undefined {
   return typeof email === "string" ? email : undefined;
 }
 
-async function openBrowser(url: string): Promise<void> {
+async function openBrowser(url: string): Promise<boolean> {
   const command =
     process.platform === "darwin"
       ? ["open", url]
@@ -130,13 +130,15 @@ async function openBrowser(url: string): Promise<void> {
         : ["xdg-open", url];
 
   try {
-    Bun.spawn(command, {
+    const proc = Bun.spawn(command, {
       stdin: "ignore",
       stdout: "ignore",
       stderr: "ignore",
     });
+
+    return (await proc.exited) === 0;
   } catch {
-    // Fall back to printing the URL for manual copy/paste.
+    return false;
   }
 }
 
@@ -318,7 +320,10 @@ export async function loginWithGoogle(
   authUrl.searchParams.set("prompt", "consent");
   authUrl.searchParams.set("state", state);
 
-  await openBrowser(authUrl.toString());
+  if (!(await openBrowser(authUrl.toString()))) {
+    console.error("Could not open your browser automatically.");
+    console.error(`Open this URL to continue admin login:\n${authUrl.toString()}`);
+  }
 
   const timeout = setTimeout(() => {
     rejectCallback?.(new Error("Timed out waiting for Google login callback"));
