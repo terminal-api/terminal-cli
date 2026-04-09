@@ -32,7 +32,6 @@ export class TerminalClient {
     const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     const retryOn = new Set(options.retryOn ?? DEFAULT_RETRY_STATUS);
     const shouldRetry = RETRYABLE_METHODS.has(method);
-    const { version } = await getCliVersion();
 
     // Build URL with query parameters
     // Ensure base URL ends with / for proper path joining
@@ -51,11 +50,12 @@ export class TerminalClient {
     }
 
     // Build headers
+    const userAgent = await buildUserAgent();
     const requestHeaders: Record<string, string> = {
       "Content-Type": "application/json",
+      "User-Agent": userAgent,
       ...headers,
     };
-    requestHeaders["User-Agent"] = `terminal-cli/${version}`;
 
     // Add authorization
     if (!this.config.apiKey) {
@@ -253,4 +253,9 @@ function getRetryDelayMs(attempt: number): number {
 
 function sleep(delayMs: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+async function buildUserAgent(): Promise<string> {
+  const { version } = await getCliVersion();
+  return `terminal-cli/${version}`;
 }
