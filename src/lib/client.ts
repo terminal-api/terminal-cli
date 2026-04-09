@@ -1,4 +1,5 @@
 import { loadConfig, type Config } from "./config.ts";
+import { getCliVersion } from "./version.ts";
 
 export interface RequestOptions {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -31,6 +32,7 @@ export class TerminalClient {
     const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     const retryOn = new Set(options.retryOn ?? DEFAULT_RETRY_STATUS);
     const shouldRetry = RETRYABLE_METHODS.has(method);
+    const { version } = await getCliVersion();
 
     // Build URL with query parameters
     // Ensure base URL ends with / for proper path joining
@@ -53,6 +55,7 @@ export class TerminalClient {
       "Content-Type": "application/json",
       ...headers,
     };
+    requestHeaders["User-Agent"] = `terminal-cli/${version}`;
 
     // Add authorization
     if (!this.config.apiKey) {

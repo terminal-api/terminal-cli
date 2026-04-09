@@ -26,6 +26,7 @@ import {
   generateZshCompletions,
   generateFishCompletions,
 } from "./lib/completions.ts";
+import { getCliVersion } from "./lib/version.ts";
 import { startTui } from "./tui/app.ts";
 
 interface GlobalOptions {
@@ -34,20 +35,6 @@ interface GlobalOptions {
   connectionToken?: string;
   profile?: string;
   all?: boolean;
-}
-
-async function getCliVersion(): Promise<{ name: string; version: string }> {
-  try {
-    const pkgUrl = new URL("../package.json", import.meta.url);
-    const pkgText = await Bun.file(pkgUrl).text();
-    const pkg = JSON.parse(pkgText) as { name?: string; version?: string };
-    return {
-      name: pkg.name ?? "terminal-cli",
-      version: pkg.version ?? "unknown",
-    };
-  } catch {
-    return { name: "terminal-cli", version: "unknown" };
-  }
 }
 
 function showCommandHelp(cmd: ApiCommand): void {
