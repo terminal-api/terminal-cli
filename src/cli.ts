@@ -80,18 +80,18 @@ function maskConfigDisplay<
 }
 
 function getConfigSetDescription(): string {
-  const keys = isAdminFeatureEnabled()
+  return `Set a config value (keys: ${getAvailableConfigKeys()})`;
+}
+
+function getAvailableConfigKeys(): string {
+  return isAdminFeatureEnabled()
     ? "api-key, connection-token, base-url, environment, application-id, admin-application-id, admin-google-client-id, admin-google-client-secret"
     : "api-key, connection-token, base-url, environment";
-  return `Set a config value (keys: ${keys})`;
 }
 
 function showUnknownConfigKey(key: string): never {
   printError(`Unknown config key: ${key}`);
-  const keys = isAdminFeatureEnabled()
-    ? "api-key, connection-token, base-url, environment, application-id, admin-application-id, admin-google-client-id, admin-google-client-secret"
-    : "api-key, connection-token, base-url, environment";
-  printInfo(`Available keys: ${keys}`);
+  printInfo(`Available keys: ${getAvailableConfigKeys()}`);
   process.exit(1);
 }
 
