@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { TerminalClient, ClientError } from "../src/lib/client";
-import { createMockServer, getServerUrl, mockData } from "./mock-server";
+import { getCliVersion } from "../src/lib/version";
+import { createMockServer, getServerUrl, lastRequestHeaders, mockData } from "./mock-server";
 
 type BunServer = ReturnType<typeof Bun.serve>;
 
@@ -38,6 +39,19 @@ describe("TerminalClient", () => {
       // This should work since we have a valid bearer token format
       const result = await client.get("/vehicles");
       expect(result).toBeDefined();
+    });
+
+    test("sets a versioned user agent on requests", async () => {
+      const client = new TerminalClient({
+        apiKey: "test-api-key",
+        baseUrl,
+        connectionToken: "test-token",
+      });
+      const { version } = await getCliVersion();
+
+      await client.get("/vehicles");
+
+      expect(lastRequestHeaders.get("User-Agent")).toBe(`terminal-cli/${version}`);
     });
   });
 
