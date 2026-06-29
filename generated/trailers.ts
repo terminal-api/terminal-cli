@@ -93,6 +93,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
       {
         name: "modifiedAfter",
@@ -112,6 +113,7 @@ export const commands: Command[] = [
         required: false,
         description:
           'Show "soft-deleted" records that have been deleted from the provider. Defaults to false.',
+        enum: ["true", "false"],
       },
     ],
     handler: list_trailers,
@@ -146,6 +148,7 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -158,10 +161,30 @@ export const commands: Command[] = [
               groups: {
                 type: "array",
                 items: {
-                  type: "string",
-                  title: "GroupId",
-                  format: "ulid",
                   example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  oneOf: [
+                    {
+                      type: "string",
+                      title: "GroupId",
+                      format: "ulid",
+                      example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                    },
+                    {
+                      type: "object",
+                      title: "Expanded Group",
+                      properties: {
+                        id: {
+                          type: "string",
+                          title: "GroupId",
+                          format: "ulid",
+                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      required: ["id"],
+                    },
+                  ],
+                  description:
+                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               licensePlate: {
@@ -291,6 +314,7 @@ export const commands: Command[] = [
                       "hidden_by_status",
                       "deleted",
                     ],
+                    example: "visible",
                     description:
                       "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
                   },
@@ -367,6 +391,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
     ],
     handler: list_latest_trailer_locations,
@@ -382,15 +407,36 @@ export const commands: Command[] = [
             properties: {
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               trailer: {
-                type: "string",
-                title: "TrailerId",
-                format: "ulid",
                 example: "trl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "TrailerId",
+                    format: "ulid",
+                    example: "trl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Trailer",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "TrailerId",
+                        format: "ulid",
+                        example: "trl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
+                description:
+                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               locatedAt: {
                 type: "string",

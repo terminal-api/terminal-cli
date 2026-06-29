@@ -77,6 +77,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
       {
         name: "modifiedAfter",
@@ -96,6 +97,7 @@ export const commands: Command[] = [
         required: false,
         description:
           'Show "soft-deleted" records that have been deleted from the provider. Defaults to false.',
+        enum: ["true", "false"],
       },
     ],
     handler: list_groups,
@@ -119,16 +121,36 @@ export const commands: Command[] = [
               sourceId: { type: "string", example: "12345" },
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               description: { type: "string", example: "Resources part of the California division" },
               parent: {
-                type: "string",
-                title: "GroupId",
-                format: "ulid",
+                description: "Optional parent group. This is expandable.",
                 example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "GroupId",
+                    format: "ulid",
+                    example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Group",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "GroupId",
+                        format: "ulid",
+                        example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
               },
               createdAt: {
                 type: "string",
@@ -173,6 +195,7 @@ export const commands: Command[] = [
                       "hidden_by_status",
                       "deleted",
                     ],
+                    example: "visible",
                     description:
                       "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
                   },

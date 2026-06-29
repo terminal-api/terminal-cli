@@ -110,14 +110,14 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description:
-          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time.",
+          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time. Each ID must use the `drv_` prefix.",
       },
       {
         name: "vehicleIds",
         type: "string",
         required: false,
         description:
-          "Comma separated list of vehicle IDs to filter for. Can filter up to 50 vehicles at a time.",
+          "Comma separated list of vehicle IDs to filter for. Can filter up to 50 vehicles at a time. Each ID must use the `vcl_` prefix.",
       },
       {
         name: "raw",
@@ -125,6 +125,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
       {
         name: "expand",
@@ -160,23 +161,69 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               driver: {
-                type: "string",
-                title: "DriverId",
-                description: "Unique identifier for the driver in Terminal.",
-                format: "ulid",
                 example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "DriverId",
+                    description: "Unique identifier for the driver in Terminal.",
+                    format: "ulid",
+                    pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Driver",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "DriverId",
+                        description: "Unique identifier for the driver in Terminal.",
+                        format: "ulid",
+                        pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                        example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
+                description:
+                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               vehicle: {
-                type: "string",
-                title: "VehicleId",
-                description: "Unique identifier for the vehicle in Terminal.",
-                format: "ulid",
+                description: "The ID of the vehicle that was involved in the trip.",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "VehicleId",
+                    description: "Unique identifier for the vehicle in Terminal.",
+                    format: "ulid",
+                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Vehicle",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "VehicleId",
+                        description: "Unique identifier for the vehicle in Terminal.",
+                        format: "ulid",
+                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
               },
               startLocation: {
                 type: "object",
@@ -207,6 +254,7 @@ export const commands: Command[] = [
                 title: "DurationInMS",
                 example: 0,
                 description: "Duration in MS",
+                minimum: 0,
               },
               startedAt: {
                 type: "string",
