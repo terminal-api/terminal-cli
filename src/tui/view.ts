@@ -61,6 +61,7 @@ export function updateStatusBar(context: TuiContext): void {
     }
   } else if (state.currentView === "detail") {
     hotkeys = [
+      { key: "↑↓", action: "scroll" },
       { key: "i", action: "copy id" },
       { key: "c", action: "copy json" },
       { key: "esc", action: "back" },
@@ -218,7 +219,11 @@ export function updateView(context: TuiContext): void {
 
     if (state.selectedItem) {
       detailPanel.content = formatDetail(state.selectedItem);
+      detailContainer.scrollTop = 0;
     }
+
+    resultsSelect.blur();
+    setTimeout(() => detailContainer.focus(), 10);
   }
 
   updateStatusBar(context);

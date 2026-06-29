@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import type { Command } from "../generated/index.ts";
 import { createInitialState } from "../src/tui/state.ts";
 import {
+  buildOptionalArgsOptions,
+  formatCollectedArgValue,
   handleOptionalListSelection,
   initArgsStateForCommand,
   submitActiveArg,
@@ -109,5 +111,39 @@ describe("tui args flow", () => {
 
     const res = handleOptionalListSelection(state, "__submit__");
     expect(res.submit).toBe(true);
+  });
+
+  test("formatCollectedArgValue renders compact previews", () => {
+    expect(formatCollectedArgValue("raw")).toBe("raw");
+    expect(formatCollectedArgValue(7)).toBe("7");
+    expect(formatCollectedArgValue(true)).toBe("true");
+    expect(formatCollectedArgValue({ a: 1 })).toBe('{"a":1}');
+    expect(formatCollectedArgValue("x".repeat(60)).endsWith("…")).toBe(true);
+  });
+
+  test("buildOptionalArgsOptions shows saved value previews", () => {
+    const cmd = makeCommand({
+      args: [
+        { name: "startedAfter", type: "string", required: false, description: "ISO timestamp" },
+        { name: "raw", type: "boolean", required: false, description: "Return raw payload" },
+      ],
+    });
+
+    const state = createInitialState();
+    state.selectedCommand = cmd;
+    initArgsStateForCommand(state, cmd);
+    state.collectedArgs.startedAfter = "2024-01-01T00:00:00Z";
+    state.collectedArgs.raw = true;
+
+    const options = buildOptionalArgsOptions(cmd, state);
+    const startedAfter = options.find((option) => option.value === "startedAfter");
+    const raw = options.find((option) => option.value === "raw");
+    const unset = options.find((option) => option.value === "startFrom");
+
+    expect(startedAfter?.name).toBe("startedAfter ✓");
+    expect(startedAfter?.description).toBe("2024-01-01T00:00:00Z");
+    expect(raw?.name).toBe("raw ✓");
+    expect(raw?.description).toBe("true");
+    expect(unset).toBeUndefined();
   });
 });

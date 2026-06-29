@@ -1,20 +1,28 @@
-import { BoxRenderable, TextRenderable, type CliRenderer } from "@opentui/core";
+import {
+  ScrollBoxRenderable,
+  TextRenderable,
+  type BoxRenderable,
+  type CliRenderer,
+} from "@opentui/core";
 import type { Theme } from "../theme.ts";
 
 export function createDetailPanel(
   renderer: CliRenderer,
   contentArea: BoxRenderable,
   theme: Theme,
-): { detailContainer: BoxRenderable; detailPanel: TextRenderable } {
-  const detailContainer = new BoxRenderable(renderer, {
+): { detailContainer: ScrollBoxRenderable; detailPanel: TextRenderable } {
+  const detailContainer = new ScrollBoxRenderable(renderer, {
     id: "detail-container",
     width: "100%",
     height: theme.sizes.listHeight,
     borderStyle: "single",
     borderColor: theme.colors.border,
-    padding: 1,
     visible: false,
-    overflow: "scroll",
+    scrollY: true,
+    scrollX: false,
+    viewportOptions: {
+      padding: 1,
+    },
   });
   contentArea.add(detailContainer);
 
@@ -22,7 +30,6 @@ export function createDetailPanel(
     id: "detail-panel",
     content: "",
     width: "100%",
-    height: "100%",
     fg: theme.colors.textPrimary,
   });
   detailContainer.add(detailPanel);

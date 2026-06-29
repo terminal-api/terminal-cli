@@ -71,6 +71,17 @@ function stringifyExistingValue(value: unknown): string {
   }
 }
 
+export function formatCollectedArgValue(value: unknown, maxLength = 48): string {
+  const str = stringifyExistingValue(value);
+  if (!str) {
+    return "";
+  }
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return `${str.slice(0, maxLength - 1)}…`;
+}
+
 function buildArgLabelContent(params: {
   phase: "required" | "optional-edit";
   arg: CommandArg;
@@ -110,7 +121,13 @@ function buildOptionalListLabelContent(params: {
     requiredArgs.length === 0
       ? "(none)"
       : requiredArgs
-          .map((arg) => (arg.name in state.collectedArgs ? `${arg.name} ✓` : `${arg.name} ✗`))
+          .map((arg) => {
+            if (!(arg.name in state.collectedArgs)) {
+              return `${arg.name} ✗`;
+            }
+            const preview = formatCollectedArgValue(state.collectedArgs[arg.name]);
+            return preview ? `${arg.name}=${preview}` : `${arg.name} ✓`;
+          })
           .join(", ");
 
   const optionalSummary =
@@ -124,7 +141,7 @@ function buildOptionalListLabelContent(params: {
   ].join("\n");
 }
 
-function buildOptionalArgsOptions(cmd: Command, state: AppState): SelectOption[] {
+export function buildOptionalArgsOptions(cmd: Command, state: AppState): SelectOption[] {
   const options: SelectOption[] = [
     {
       name: "Submit",
@@ -137,9 +154,10 @@ function buildOptionalArgsOptions(cmd: Command, state: AppState): SelectOption[]
 
   for (const arg of optionalArgs) {
     const hasValue = arg.name in state.collectedArgs;
+    const preview = hasValue ? formatCollectedArgValue(state.collectedArgs[arg.name]) : "";
     options.push({
       name: hasValue ? `${arg.name} ✓` : arg.name,
-      description: arg.description || "",
+      description: preview || arg.description || "",
       value: arg.name,
     });
   }
@@ -185,6 +203,10 @@ export function updateArgsView(state: AppState, components: UiComponents): void 
   }
 
   if (state.argsPhase === "optional-list") {
+    argInput.blur();
+    argEnumSelect.blur();
+    argInput.value = "";
+
     argLabel.content = buildOptionalListLabelContent({ requiredArgs, optionalArgs, state });
 
     const options = buildOptionalArgsOptions(cmd, state);
@@ -194,7 +216,7 @@ export function updateArgsView(state: AppState, components: UiComponents): void 
     const maxIndex = Math.max(0, options.length - 1);
     state.optionalArgIndex = Math.max(0, Math.min(state.optionalArgIndex, maxIndex));
     optionalArgsSelect.setSelectedIndex(state.optionalArgIndex);
-    optionalArgsSelect.focus();
+    setTimeout(() => optionalArgsSelect.focus(), 10);
     return;
   }
 
@@ -219,7 +241,9 @@ export function updateArgsView(state: AppState, components: UiComponents): void 
 }
 
 function showArgEditor(state: AppState, components: UiComponents, arg: CommandArg): void {
-  const { argInput, argEnumSelect } = components;
+  const { argInput, argEnumSelect, optionalArgsSelect } = components;
+
+  optionalArgsSelect.blur();
 
   const existingValue = state.collectedArgs[arg.name];
 
