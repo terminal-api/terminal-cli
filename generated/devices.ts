@@ -82,6 +82,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
       {
         name: "deleted",
@@ -89,6 +90,7 @@ export const commands: Command[] = [
         required: false,
         description:
           'Show "soft-deleted" records that have been deleted from the provider. Defaults to false.',
+        enum: ["true", "false"],
       },
       {
         name: "expand",
@@ -118,6 +120,7 @@ export const commands: Command[] = [
               },
               type: {
                 type: "string",
+                description: "The type of device",
                 title: "Device Type",
                 enum: ["tracker", "camera"],
                 example: "tracker",
@@ -130,16 +133,39 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               vehicle: {
-                type: "string",
-                title: "VehicleId",
-                description: "Unique identifier for the vehicle in Terminal.",
-                format: "ulid",
+                description: "The ID of the vehicle that the device is associated with",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "VehicleId",
+                    description: "Unique identifier for the vehicle in Terminal.",
+                    format: "ulid",
+                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Vehicle",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "VehicleId",
+                        description: "Unique identifier for the vehicle in Terminal.",
+                        format: "ulid",
+                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
               },
               description: {
                 type: "string",
@@ -201,6 +227,7 @@ export const commands: Command[] = [
                       "hidden_by_status",
                       "deleted",
                     ],
+                    example: "visible",
                     description:
                       "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
                   },

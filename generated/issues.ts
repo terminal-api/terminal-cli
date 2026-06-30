@@ -107,6 +107,15 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description: "Filter issues to a specific error code",
+        enum: [
+          "missing_permissions",
+          "exceeded_retention_window",
+          "invalid_source_id",
+          "unknown_device_type",
+          "missing_safety_configuration",
+          "inaccessible_data",
+          "manually_disabled",
+        ],
       },
       {
         name: "status",
@@ -131,14 +140,24 @@ export const commands: Command[] = [
                 type: "string",
                 title: "IssueId",
                 format: "ulid",
+                pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
               },
               status: { enum: ["ongoing", "resolved"] },
               connection: {
-                type: "string",
-                title: "ConnectionId",
-                format: "ulid",
+                title: "ExpandableConnection",
                 example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "ConnectionId",
+                    format: "ulid",
+                    example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+                  },
+                  { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+                ],
+                description:
+                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               error: {
                 type: "object",
@@ -153,6 +172,7 @@ export const commands: Command[] = [
                       "unknown_device_type",
                       "missing_safety_configuration",
                       "inaccessible_data",
+                      "manually_disabled",
                     ],
                   },
                   message: {
@@ -218,14 +238,24 @@ export const commands: Command[] = [
           type: "string",
           title: "IssueId",
           format: "ulid",
+          pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
         },
         status: { enum: ["ongoing", "resolved"] },
         connection: {
-          type: "string",
-          title: "ConnectionId",
-          format: "ulid",
+          title: "ExpandableConnection",
           example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+          oneOf: [
+            {
+              type: "string",
+              title: "ConnectionId",
+              format: "ulid",
+              example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+            },
+            { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+          ],
+          description:
+            "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
         },
         error: {
           type: "object",
@@ -240,6 +270,7 @@ export const commands: Command[] = [
                 "unknown_device_type",
                 "missing_safety_configuration",
                 "inaccessible_data",
+                "manually_disabled",
               ],
             },
             message: {

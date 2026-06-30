@@ -16,7 +16,7 @@ import {
   submitActiveArg,
 } from "./args.ts";
 import { setActiveConnection } from "./connection.ts";
-import { filterResults } from "./results.ts";
+import { filterResults, navigateDetailItem } from "./results.ts";
 import { updateStatusBar, updateView } from "./view.ts";
 import { copyToClipboard } from "./detail.ts";
 import { isConnectionsView } from "./constants.ts";
@@ -205,6 +205,16 @@ function setupKeyHandlers(context: TuiContext): void {
     }
 
     if (state.currentView === "detail" && state.selectedItem) {
+      if (key.name === "left" && navigateDetailItem(context, -1)) {
+        updateView(context);
+        return;
+      }
+
+      if (key.name === "right" && navigateDetailItem(context, 1)) {
+        updateView(context);
+        return;
+      }
+
       if (key.name === "c") {
         const jsonText = JSON.stringify(state.selectedItem, null, 2);
         void copyToClipboard(jsonText).then((success) => {

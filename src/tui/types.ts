@@ -3,6 +3,7 @@ import type {
   TextRenderable,
   SelectRenderable,
   InputRenderable,
+  ScrollBoxRenderable,
   CliRenderer,
 } from "@opentui/core";
 import type { TerminalClient } from "../lib/client.ts";
@@ -17,7 +18,7 @@ export interface UiComponents {
   connectionDisplay: TextRenderable;
   titleDisplay: TextRenderable;
   detailPanel: TextRenderable;
-  detailContainer: BoxRenderable;
+  detailContainer: ScrollBoxRenderable;
   argsContainer: BoxRenderable;
   argLabel: TextRenderable;
   argInput: InputRenderable;

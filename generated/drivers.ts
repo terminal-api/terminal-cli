@@ -97,6 +97,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
       {
         name: "hidden",
@@ -104,6 +105,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Show hidden records that don't match the configured filters. Defaults to false.",
+        enum: ["true", "false"],
       },
       {
         name: "deleted",
@@ -111,6 +113,7 @@ export const commands: Command[] = [
         required: false,
         description:
           'Show "soft-deleted" records that have been deleted from the provider. Defaults to false.',
+        enum: ["true", "false"],
       },
       {
         name: "expand",
@@ -138,11 +141,13 @@ export const commands: Command[] = [
                 title: "DriverId",
                 description: "Unique identifier for the driver in Terminal.",
                 format: "ulid",
+                pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
               },
               status: {
                 type: "string",
                 enum: ["active", "inactive"],
+                example: "active",
                 description: "The status in the providers system",
               },
               sourceId: {
@@ -153,6 +158,7 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -261,10 +267,30 @@ export const commands: Command[] = [
               groups: {
                 type: "array",
                 items: {
-                  type: "string",
-                  title: "GroupId",
-                  format: "ulid",
                   example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  oneOf: [
+                    {
+                      type: "string",
+                      title: "GroupId",
+                      format: "ulid",
+                      example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                    },
+                    {
+                      type: "object",
+                      title: "Expanded Group",
+                      properties: {
+                        id: {
+                          type: "string",
+                          title: "GroupId",
+                          format: "ulid",
+                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      required: ["id"],
+                    },
+                  ],
+                  description:
+                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               createdAt: {
@@ -310,6 +336,7 @@ export const commands: Command[] = [
                       "hidden_by_status",
                       "deleted",
                     ],
+                    example: "visible",
                     description:
                       "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
                   },
@@ -373,6 +400,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
       {
         name: "expand",
@@ -395,11 +423,13 @@ export const commands: Command[] = [
           title: "DriverId",
           description: "Unique identifier for the driver in Terminal.",
           format: "ulid",
+          pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
         },
         status: {
           type: "string",
           enum: ["active", "inactive"],
+          example: "active",
           description: "The status in the providers system",
         },
         sourceId: {
@@ -410,6 +440,7 @@ export const commands: Command[] = [
         },
         provider: {
           type: "string",
+          title: "Provider Code",
           example: "geotab",
           description:
             "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -518,10 +549,30 @@ export const commands: Command[] = [
         groups: {
           type: "array",
           items: {
-            type: "string",
-            title: "GroupId",
-            format: "ulid",
             example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+            oneOf: [
+              {
+                type: "string",
+                title: "GroupId",
+                format: "ulid",
+                example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+              },
+              {
+                type: "object",
+                title: "Expanded Group",
+                properties: {
+                  id: {
+                    type: "string",
+                    title: "GroupId",
+                    format: "ulid",
+                    example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                },
+                required: ["id"],
+              },
+            ],
+            description:
+              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
           },
         },
         createdAt: {
@@ -567,6 +618,7 @@ export const commands: Command[] = [
                 "hidden_by_status",
                 "deleted",
               ],
+              example: "visible",
               description:
                 "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
             },

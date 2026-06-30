@@ -372,6 +372,16 @@ export async function ${funcName}(client: TerminalClient, ${argsParam}: Record<s
 }`;
 }
 
+function getArgEnumValues(param: ParamDef): string[] | undefined {
+  if (param.enumValues && param.enumValues.length > 0) {
+    return param.enumValues;
+  }
+  if (param.type === "boolean") {
+    return ["true", "false"];
+  }
+  return undefined;
+}
+
 function generateCommandDef(cmd: CommandDef): string {
   const allParams = [...cmd.pathParams, ...cmd.queryParams, ...cmd.bodyParams];
 
@@ -382,9 +392,10 @@ function generateCommandDef(cmd: CommandDef): string {
       type: "${p.type}",
       required: ${p.required},
       description: "${p.description.replace(/"/g, '\\"').replace(/\n/g, " ")}"`;
-      if (p.enumValues) {
+      const enumValues = getArgEnumValues(p);
+      if (enumValues) {
         argDef += `,
-      enum: ${JSON.stringify(p.enumValues)}`;
+      enum: ${JSON.stringify(enumValues)}`;
       }
       argDef += `
     }`;

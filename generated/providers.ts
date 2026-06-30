@@ -56,6 +56,7 @@ export const commands: Command[] = [
           },
           code: {
             type: "string",
+            title: "Provider Code",
             example: "geotab",
             description:
               "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -75,16 +76,6 @@ export const commands: Command[] = [
             type: "string",
             format: "uri",
             example: "https://cdn.withterminal.com/providers/geotab/icon.png",
-          },
-          userGuides: {
-            type: "object",
-            description: "Links to user guides in different languages",
-            properties: {
-              en: { type: "string", format: "uri" },
-              fr: { type: "string", format: "uri" },
-              es: { type: "string", format: "uri" },
-            },
-            required: ["en", "fr", "es"],
           },
           references: {
             type: "array",
@@ -254,29 +245,63 @@ export const commands: Command[] = [
                 ],
               },
               VehicleStatLog: {
-                type: "object",
-                title: "ModelSupportedOperations",
-                description:
-                  "Common structure for model support status containing the supported operations.",
-                required: ["supportedOperations"],
-                properties: {
-                  supportedOperations: {
+                allOf: [
+                  {
                     type: "object",
-                    required: ["read"],
+                    title: "ModelSupportedOperations",
+                    description:
+                      "Common structure for model support status containing the supported operations.",
+                    required: ["supportedOperations"],
                     properties: {
-                      read: {
-                        type: "string",
-                        description:
-                          "Enum values:\n- `supported`: Terminal supports this resource\n- `not_supported_by_terminal`: Terminal does not support this resource\n- `not_supported_by_provider`: The provider does not support this resource",
-                        enum: [
-                          "supported",
-                          "not_supported_by_terminal",
-                          "not_supported_by_provider",
-                        ],
+                      supportedOperations: {
+                        type: "object",
+                        required: ["read"],
+                        properties: {
+                          read: {
+                            type: "string",
+                            description:
+                              "Enum values:\n- `supported`: Terminal supports this resource\n- `not_supported_by_terminal`: Terminal does not support this resource\n- `not_supported_by_provider`: The provider does not support this resource",
+                            enum: [
+                              "supported",
+                              "not_supported_by_terminal",
+                              "not_supported_by_provider",
+                            ],
+                          },
+                        },
                       },
                     },
                   },
-                },
+                  {
+                    type: "object",
+                    required: ["types"],
+                    properties: {
+                      types: {
+                        type: "array",
+                        description:
+                          "The types of vehicle stat logs that are supported by this provider.",
+                        example: ["odometer", "engine_state", "fuel_level", "engine_runtime"],
+                        items: {
+                          type: "string",
+                          title: "VehicleStatLogType",
+                          enum: [
+                            "engine_state",
+                            "odometer",
+                            "total_fuel_consumption",
+                            "fuel_level",
+                            "engine_runtime",
+                            "engine_oil_percentage",
+                            "engine_oil_pressure",
+                            "engine_oil_temperature",
+                            "engine_coolant_temperature",
+                            "coolant_percentage",
+                            "engine_rpm",
+                            "battery_voltage",
+                          ],
+                        },
+                      },
+                    },
+                  },
+                ],
               },
               Trailer: {
                 type: "object",

@@ -126,6 +126,7 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description: "",
+        enum: ["requested", "in_progress", "completed", "failed"],
       },
       {
         name: "expand",
@@ -150,6 +151,7 @@ export const commands: Command[] = [
                 type: "string",
                 title: "SyncId",
                 format: "ulid",
+                pattern: "^sync_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
               },
               status: {
@@ -177,10 +179,32 @@ export const commands: Command[] = [
                 description:
                   "Issues are problems encountered with a connection that did not result in a failed sync but may require manual intervention. You can see the issues for a given sync by providing `issues` to the `expand` parameter.",
                 items: {
-                  type: "string",
-                  title: "IssueId",
-                  format: "ulid",
+                  title: "ExpandableIssue",
                   example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  oneOf: [
+                    {
+                      type: "string",
+                      title: "IssueId",
+                      format: "ulid",
+                      pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
+                      example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          title: "IssueId",
+                          format: "ulid",
+                          pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
+                          example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      required: ["id"],
+                    },
+                  ],
+                  description:
+                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               startFrom: {
@@ -191,6 +215,17 @@ export const commands: Command[] = [
                 description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
               },
               attempts: { type: "number", example: 1 },
+              providerRequests: {
+                type: "array",
+                description:
+                  "Provider requests attached to this sync. When non-empty, the sync is waiting on an out-of-band step on the provider's side (e.g. the provider manually delivering historical files, or credentials being provisioned) and may legitimately stay in progress for an extended period.",
+                example: ["historical_files"],
+                items: {
+                  type: "string",
+                  title: "Sync Provider Request Type",
+                  enum: ["historical_files", "provision_credentials"],
+                },
+              },
               requestedAt: {
                 type: "string",
                 title: "ISODateTime",
@@ -283,6 +318,7 @@ export const commands: Command[] = [
           type: "string",
           title: "SyncId",
           format: "ulid",
+          pattern: "^sync_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
         },
         status: {
@@ -310,10 +346,32 @@ export const commands: Command[] = [
           description:
             "Issues are problems encountered with a connection that did not result in a failed sync but may require manual intervention. You can see the issues for a given sync by providing `issues` to the `expand` parameter.",
           items: {
-            type: "string",
-            title: "IssueId",
-            format: "ulid",
+            title: "ExpandableIssue",
             example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+            oneOf: [
+              {
+                type: "string",
+                title: "IssueId",
+                format: "ulid",
+                pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
+                example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+              },
+              {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "string",
+                    title: "IssueId",
+                    format: "ulid",
+                    pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                },
+                required: ["id"],
+              },
+            ],
+            description:
+              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
           },
         },
         startFrom: {
@@ -324,6 +382,17 @@ export const commands: Command[] = [
           description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
         },
         attempts: { type: "number", example: 1 },
+        providerRequests: {
+          type: "array",
+          description:
+            "Provider requests attached to this sync. When non-empty, the sync is waiting on an out-of-band step on the provider's side (e.g. the provider manually delivering historical files, or credentials being provisioned) and may legitimately stay in progress for an extended period.",
+          example: ["historical_files"],
+          items: {
+            type: "string",
+            title: "Sync Provider Request Type",
+            enum: ["historical_files", "provision_credentials"],
+          },
+        },
         requestedAt: {
           type: "string",
           title: "ISODateTime",
@@ -366,6 +435,7 @@ export const commands: Command[] = [
           type: "string",
           title: "SyncId",
           format: "ulid",
+          pattern: "^sync_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
         },
         message: { type: "string", example: "Sync retry requested" },
@@ -394,6 +464,7 @@ export const commands: Command[] = [
           type: "string",
           title: "SyncId",
           format: "ulid",
+          pattern: "^sync_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "sync_01GV12VR4DJP70GD1ZBK0SDWFH",
         },
         message: { type: "string", example: "Sync cancellation requested" },
@@ -461,6 +532,8 @@ export const commands: Command[] = [
           description: "Any returned headers from the passthrough request.",
         },
         response: {
+          example: { reportId: "1234" },
+          description: "The response body from the passthrough request",
           title: "JSON Value",
           oneOf: [
             { type: "object" },

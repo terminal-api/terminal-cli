@@ -109,3 +109,23 @@ export function filterResults(context: TuiContext): void {
     titleDisplay.content = `${cmdName} (${state.filteredResults?.length ?? 0} items)${connectionsHint}`;
   }
 }
+
+export function navigateDetailItem(context: TuiContext, delta: -1 | 1): boolean {
+  const { state, components } = context;
+  const results = state.filteredResults;
+
+  if (!results || results.length === 0) {
+    return false;
+  }
+
+  const nextIndex = state.selectedResultIndex + delta;
+  if (nextIndex < 0 || nextIndex >= results.length) {
+    return false;
+  }
+
+  state.selectedResultIndex = nextIndex;
+  state.selectedItem = results[nextIndex] as Record<string, unknown>;
+  components.resultsSelect.setSelectedIndex(nextIndex);
+
+  return true;
+}

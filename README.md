@@ -199,6 +199,9 @@ bun test
 # Build
 bun run build
 
+# Install dependencies for VS Code/etc.
+bun install
+
 # Link to use globally
 bun link
 ```

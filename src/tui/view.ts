@@ -61,6 +61,8 @@ export function updateStatusBar(context: TuiContext): void {
     }
   } else if (state.currentView === "detail") {
     hotkeys = [
+      { key: "←→", action: "prev/next" },
+      { key: "↑↓", action: "scroll" },
       { key: "i", action: "copy id" },
       { key: "c", action: "copy json" },
       { key: "esc", action: "back" },
@@ -213,12 +215,19 @@ export function updateView(context: TuiContext): void {
       }
     }
   } else if (state.currentView === "detail") {
-    titleDisplay.content = "Item Detail (Escape to go back)";
+    const total = state.filteredResults?.length ?? 0;
+    const position = total > 0 ? state.selectedResultIndex + 1 : 0;
+    titleDisplay.content =
+      total > 1 ? `Item Detail (${position}/${total})` : "Item Detail (Escape to go back)";
     detailContainer.visible = true;
 
     if (state.selectedItem) {
       detailPanel.content = formatDetail(state.selectedItem);
+      detailContainer.scrollTop = 0;
     }
+
+    resultsSelect.blur();
+    setTimeout(() => detailContainer.focus(), 10);
   }
 
   updateStatusBar(context);
