@@ -8,6 +8,7 @@ import type {
 } from "@opentui/core";
 import type { TerminalClient } from "../lib/client.ts";
 import type { AppState } from "./state.ts";
+import type { ArgsCache } from "./args-cache.ts";
 
 export interface UiComponents {
   commandSelect: SelectRenderable;
@@ -37,5 +38,6 @@ export interface TuiContext {
   client: TerminalClient;
   state: AppState;
   components: UiComponents;
+  argsCache: ArgsCache;
   currentProfileName?: string;
 }

@@ -2,6 +2,7 @@ import type { Command } from "../../generated/index.ts";
 import { ClientError } from "../lib/client.ts";
 import type { ErrorInfo } from "./state.ts";
 import type { TuiContext } from "./types.ts";
+import { saveArgsToCache } from "./args-cache.ts";
 import { updateStatusBar, updateView } from "./view.ts";
 
 export async function executeCommand(context: TuiContext, cmd: Command): Promise<void> {
@@ -25,6 +26,7 @@ export async function executeCommand(context: TuiContext, cmd: Command): Promise
 
   try {
     const args: Record<string, unknown> = { ...state.collectedArgs };
+    saveArgsToCache(context.argsCache, cmd, state.collectedArgs);
     const result = await cmd.handler(client, args);
 
     if (result && typeof result === "object" && "results" in result) {

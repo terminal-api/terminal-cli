@@ -9,6 +9,7 @@ import { findCommandByName, filterCommandOptions } from "./commands.ts";
 import { executeCommand } from "./actions.ts";
 import {
   cancelArgsFlow,
+  clearSavedArgsForCommand,
   handleOptionalListSelection,
   initArgsStateForCommand,
   isUnsetEnumValue,
@@ -16,6 +17,7 @@ import {
   submitActiveArg,
 } from "./args.ts";
 import { setActiveConnection } from "./connection.ts";
+import { hasCachedArgs } from "./args-cache.ts";
 import { filterResults, navigateDetailItem } from "./results.ts";
 import { updateStatusBar, updateView } from "./view.ts";
 import { copyToClipboard } from "./detail.ts";
@@ -68,7 +70,7 @@ function bindComponentHandlers(context: TuiContext): void {
 
     state.selectedCommand = cmd;
     state.error = null;
-    initArgsStateForCommand(state, cmd);
+    initArgsStateForCommand(state, cmd, context.argsCache);
 
     if (shouldPromptForArgs(cmd)) {
       state.currentView = "args";
@@ -101,6 +103,12 @@ function bindComponentHandlers(context: TuiContext): void {
   optionalArgsSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option) => {
     state.optionalArgIndex = index;
     const selection = handleOptionalListSelection(state, option.value);
+    if (selection.clearSaved && state.selectedCommand) {
+      clearSavedArgsForCommand(state, state.selectedCommand, context.argsCache);
+      updateView(context);
+      updateStatusBar(context);
+      return;
+    }
     if (selection.submit && state.selectedCommand) {
       void executeCommand(context, state.selectedCommand);
       return;
@@ -184,6 +192,20 @@ function setupKeyHandlers(context: TuiContext): void {
       state.selectedCommand
     ) {
       void executeCommand(context, state.selectedCommand);
+      return;
+    }
+
+    if (
+      key.name === "d" &&
+      state.currentView === "args" &&
+      state.argsPhase === "optional-list" &&
+      optionalArgsSelect.focused &&
+      state.selectedCommand &&
+      hasCachedArgs(context.argsCache, state.selectedCommand.name)
+    ) {
+      clearSavedArgsForCommand(state, state.selectedCommand, context.argsCache);
+      updateView(context);
+      updateStatusBar(context);
       return;
     }
 

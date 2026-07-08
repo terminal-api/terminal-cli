@@ -1,6 +1,7 @@
 import { StyledText, dim, white } from "@opentui/core";
 import type { TuiContext } from "./types.ts";
 import { isConnectionsView } from "./constants.ts";
+import { hasCachedArgs } from "./args-cache.ts";
 import { getOptionalArgs, getRequiredArgs, updateArgsView } from "./args.ts";
 import { resultsToOptions } from "./results.ts";
 import { formatDetail } from "./detail.ts";
@@ -46,6 +47,9 @@ export function updateStatusBar(context: TuiContext): void {
         { key: "esc", action: "cancel" },
         { key: "ctrl+c", action: "quit" },
       ];
+      if (state.selectedCommand && hasCachedArgs(context.argsCache, state.selectedCommand.name)) {
+        hotkeys.splice(1, 0, { key: "d", action: "clear saved" });
+      }
     } else if (state.argsPhase === "optional-edit") {
       hotkeys = [
         { key: "enter", action: "save" },
@@ -163,7 +167,7 @@ export function updateView(context: TuiContext): void {
     const optionalArgs = state.selectedCommand ? getOptionalArgs(state.selectedCommand) : [];
 
     argsContainer.visible = true;
-    updateArgsView(state, components);
+    updateArgsView(state, components, context.argsCache);
 
     if (state.argsPhase === "required") {
       titleDisplay.content = `${cmdName} - Required ${state.currentArgIndex + 1}/${Math.max(1, requiredArgs.length)}`;
