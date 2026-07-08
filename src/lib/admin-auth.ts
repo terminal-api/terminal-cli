@@ -5,6 +5,10 @@ const GOOGLE_OAUTH_SCOPE = "openid email profile";
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const OAUTH_CALLBACK_PATH = "/oauth/callback";
+// Fixed port so the exact redirect URI (http://127.0.0.1:8484/oauth/callback)
+// can be registered on the Google OAuth client. Google requires exact-match
+// redirect URIs for web application clients, so a random port cannot work.
+const DEFAULT_OAUTH_CALLBACK_PORT = 8484;
 const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 const TOKEN_EXPIRY_BUFFER_MS = 60 * 1000;
 interface GoogleTokenResponse {
@@ -62,7 +66,10 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-async function createPkcePair(): Promise<{ verifier: string; challenge: string }> {
+async function createPkcePair(): Promise<{
+  verifier: string;
+  challenge: string;
+}> {
   const random = new Uint8Array(32);
   crypto.getRandomValues(random);
   const verifier = base64UrlEncode(random);
@@ -253,8 +260,12 @@ export async function loginWithGoogle(
     rejectCallback = reject;
   });
 
+  const callbackPort = Number(
+    process.env["TERMINAL_ADMIN_OAUTH_CALLBACK_PORT"] ?? DEFAULT_OAUTH_CALLBACK_PORT,
+  );
+
   const server = Bun.serve({
-    port: 0,
+    port: callbackPort,
     fetch(req) {
       const url = new URL(req.url);
       if (url.pathname !== OAUTH_CALLBACK_PATH) {
