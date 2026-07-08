@@ -105,6 +105,13 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Artifact downloads strip execute bits; restore them before smoke test / pack
+  if (process.platform !== "win32") {
+    for (const dirName of platformDirs) {
+      await $`chmod -R 755 ${join(DIST_DIR, dirName)}`.quiet();
+    }
+  }
+
   // Smoke test: run the binary for current platform
   const currentPlatform = process.platform === "win32" ? "windows" : process.platform;
   const currentBinaryDir = `terminal-${currentPlatform}-${process.arch}`;
@@ -120,8 +127,9 @@ async function main(): Promise<void> {
     try {
       await $`${currentBinaryPath} --version`;
       console.log("Smoke test passed!\n");
-    } catch {
+    } catch (err) {
       console.error("Smoke test failed!");
+      console.error(err);
       process.exit(1);
     }
   } else {
@@ -144,10 +152,6 @@ async function main(): Promise<void> {
 
     if (!dryRun) {
       try {
-        // Make binaries executable on Unix
-        if (process.platform !== "win32") {
-          await $`chmod -R 755 ${pkgDir}`.quiet();
-        }
         // Pack and publish
         await $`bun pm pack`.cwd(pkgDir).quiet();
         publishTarball(pkgDir, tag, otp);
