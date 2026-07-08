@@ -9,6 +9,7 @@ import { findCommandByName, filterCommandOptions } from "./commands.ts";
 import { executeCommand } from "./actions.ts";
 import {
   cancelArgsFlow,
+  clearSavedArgsForCommand,
   handleOptionalListSelection,
   initArgsStateForCommand,
   isUnsetEnumValue,
@@ -16,7 +17,8 @@ import {
   submitActiveArg,
 } from "./args.ts";
 import { setActiveConnection } from "./connection.ts";
-import { filterResults } from "./results.ts";
+import { hasCachedArgs } from "./args-cache.ts";
+import { filterResults, navigateDetailItem } from "./results.ts";
 import { updateStatusBar, updateView } from "./view.ts";
 import { copyToClipboard } from "./detail.ts";
 import { isConnectionsView } from "./constants.ts";
@@ -68,7 +70,7 @@ function bindComponentHandlers(context: TuiContext): void {
 
     state.selectedCommand = cmd;
     state.error = null;
-    initArgsStateForCommand(state, cmd);
+    initArgsStateForCommand(state, cmd, context.argsCache, context.argsCacheScopeKey);
 
     if (shouldPromptForArgs(cmd)) {
       state.currentView = "args";
@@ -101,6 +103,17 @@ function bindComponentHandlers(context: TuiContext): void {
   optionalArgsSelect.on(SelectRenderableEvents.ITEM_SELECTED, (index: number, option) => {
     state.optionalArgIndex = index;
     const selection = handleOptionalListSelection(state, option.value);
+    if (selection.clearSaved && state.selectedCommand) {
+      clearSavedArgsForCommand(
+        state,
+        state.selectedCommand,
+        context.argsCache,
+        context.argsCacheScopeKey,
+      );
+      updateView(context);
+      updateStatusBar(context);
+      return;
+    }
     if (selection.submit && state.selectedCommand) {
       void executeCommand(context, state.selectedCommand);
       return;
@@ -187,6 +200,25 @@ function setupKeyHandlers(context: TuiContext): void {
       return;
     }
 
+    if (
+      key.name === "d" &&
+      state.currentView === "args" &&
+      state.argsPhase === "optional-list" &&
+      optionalArgsSelect.focused &&
+      state.selectedCommand &&
+      hasCachedArgs(context.argsCache, context.argsCacheScopeKey, state.selectedCommand)
+    ) {
+      clearSavedArgsForCommand(
+        state,
+        state.selectedCommand,
+        context.argsCache,
+        context.argsCacheScopeKey,
+      );
+      updateView(context);
+      updateStatusBar(context);
+      return;
+    }
+
     if (key.name === "return" && state.currentView === "args" && argInput.focused) {
       handleArgSubmit(context, argInput.value);
       return;
@@ -205,6 +237,16 @@ function setupKeyHandlers(context: TuiContext): void {
     }
 
     if (state.currentView === "detail" && state.selectedItem) {
+      if (key.name === "left" && navigateDetailItem(context, -1)) {
+        updateView(context);
+        return;
+      }
+
+      if (key.name === "right" && navigateDetailItem(context, 1)) {
+        updateView(context);
+        return;
+      }
+
       if (key.name === "c") {
         const jsonText = JSON.stringify(state.selectedItem, null, 2);
         void copyToClipboard(jsonText).then((success) => {

@@ -11,6 +11,7 @@ import * as groups from "./groups.ts";
 import * as hoursOfService from "./hours-of-service.ts";
 import * as ifta from "./ifta.ts";
 import * as issues from "./issues.ts";
+import * as link from "./link.ts";
 import * as providers from "./providers.ts";
 import * as safety from "./safety.ts";
 import * as trailers from "./trailers.ts";
@@ -31,6 +32,7 @@ export const allCommands = [
   ...hoursOfService.commands,
   ...ifta.commands,
   ...issues.commands,
+  ...link.commands,
   ...providers.commands,
   ...safety.commands,
   ...trailers.commands,
@@ -91,6 +93,11 @@ export const commandGroups = [
     commands: issues.commands,
   },
   {
+    name: "link",
+    description: link.tagDescription,
+    commands: link.commands,
+  },
+  {
     name: "providers",
     description: providers.tagDescription,
     commands: providers.commands,
@@ -128,6 +135,8 @@ export const commandGroups = [
  */
 export const commandNames = [
   "cancel-sync",
+  "create-short-link",
+  "delete-current-connection",
   "get-current-connection",
   "get-driver",
   "get-event-camera-media",

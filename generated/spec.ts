@@ -7,6 +7,8 @@
  */
 export const specOperationIds = [
   "cancelSync",
+  "createShortLink",
+  "deleteCurrentConnection",
   "getCurrentConnection",
   "getDriver",
   "getEventCameraMedia",
@@ -53,6 +55,8 @@ export type SpecOperationId = (typeof specOperationIds)[number];
  */
 export const expectedCommandNames = [
   "cancel-sync",
+  "create-short-link",
+  "delete-current-connection",
   "get-current-connection",
   "get-driver",
   "get-event-camera-media",

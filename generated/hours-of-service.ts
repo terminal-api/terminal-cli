@@ -109,7 +109,7 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description:
-          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time.",
+          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time. Each ID must use the `drv_` prefix.",
       },
       {
         name: "expand",
@@ -124,6 +124,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
     ],
     handler: list_hosavailable_time,
@@ -139,19 +140,44 @@ export const commands: Command[] = [
             properties: {
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               driver: {
-                type: "string",
-                title: "DriverId",
-                description: "Unique identifier for the driver in Terminal.",
-                format: "ulid",
+                description: "Reference to the driver for this log",
                 example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "DriverId",
+                    description: "Unique identifier for the driver in Terminal.",
+                    format: "ulid",
+                    pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Driver",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "DriverId",
+                        description: "Unique identifier for the driver in Terminal.",
+                        format: "ulid",
+                        pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                        example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
               },
               currentStatus: {
                 type: "string",
+                example: "driving",
+                description: "The current status of the driver",
                 enum: [
                   "off_duty",
                   "sleeper_bed",
@@ -162,6 +188,13 @@ export const commands: Command[] = [
                   "waiting_time",
                 ],
               },
+              currentStatusStartedAt: {
+                type: "string",
+                title: "ISODateTime",
+                format: "date-time",
+                example: "2021-01-06T03:24:53.000Z",
+                description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+              },
               availableTime: {
                 type: "object",
                 example: { cycle: 252000000, shift: 50400000, drive: 39600000, break: 28800000 },
@@ -169,27 +202,31 @@ export const commands: Command[] = [
                 properties: {
                   cycle: {
                     type: "integer",
+                    example: 252000000,
+                    description:
+                      "The total remaining time for the driver's current cycle (ex: 70 hours). Value is in milliseconds.",
                     title: "DurationInMS",
-                    example: 0,
-                    description: "Duration in MS",
                   },
                   shift: {
                     type: "integer",
+                    example: 50400000,
+                    description:
+                      "The total remaining time for the driver's current shift (ex: 14 hours). Value is in milliseconds.",
                     title: "DurationInMS",
-                    example: 0,
-                    description: "Duration in MS",
                   },
                   drive: {
                     type: "integer",
+                    example: 39600000,
+                    description:
+                      "The total remaining drive time for the driver's current shift (ex: 11 hours). Value is in milliseconds.",
                     title: "DurationInMS",
-                    example: 0,
-                    description: "Duration in MS",
                   },
                   break: {
                     type: "integer",
+                    example: 28800000,
+                    description:
+                      "The amount of time before the next break is required (ex: 8 hours). Value is in milliseconds.",
                     title: "DurationInMS",
-                    example: 0,
-                    description: "Duration in MS",
                   },
                 },
               },
@@ -273,7 +310,7 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description:
-          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time.",
+          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time. Each ID must use the `drv_` prefix.",
       },
       {
         name: "expand",
@@ -304,6 +341,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
     ],
     handler: list_hoslogs,
@@ -344,37 +382,106 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               driver: {
-                type: "string",
-                title: "DriverId",
-                description: "Unique identifier for the driver in Terminal.",
-                format: "ulid",
+                description: "Reference to the driver for this log",
                 example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "DriverId",
+                    description: "Unique identifier for the driver in Terminal.",
+                    format: "ulid",
+                    pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Driver",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "DriverId",
+                        description: "Unique identifier for the driver in Terminal.",
+                        format: "ulid",
+                        pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                        example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
               },
               vehicle: {
-                type: "string",
-                title: "VehicleId",
-                description: "Unique identifier for the vehicle in Terminal.",
-                format: "ulid",
+                description: "The vehicle the driver was driving when the log was recorded.",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "VehicleId",
+                    description: "Unique identifier for the vehicle in Terminal.",
+                    format: "ulid",
+                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Vehicle",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "VehicleId",
+                        description: "Unique identifier for the vehicle in Terminal.",
+                        format: "ulid",
+                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
               },
               codrivers: {
                 type: "array",
                 description: "Additional drivers that were included in the HOS log.",
                 items: {
-                  type: "string",
-                  title: "DriverId",
-                  description: "Unique identifier for the driver in Terminal.",
-                  format: "ulid",
                   example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  oneOf: [
+                    {
+                      type: "string",
+                      title: "DriverId",
+                      description: "Unique identifier for the driver in Terminal.",
+                      format: "ulid",
+                      pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                      example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                    },
+                    {
+                      type: "object",
+                      title: "Expanded Driver",
+                      properties: {
+                        id: {
+                          type: "string",
+                          title: "DriverId",
+                          description: "Unique identifier for the driver in Terminal.",
+                          format: "ulid",
+                          pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                          example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      required: ["id"],
+                    },
+                  ],
+                  description:
+                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               location: {
                 type: "object",
+                description: "Where the log was recorded",
                 title: "Coordinates",
                 properties: {
                   longitude: { type: "number", example: -122.4194155 },
@@ -531,7 +638,7 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description:
-          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time.",
+          "Comma separated list of driver IDs to filter for. Can filter up to 50 drivers at a time. Each ID must use the `drv_` prefix.",
       },
       {
         name: "raw",
@@ -539,6 +646,7 @@ export const commands: Command[] = [
         required: false,
         description:
           "Include raw responses used to normalize model. Used for debugging or accessing unique properties that are not unified.",
+        enum: ["true", "false"],
       },
       {
         name: "expand",
@@ -573,16 +681,40 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
+                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               driver: {
-                type: "string",
-                title: "DriverId",
-                description: "Unique identifier for the driver in Terminal.",
-                format: "ulid",
                 example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                oneOf: [
+                  {
+                    type: "string",
+                    title: "DriverId",
+                    description: "Unique identifier for the driver in Terminal.",
+                    format: "ulid",
+                    pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  {
+                    type: "object",
+                    title: "Expanded Driver",
+                    properties: {
+                      id: {
+                        type: "string",
+                        title: "DriverId",
+                        description: "Unique identifier for the driver in Terminal.",
+                        format: "ulid",
+                        pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
+                        example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                      },
+                    },
+                    required: ["id"],
+                  },
+                ],
+                description:
+                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               date: { type: "string", format: "date", example: "2021-01-06" },
               distances: {
@@ -592,26 +724,26 @@ export const commands: Command[] = [
                 properties: {
                   total: {
                     type: "number",
+                    description: "Total distance driven during this day in kilometers",
                     title: "Distance In Kilometers",
-                    description: "Distance in kilometers",
                     example: 100,
                   },
                   driving: {
                     type: "number",
+                    description: "Distance driven during driving",
                     title: "Distance In Kilometers",
-                    description: "Distance in kilometers",
                     example: 100,
                   },
                   personalConveyance: {
                     type: "number",
+                    description: "Distance driven during personal conveyance",
                     title: "Distance In Kilometers",
-                    description: "Distance in kilometers",
                     example: 100,
                   },
                   yardMove: {
                     type: "number",
+                    description: "Distance driven during yard moves",
                     title: "Distance In Kilometers",
-                    description: "Distance in kilometers",
                     example: 100,
                   },
                 },
@@ -621,44 +753,44 @@ export const commands: Command[] = [
                 properties: {
                   onDuty: {
                     type: "integer",
+                    example: 11252299,
                     title: "DurationInMS",
-                    example: 0,
                     description: "Duration in MS",
                   },
                   offDuty: {
                     type: "integer",
+                    example: 48478999,
                     title: "DurationInMS",
-                    example: 0,
                     description: "Duration in MS",
                   },
                   driving: {
                     type: "integer",
+                    example: 26668701,
                     title: "DurationInMS",
-                    example: 0,
                     description: "Duration in MS",
                   },
                   waiting: {
                     type: "integer",
+                    example: 232322,
                     title: "DurationInMS",
-                    example: 0,
                     description: "Duration in MS",
                   },
                   sleeperBed: {
                     type: "integer",
+                    example: 2300000,
                     title: "DurationInMS",
-                    example: 0,
                     description: "Duration in MS",
                   },
                   personalConveyance: {
                     type: "integer",
+                    example: 500000,
                     title: "DurationInMS",
-                    example: 0,
                     description: "Duration in MS",
                   },
                   yardMove: {
                     type: "integer",
+                    example: 62000,
                     title: "DurationInMS",
-                    example: 0,
                     description: "Duration in MS",
                   },
                 },

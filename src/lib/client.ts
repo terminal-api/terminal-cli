@@ -1,5 +1,6 @@
 import { loadConfig, type Config } from "./config.ts";
 import { isAdminFeatureEnabled, resolveAdminAccessToken } from "./admin-auth.ts";
+import { getCliVersion } from "./version.ts";
 
 export interface RequestOptions {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -103,8 +104,10 @@ export class TerminalClient {
     }
 
     // Build headers
+    const userAgent = await buildUserAgent();
     const requestHeaders: Record<string, string> = {
       "Content-Type": "application/json",
+      "User-Agent": userAgent,
       ...headers,
     };
 
@@ -304,4 +307,9 @@ function getRetryDelayMs(attempt: number): number {
 
 function sleep(delayMs: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+async function buildUserAgent(): Promise<string> {
+  const { version } = await getCliVersion();
+  return `terminal-cli/${version}`;
 }

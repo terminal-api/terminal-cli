@@ -3,6 +3,8 @@ import { TerminalClient } from "../lib/client.ts";
 import { loadConfig, saveConfig } from "../lib/config.ts";
 import type { TuiContext } from "./types.ts";
 import { formatDate, sidebarSection } from "./format.ts";
+import { cancelArgsFlow } from "./args.ts";
+import { getConnectionScopeKey } from "./args-cache.ts";
 
 function safeString(val: unknown): string {
   if (val === null || val === undefined) return "N/A";
@@ -84,10 +86,14 @@ export function setActiveConnection(
 
   const newConfig = loadConfig(context.currentProfileName);
   context.client = new TerminalClient(newConfig);
+  context.argsCacheScopeKey = getConnectionScopeKey(token);
 
   context.state.connectionInfo = connection;
   updateConnectionDisplay(context);
   context.state.error = null;
+
+  cancelArgsFlow(context.state);
+  context.state.selectedCommand = null;
 
   const providerObj = connection["provider"] as Record<string, unknown> | undefined;
   const providerName = safeString(providerObj?.["name"]);

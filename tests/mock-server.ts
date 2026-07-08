@@ -5,6 +5,8 @@
 
 type BunServer = ReturnType<typeof Bun.serve>;
 
+export let lastRequestHeaders = new Headers();
+
 // Mock data based on OpenAPI spec schemas
 export const mockData = {
   vehicles: [
@@ -267,6 +269,7 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
     fetch(req) {
       const url = new URL(req.url);
       const path = url.pathname;
+      lastRequestHeaders = new Headers(req.headers);
 
       if (path === "/google/token") {
         for (const route of routes) {

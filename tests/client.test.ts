@@ -4,7 +4,8 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { isAdminSessionExpired, refreshAdminSession } from "../src/lib/admin-auth";
 import { TerminalClient, ClientError } from "../src/lib/client";
-import { createMockServer, getServerUrl, mockData } from "./mock-server";
+import { getCliVersion } from "../src/lib/version";
+import { createMockServer, getServerUrl, lastRequestHeaders, mockData } from "./mock-server";
 
 type BunServer = ReturnType<typeof Bun.serve>;
 
@@ -103,7 +104,6 @@ describe("TerminalClient", () => {
       const result = await client.get("/vehicles");
       expect(result).toBeDefined();
     });
-
     test("admin auth is disabled unless feature flag is enabled", async () => {
       delete process.env.TERMINAL_ENABLE_ADMIN;
 
@@ -200,6 +200,19 @@ describe("TerminalClient", () => {
       return expect(client.get("/debug/headers", undefined, false)).rejects.toThrow(
         "Application ID is required for admin mode",
       );
+    });
+
+    test("sets a versioned user agent on requests", async () => {
+      const client = new TerminalClient({
+        apiKey: "test-api-key",
+        baseUrl,
+        connectionToken: "test-token",
+      });
+      const { version } = await getCliVersion();
+
+      await client.get("/vehicles");
+
+      expect(lastRequestHeaders.get("User-Agent")).toBe(`terminal-cli/${version}`);
     });
   });
 

@@ -41,7 +41,7 @@ export function createArgsInput(
   const optionalArgsSelect = new SelectRenderable(renderer, {
     id: "optional-args-select",
     width: "100%",
-    height: theme.sizes.enumListHeight,
+    flexGrow: 1,
     options: [],
     backgroundColor: theme.colors.panelBackground,
     focusedBackgroundColor: theme.colors.panelFocusedBackground,
@@ -50,7 +50,10 @@ export function createArgsInput(
     selectedBackgroundColor: theme.colors.selectionBlue,
     selectedTextColor: theme.colors.textBright,
     descriptionColor: theme.colors.textMuted,
+    selectedDescriptionColor: theme.colors.textPrimary,
     showDescription: true,
+    showScrollIndicator: true,
+    wrapSelection: true,
     visible: false,
   });
   argsContainer.add(optionalArgsSelect);

@@ -27,6 +27,7 @@ import {
   generateZshCompletions,
   generateFishCompletions,
 } from "./lib/completions.ts";
+import { getCliVersion } from "./lib/version.ts";
 import { startTui } from "./tui/app.ts";
 
 interface GlobalOptions {
@@ -36,21 +37,6 @@ interface GlobalOptions {
   profile?: string;
   all?: boolean;
 }
-
-async function getCliVersion(): Promise<{ name: string; version: string }> {
-  try {
-    const pkgUrl = new URL("../package.json", import.meta.url);
-    const pkgText = await Bun.file(pkgUrl).text();
-    const pkg = JSON.parse(pkgText) as { name?: string; version?: string };
-    return {
-      name: pkg.name ?? "terminal-cli",
-      version: pkg.version ?? "unknown",
-    };
-  } catch {
-    return { name: "terminal-cli", version: "unknown" };
-  }
-}
-
 function maskSecret(value: string | undefined, visibleChars: number): string | undefined {
   if (!value) {
     return undefined;
@@ -97,7 +83,6 @@ function showUnknownConfigKey(key: string): never {
   printInfo(`Available keys: ${getAvailableConfigKeys()}`);
   process.exit(1);
 }
-
 function showCommandHelp(cmd: ApiCommand): void {
   console.log(`
 \x1b[1m${cmd.name}\x1b[0m - ${cmd.description}

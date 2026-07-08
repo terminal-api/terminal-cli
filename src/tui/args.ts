@@ -2,8 +2,16 @@ import type { SelectOption } from "@opentui/core";
 import type { Command, CommandArg } from "../../generated/index.ts";
 import type { AppState } from "./state.ts";
 import type { UiComponents } from "./types.ts";
+import {
+  clearCachedArgs,
+  getCachedArgs,
+  getEditableArgs,
+  hasCachedArgs,
+  type ArgsCache,
+} from "./args-cache.ts";
 
 const SUBMIT_OPTION_VALUE = "__submit__";
+const CLEAR_SAVED_OPTION_VALUE = "__clear_saved__";
 const UNSET_OPTION_VALUE = "__unset__";
 
 export function getRequiredArgs(cmd: Command): CommandArg[] {
@@ -18,14 +26,47 @@ export function shouldPromptForArgs(cmd: Command): boolean {
   return cmd.args.length > 0;
 }
 
-export function initArgsStateForCommand(state: AppState, cmd: Command): void {
+export function initArgsStateForCommand(
+  state: AppState,
+  cmd: Command,
+  cache: ArgsCache,
+  scopeKey: string,
+): void {
+  state.collectedArgs = getCachedArgs(cache, scopeKey, cmd);
+  state.optionalArgIndex = 0;
+  state.editingOptionalArgName = null;
+
+  const requiredArgs = getRequiredArgs(cmd);
+  if (requiredArgs.length === 0) {
+    state.argsPhase = "optional-list";
+    state.currentArgIndex = 0;
+    return;
+  }
+
+  const firstMissingIndex = requiredArgs.findIndex((arg) => !(arg.name in state.collectedArgs));
+  if (firstMissingIndex === -1) {
+    state.argsPhase = "optional-list";
+    state.currentArgIndex = requiredArgs.length - 1;
+  } else {
+    state.argsPhase = "required";
+    state.currentArgIndex = firstMissingIndex;
+  }
+}
+
+export function clearSavedArgsForCommand(
+  state: AppState,
+  cmd: Command,
+  cache: ArgsCache,
+  scopeKey: string,
+): void {
+  clearCachedArgs(cache, scopeKey, cmd);
   state.collectedArgs = {};
-  state.currentArgIndex = 0;
   state.optionalArgIndex = 0;
   state.editingOptionalArgName = null;
 
   const requiredArgs = getRequiredArgs(cmd);
   state.argsPhase = requiredArgs.length > 0 ? "required" : "optional-list";
+  state.currentArgIndex = 0;
 }
 
 export function cancelArgsFlow(state: AppState): void {
@@ -48,7 +89,11 @@ export function getActiveArg(state: AppState): CommandArg | null {
   }
 
   if (state.argsPhase === "optional-edit" && state.editingOptionalArgName) {
-    return optionalArgs.find((arg) => arg.name === state.editingOptionalArgName) ?? null;
+    return (
+      requiredArgs.find((arg) => arg.name === state.editingOptionalArgName) ??
+      optionalArgs.find((arg) => arg.name === state.editingOptionalArgName) ??
+      null
+    );
   }
 
   return null;
@@ -69,6 +114,17 @@ function stringifyExistingValue(value: unknown): string {
   } catch {
     return "[unserializable]";
   }
+}
+
+export function formatCollectedArgValue(value: unknown, maxLength = 48): string {
+  const str = stringifyExistingValue(value);
+  if (!str) {
+    return "";
+  }
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return `${str.slice(0, maxLength - 1)}…`;
 }
 
 function buildArgLabelContent(params: {
@@ -110,7 +166,13 @@ function buildOptionalListLabelContent(params: {
     requiredArgs.length === 0
       ? "(none)"
       : requiredArgs
-          .map((arg) => (arg.name in state.collectedArgs ? `${arg.name} ✓` : `${arg.name} ✗`))
+          .map((arg) => {
+            if (!(arg.name in state.collectedArgs)) {
+              return `${arg.name} ✗`;
+            }
+            const preview = formatCollectedArgValue(state.collectedArgs[arg.name]);
+            return preview ? `${arg.name}=${preview}` : `${arg.name} ✓`;
+          })
           .join(", ");
 
   const optionalSummary =
@@ -120,11 +182,28 @@ function buildOptionalListLabelContent(params: {
     `Required: ${requiredSummary}`,
     `Optional: ${optionalSummary}`,
     "",
-    "Select an optional field to set, or choose Submit.",
+    "Select a field to edit, Submit to run, or Clear saved values.",
   ].join("\n");
 }
 
-function buildOptionalArgsOptions(cmd: Command, state: AppState): SelectOption[] {
+function buildArgSelectOption(arg: CommandArg, state: AppState): SelectOption {
+  const hasValue = arg.name in state.collectedArgs;
+  const preview = hasValue ? formatCollectedArgValue(state.collectedArgs[arg.name]) : "";
+  const requiredSuffix = arg.required ? " (required)" : "";
+
+  return {
+    name: hasValue ? `${arg.name} ✓${requiredSuffix}` : `${arg.name}${requiredSuffix}`,
+    description: preview || arg.description || "",
+    value: arg.name,
+  };
+}
+
+export function buildOptionalArgsOptions(
+  cmd: Command,
+  state: AppState,
+  cache: ArgsCache,
+  scopeKey: string,
+): SelectOption[] {
   const options: SelectOption[] = [
     {
       name: "Submit",
@@ -133,21 +212,27 @@ function buildOptionalArgsOptions(cmd: Command, state: AppState): SelectOption[]
     },
   ];
 
-  const optionalArgs = getOptionalArgs(cmd);
+  for (const arg of getEditableArgs(cmd)) {
+    options.push(buildArgSelectOption(arg, state));
+  }
 
-  for (const arg of optionalArgs) {
-    const hasValue = arg.name in state.collectedArgs;
+  if (hasCachedArgs(cache, scopeKey, cmd)) {
     options.push({
-      name: hasValue ? `${arg.name} ✓` : arg.name,
-      description: arg.description || "",
-      value: arg.name,
+      name: "Clear saved values",
+      description: "Forget cached inputs for this command (d)",
+      value: CLEAR_SAVED_OPTION_VALUE,
     });
   }
 
   return options;
 }
 
-export function updateArgsView(state: AppState, components: UiComponents): void {
+export function updateArgsView(
+  state: AppState,
+  components: UiComponents,
+  cache: ArgsCache,
+  scopeKey: string,
+): void {
   const cmd = state.selectedCommand;
   if (!cmd) return;
 
@@ -162,14 +247,14 @@ export function updateArgsView(state: AppState, components: UiComponents): void 
   if (state.argsPhase === "required") {
     if (requiredArgs.length === 0) {
       state.argsPhase = "optional-list";
-      updateArgsView(state, components);
+      updateArgsView(state, components, cache, scopeKey);
       return;
     }
 
     const currentArg = requiredArgs[state.currentArgIndex];
     if (!currentArg) {
       state.argsPhase = "optional-list";
-      updateArgsView(state, components);
+      updateArgsView(state, components, cache, scopeKey);
       return;
     }
 
@@ -185,16 +270,20 @@ export function updateArgsView(state: AppState, components: UiComponents): void 
   }
 
   if (state.argsPhase === "optional-list") {
+    argInput.blur();
+    argEnumSelect.blur();
+    argInput.value = "";
+
     argLabel.content = buildOptionalListLabelContent({ requiredArgs, optionalArgs, state });
 
-    const options = buildOptionalArgsOptions(cmd, state);
+    const options = buildOptionalArgsOptions(cmd, state, cache, scopeKey);
     optionalArgsSelect.options = options;
     optionalArgsSelect.visible = true;
 
     const maxIndex = Math.max(0, options.length - 1);
     state.optionalArgIndex = Math.max(0, Math.min(state.optionalArgIndex, maxIndex));
     optionalArgsSelect.setSelectedIndex(state.optionalArgIndex);
-    optionalArgsSelect.focus();
+    setTimeout(() => optionalArgsSelect.focus(), 10);
     return;
   }
 
@@ -203,7 +292,7 @@ export function updateArgsView(state: AppState, components: UiComponents): void 
     if (!currentArg) {
       state.argsPhase = "optional-list";
       state.editingOptionalArgName = null;
-      updateArgsView(state, components);
+      updateArgsView(state, components, cache, scopeKey);
       return;
     }
 
@@ -219,7 +308,9 @@ export function updateArgsView(state: AppState, components: UiComponents): void 
 }
 
 function showArgEditor(state: AppState, components: UiComponents, arg: CommandArg): void {
-  const { argInput, argEnumSelect } = components;
+  const { argInput, argEnumSelect, optionalArgsSelect } = components;
+
+  optionalArgsSelect.blur();
 
   const existingValue = state.collectedArgs[arg.name];
 
@@ -255,7 +346,7 @@ function showArgEditor(state: AppState, components: UiComponents, arg: CommandAr
 
   argEnumSelect.visible = false;
   argInput.visible = true;
-  argInput.value = state.argsPhase === "optional-edit" ? stringifyExistingValue(existingValue) : "";
+  argInput.value = stringifyExistingValue(existingValue);
   argInput.focus();
 }
 
@@ -342,6 +433,10 @@ export function submitActiveArg(state: AppState, rawValue: string): SubmitResult
   }
 
   if (state.argsPhase === "optional-edit") {
+    if (arg.required && parsed.value === undefined) {
+      return { kind: "error", message: `${arg.name} is required` };
+    }
+
     if (parsed.value === undefined) {
       delete state.collectedArgs[arg.name];
     } else {
@@ -361,9 +456,14 @@ export function handleOptionalListSelection(
   optionValue: unknown,
 ): {
   submit: boolean;
+  clearSaved: boolean;
 } {
   if (optionValue === SUBMIT_OPTION_VALUE) {
-    return { submit: true };
+    return { submit: true, clearSaved: false };
+  }
+
+  if (optionValue === CLEAR_SAVED_OPTION_VALUE) {
+    return { submit: false, clearSaved: true };
   }
 
   if (typeof optionValue === "string") {
@@ -371,7 +471,7 @@ export function handleOptionalListSelection(
     state.editingOptionalArgName = optionValue;
   }
 
-  return { submit: false };
+  return { submit: false, clearSaved: false };
 }
 
 export function isUnsetEnumValue(value: unknown): boolean {

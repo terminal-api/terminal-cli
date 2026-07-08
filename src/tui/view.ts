@@ -1,6 +1,7 @@
 import { StyledText, dim, white } from "@opentui/core";
 import type { TuiContext } from "./types.ts";
 import { isConnectionsView } from "./constants.ts";
+import { hasCachedArgs } from "./args-cache.ts";
 import { getOptionalArgs, getRequiredArgs, updateArgsView } from "./args.ts";
 import { resultsToOptions } from "./results.ts";
 import { formatDetail } from "./detail.ts";
@@ -46,6 +47,12 @@ export function updateStatusBar(context: TuiContext): void {
         { key: "esc", action: "cancel" },
         { key: "ctrl+c", action: "quit" },
       ];
+      if (
+        state.selectedCommand &&
+        hasCachedArgs(context.argsCache, context.argsCacheScopeKey, state.selectedCommand)
+      ) {
+        hotkeys.splice(1, 0, { key: "d", action: "clear saved" });
+      }
     } else if (state.argsPhase === "optional-edit") {
       hotkeys = [
         { key: "enter", action: "save" },
@@ -61,6 +68,8 @@ export function updateStatusBar(context: TuiContext): void {
     }
   } else if (state.currentView === "detail") {
     hotkeys = [
+      { key: "←→", action: "prev/next" },
+      { key: "↑↓", action: "scroll" },
       { key: "i", action: "copy id" },
       { key: "c", action: "copy json" },
       { key: "esc", action: "back" },
@@ -161,7 +170,7 @@ export function updateView(context: TuiContext): void {
     const optionalArgs = state.selectedCommand ? getOptionalArgs(state.selectedCommand) : [];
 
     argsContainer.visible = true;
-    updateArgsView(state, components);
+    updateArgsView(state, components, context.argsCache, context.argsCacheScopeKey);
 
     if (state.argsPhase === "required") {
       titleDisplay.content = `${cmdName} - Required ${state.currentArgIndex + 1}/${Math.max(1, requiredArgs.length)}`;
@@ -213,12 +222,19 @@ export function updateView(context: TuiContext): void {
       }
     }
   } else if (state.currentView === "detail") {
-    titleDisplay.content = "Item Detail (Escape to go back)";
+    const total = state.filteredResults?.length ?? 0;
+    const position = total > 0 ? state.selectedResultIndex + 1 : 0;
+    titleDisplay.content =
+      total > 1 ? `Item Detail (${position}/${total})` : "Item Detail (Escape to go back)";
     detailContainer.visible = true;
 
     if (state.selectedItem) {
       detailPanel.content = formatDetail(state.selectedItem);
+      detailContainer.scrollTop = 0;
     }
+
+    resultsSelect.blur();
+    setTimeout(() => detailContainer.focus(), 10);
   }
 
   updateStatusBar(context);

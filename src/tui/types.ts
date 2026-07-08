@@ -3,10 +3,12 @@ import type {
   TextRenderable,
   SelectRenderable,
   InputRenderable,
+  ScrollBoxRenderable,
   CliRenderer,
 } from "@opentui/core";
 import type { TerminalClient } from "../lib/client.ts";
 import type { AppState } from "./state.ts";
+import type { ArgsCache } from "./args-cache.ts";
 
 export interface UiComponents {
   commandSelect: SelectRenderable;
@@ -17,7 +19,7 @@ export interface UiComponents {
   connectionDisplay: TextRenderable;
   titleDisplay: TextRenderable;
   detailPanel: TextRenderable;
-  detailContainer: BoxRenderable;
+  detailContainer: ScrollBoxRenderable;
   argsContainer: BoxRenderable;
   argLabel: TextRenderable;
   argInput: InputRenderable;
@@ -36,5 +38,8 @@ export interface TuiContext {
   client: TerminalClient;
   state: AppState;
   components: UiComponents;
+  argsCache: ArgsCache;
+  /** Active connection token scope for args cache (see resolveArgsCacheScopeKey). */
+  argsCacheScopeKey: string;
   currentProfileName?: string;
 }
