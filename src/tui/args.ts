@@ -26,8 +26,13 @@ export function shouldPromptForArgs(cmd: Command): boolean {
   return cmd.args.length > 0;
 }
 
-export function initArgsStateForCommand(state: AppState, cmd: Command, cache: ArgsCache): void {
-  state.collectedArgs = getCachedArgs(cache, cmd);
+export function initArgsStateForCommand(
+  state: AppState,
+  cmd: Command,
+  cache: ArgsCache,
+  scopeKey: string,
+): void {
+  state.collectedArgs = getCachedArgs(cache, scopeKey, cmd);
   state.optionalArgIndex = 0;
   state.editingOptionalArgName = null;
 
@@ -48,8 +53,13 @@ export function initArgsStateForCommand(state: AppState, cmd: Command, cache: Ar
   }
 }
 
-export function clearSavedArgsForCommand(state: AppState, cmd: Command, cache: ArgsCache): void {
-  clearCachedArgs(cache, cmd.name);
+export function clearSavedArgsForCommand(
+  state: AppState,
+  cmd: Command,
+  cache: ArgsCache,
+  scopeKey: string,
+): void {
+  clearCachedArgs(cache, scopeKey, cmd);
   state.collectedArgs = {};
   state.optionalArgIndex = 0;
   state.editingOptionalArgName = null;
@@ -192,6 +202,7 @@ export function buildOptionalArgsOptions(
   cmd: Command,
   state: AppState,
   cache: ArgsCache,
+  scopeKey: string,
 ): SelectOption[] {
   const options: SelectOption[] = [
     {
@@ -205,7 +216,7 @@ export function buildOptionalArgsOptions(
     options.push(buildArgSelectOption(arg, state));
   }
 
-  if (hasCachedArgs(cache, cmd.name)) {
+  if (hasCachedArgs(cache, scopeKey, cmd)) {
     options.push({
       name: "Clear saved values",
       description: "Forget cached inputs for this command (d)",
@@ -216,7 +227,12 @@ export function buildOptionalArgsOptions(
   return options;
 }
 
-export function updateArgsView(state: AppState, components: UiComponents, cache: ArgsCache): void {
+export function updateArgsView(
+  state: AppState,
+  components: UiComponents,
+  cache: ArgsCache,
+  scopeKey: string,
+): void {
   const cmd = state.selectedCommand;
   if (!cmd) return;
 
@@ -231,14 +247,14 @@ export function updateArgsView(state: AppState, components: UiComponents, cache:
   if (state.argsPhase === "required") {
     if (requiredArgs.length === 0) {
       state.argsPhase = "optional-list";
-      updateArgsView(state, components, cache);
+      updateArgsView(state, components, cache, scopeKey);
       return;
     }
 
     const currentArg = requiredArgs[state.currentArgIndex];
     if (!currentArg) {
       state.argsPhase = "optional-list";
-      updateArgsView(state, components, cache);
+      updateArgsView(state, components, cache, scopeKey);
       return;
     }
 
@@ -260,7 +276,7 @@ export function updateArgsView(state: AppState, components: UiComponents, cache:
 
     argLabel.content = buildOptionalListLabelContent({ requiredArgs, optionalArgs, state });
 
-    const options = buildOptionalArgsOptions(cmd, state, cache);
+    const options = buildOptionalArgsOptions(cmd, state, cache, scopeKey);
     optionalArgsSelect.options = options;
     optionalArgsSelect.visible = true;
 
@@ -276,7 +292,7 @@ export function updateArgsView(state: AppState, components: UiComponents, cache:
     if (!currentArg) {
       state.argsPhase = "optional-list";
       state.editingOptionalArgName = null;
-      updateArgsView(state, components, cache);
+      updateArgsView(state, components, cache, scopeKey);
       return;
     }
 

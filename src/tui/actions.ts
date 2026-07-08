@@ -26,7 +26,7 @@ export async function executeCommand(context: TuiContext, cmd: Command): Promise
 
   try {
     const args: Record<string, unknown> = { ...state.collectedArgs };
-    saveArgsToCache(context.argsCache, cmd, state.collectedArgs);
+    saveArgsToCache(context.argsCache, context.argsCacheScopeKey, cmd, state.collectedArgs);
     const result = await cmd.handler(client, args);
 
     if (result && typeof result === "object" && "results" in result) {

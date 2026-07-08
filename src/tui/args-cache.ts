@@ -9,6 +9,20 @@ export function createArgsCache(): ArgsCache {
   return new Map();
 }
 
+function scopedCacheKey(scopeKey: string, commandName: string): string {
+  return `${scopeKey}\0${commandName}`;
+}
+
+/** Scope key for the active connection token (empty when none is configured). */
+export function getConnectionScopeKey(connectionToken?: string): string {
+  return connectionToken ?? "";
+}
+
+/** Connection-scoped commands use the token; account-level commands use global scope. */
+export function resolveArgsCacheScopeKey(cmd: Command, connectionScopeKey: string): string {
+  return cmd.requiresConnectionToken ? connectionScopeKey : "";
+}
+
 function isCacheableArg(arg: CommandArg): boolean {
   return !UNCACHEABLE_ARG_NAMES.has(arg.name);
 }
@@ -45,8 +59,13 @@ function isValidCachedValue(arg: CommandArg, value: unknown): boolean {
   return true;
 }
 
-export function getCachedArgs(cache: ArgsCache, cmd: Command): Record<string, unknown> {
-  const stored = cache.get(cmd.name);
+export function getCachedArgs(
+  cache: ArgsCache,
+  connectionScopeKey: string,
+  cmd: Command,
+): Record<string, unknown> {
+  const scopeKey = resolveArgsCacheScopeKey(cmd, connectionScopeKey);
+  const stored = cache.get(scopedCacheKey(scopeKey, cmd.name));
   if (!stored) {
     return {};
   }
@@ -67,6 +86,7 @@ export function getCachedArgs(cache: ArgsCache, cmd: Command): Record<string, un
 
 export function saveArgsToCache(
   cache: ArgsCache,
+  connectionScopeKey: string,
   cmd: Command,
   collectedArgs: Record<string, unknown>,
 ): void {
@@ -80,20 +100,25 @@ export function saveArgsToCache(
     toStore[name] = value;
   }
 
+  const scopeKey = resolveArgsCacheScopeKey(cmd, connectionScopeKey);
+  const key = scopedCacheKey(scopeKey, cmd.name);
+
   if (Object.keys(toStore).length === 0) {
-    cache.delete(cmd.name);
+    cache.delete(key);
     return;
   }
 
-  cache.set(cmd.name, toStore);
+  cache.set(key, toStore);
 }
 
-export function clearCachedArgs(cache: ArgsCache, commandName: string): void {
-  cache.delete(commandName);
+export function clearCachedArgs(cache: ArgsCache, connectionScopeKey: string, cmd: Command): void {
+  const scopeKey = resolveArgsCacheScopeKey(cmd, connectionScopeKey);
+  cache.delete(scopedCacheKey(scopeKey, cmd.name));
 }
 
-export function hasCachedArgs(cache: ArgsCache, commandName: string): boolean {
-  return cache.has(commandName);
+export function hasCachedArgs(cache: ArgsCache, connectionScopeKey: string, cmd: Command): boolean {
+  const scopeKey = resolveArgsCacheScopeKey(cmd, connectionScopeKey);
+  return cache.has(scopedCacheKey(scopeKey, cmd.name));
 }
 
 export function getEditableArgs(cmd: Command): CommandArg[] {

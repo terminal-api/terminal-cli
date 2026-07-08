@@ -47,7 +47,10 @@ export function updateStatusBar(context: TuiContext): void {
         { key: "esc", action: "cancel" },
         { key: "ctrl+c", action: "quit" },
       ];
-      if (state.selectedCommand && hasCachedArgs(context.argsCache, state.selectedCommand.name)) {
+      if (
+        state.selectedCommand &&
+        hasCachedArgs(context.argsCache, context.argsCacheScopeKey, state.selectedCommand)
+      ) {
         hotkeys.splice(1, 0, { key: "d", action: "clear saved" });
       }
     } else if (state.argsPhase === "optional-edit") {
@@ -167,7 +170,7 @@ export function updateView(context: TuiContext): void {
     const optionalArgs = state.selectedCommand ? getOptionalArgs(state.selectedCommand) : [];
 
     argsContainer.visible = true;
-    updateArgsView(state, components, context.argsCache);
+    updateArgsView(state, components, context.argsCache, context.argsCacheScopeKey);
 
     if (state.argsPhase === "required") {
       titleDisplay.content = `${cmdName} - Required ${state.currentArgIndex + 1}/${Math.max(1, requiredArgs.length)}`;

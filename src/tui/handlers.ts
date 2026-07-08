@@ -70,7 +70,7 @@ function bindComponentHandlers(context: TuiContext): void {
 
     state.selectedCommand = cmd;
     state.error = null;
-    initArgsStateForCommand(state, cmd, context.argsCache);
+    initArgsStateForCommand(state, cmd, context.argsCache, context.argsCacheScopeKey);
 
     if (shouldPromptForArgs(cmd)) {
       state.currentView = "args";
@@ -104,7 +104,12 @@ function bindComponentHandlers(context: TuiContext): void {
     state.optionalArgIndex = index;
     const selection = handleOptionalListSelection(state, option.value);
     if (selection.clearSaved && state.selectedCommand) {
-      clearSavedArgsForCommand(state, state.selectedCommand, context.argsCache);
+      clearSavedArgsForCommand(
+        state,
+        state.selectedCommand,
+        context.argsCache,
+        context.argsCacheScopeKey,
+      );
       updateView(context);
       updateStatusBar(context);
       return;
@@ -201,9 +206,14 @@ function setupKeyHandlers(context: TuiContext): void {
       state.argsPhase === "optional-list" &&
       optionalArgsSelect.focused &&
       state.selectedCommand &&
-      hasCachedArgs(context.argsCache, state.selectedCommand.name)
+      hasCachedArgs(context.argsCache, context.argsCacheScopeKey, state.selectedCommand)
     ) {
-      clearSavedArgsForCommand(state, state.selectedCommand, context.argsCache);
+      clearSavedArgsForCommand(
+        state,
+        state.selectedCommand,
+        context.argsCache,
+        context.argsCacheScopeKey,
+      );
       updateView(context);
       updateStatusBar(context);
       return;

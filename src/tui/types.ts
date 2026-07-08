@@ -39,5 +39,7 @@ export interface TuiContext {
   state: AppState;
   components: UiComponents;
   argsCache: ArgsCache;
+  /** Active connection token scope for args cache (see resolveArgsCacheScopeKey). */
+  argsCacheScopeKey: string;
   currentProfileName?: string;
 }

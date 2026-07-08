@@ -21,7 +21,7 @@ import { createErrorPanel } from "./components/error.ts";
 import type { TuiContext, UiComponents } from "./types.ts";
 import { setupHandlers } from "./handlers.ts";
 import { updateConnectionDisplay, fetchConnectionInfo } from "./connection.ts";
-import { createArgsCache } from "./args-cache.ts";
+import { createArgsCache, getConnectionScopeKey } from "./args-cache.ts";
 import { updateStatusBar, updateView } from "./view.ts";
 
 // Initialize the TUI
@@ -84,6 +84,7 @@ export async function startTui(profileName?: string): Promise<void> {
     state,
     components,
     argsCache: createArgsCache(),
+    argsCacheScopeKey: getConnectionScopeKey(config.connectionToken),
     currentProfileName: profileName,
   };
 

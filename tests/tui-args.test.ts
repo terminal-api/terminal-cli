@@ -34,7 +34,7 @@ describe("tui args flow", () => {
 
     const state = createInitialState();
     state.selectedCommand = cmd;
-    initArgsStateForCommand(state, cmd, createArgsCache());
+    initArgsStateForCommand(state, cmd, createArgsCache(), "");
 
     expect(state.argsPhase as string).toBe("optional-list");
   });
@@ -49,7 +49,7 @@ describe("tui args flow", () => {
 
     const state = createInitialState();
     state.selectedCommand = cmd;
-    initArgsStateForCommand(state, cmd, createArgsCache());
+    initArgsStateForCommand(state, cmd, createArgsCache(), "");
 
     expect(state.argsPhase).toBe("required");
 
@@ -69,7 +69,7 @@ describe("tui args flow", () => {
 
     const state = createInitialState();
     state.selectedCommand = cmd;
-    initArgsStateForCommand(state, cmd, createArgsCache());
+    initArgsStateForCommand(state, cmd, createArgsCache(), "");
 
     state.argsPhase = "optional-edit";
     state.editingOptionalArgName = "days";
@@ -93,7 +93,7 @@ describe("tui args flow", () => {
 
     const state = createInitialState();
     state.selectedCommand = cmd;
-    initArgsStateForCommand(state, cmd, createArgsCache());
+    initArgsStateForCommand(state, cmd, createArgsCache(), "");
 
     const res = handleOptionalListSelection(state, "startFrom");
     expect(res.submit).toBe(false);
@@ -109,7 +109,7 @@ describe("tui args flow", () => {
 
     const state = createInitialState();
     state.selectedCommand = cmd;
-    initArgsStateForCommand(state, cmd, createArgsCache());
+    initArgsStateForCommand(state, cmd, createArgsCache(), "");
 
     const res = handleOptionalListSelection(state, "__submit__");
     expect(res.submit).toBe(true);
@@ -134,11 +134,11 @@ describe("tui args flow", () => {
 
     const state = createInitialState();
     state.selectedCommand = cmd;
-    initArgsStateForCommand(state, cmd, createArgsCache());
+    initArgsStateForCommand(state, cmd, createArgsCache(), "");
     state.collectedArgs.startedAfter = "2024-01-01T00:00:00Z";
     state.collectedArgs.raw = true;
 
-    const options = buildOptionalArgsOptions(cmd, state, createArgsCache());
+    const options = buildOptionalArgsOptions(cmd, state, createArgsCache(), "");
     const startedAfter = options.find((option) => option.value === "startedAfter");
     const raw = options.find((option) => option.value === "raw");
     const unset = options.find((option) => option.value === "startFrom");
