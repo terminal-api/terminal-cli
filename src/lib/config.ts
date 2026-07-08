@@ -117,6 +117,7 @@ export function loadConfig(profileName?: string): Config {
   const envBaseUrl = process.env["TERMINAL_BASE_URL"];
   const envEnvironment = process.env["TERMINAL_ENVIRONMENT"] as "prod" | "sandbox" | undefined;
   const envProfile = process.env["TERMINAL_PROFILE"];
+  const envAuthMode = process.env["TERMINAL_AUTH_MODE"] as "api-key" | "google" | undefined;
   const envAdminAccessToken = process.env["TERMINAL_ADMIN_ACCESS_TOKEN"];
   const envAdminRefreshToken = process.env["TERMINAL_ADMIN_REFRESH_TOKEN"];
   const envAdminAccessTokenExpiresAt = process.env["TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT"];
@@ -131,7 +132,7 @@ export function loadConfig(profileName?: string): Config {
 
   const environment = envEnvironment ?? profile.environment ?? "prod";
   const baseUrl = envBaseUrl ?? profile.baseUrl ?? getBaseUrl(environment);
-  const authMode = profile.authMode ?? "api-key";
+  const authMode = envAuthMode ?? profile.authMode ?? "api-key";
 
   return {
     apiKey: envApiKey ?? profile.apiKey,
