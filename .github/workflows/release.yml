@@ -9,7 +9,7 @@ on:
       dry_run:
         description: "Dry run (skip npm publish)"
         required: false
-        default: "false"
+        default: false
         type: boolean
       tag:
         description: "npm tag (latest, beta, etc.)"
@@ -109,12 +109,10 @@ jobs:
   publish-npm:
     name: Publish to npm
     needs: build
-    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
+    # GitHub-hosted runner required for npm Trusted Publishing (OIDC)
+    runs-on: ubuntu-latest
     if: github.event.inputs.dry_run != 'true'
     steps:
-      - name: Setup runs-on
-        uses: runs-on/action@v2
-
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -128,6 +126,7 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
 
       - name: Download dist artifacts
         uses: actions/download-artifact@v7
@@ -158,10 +157,12 @@ jobs:
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
+      # setup-node sets a placeholder NODE_AUTH_TOKEN when none is provided, which
+      # blocks npm's OIDC trusted publishing flow. Unset it so npm uses OIDC instead.
       - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: bun run scripts/publish.ts --tag ${{ steps.tag.outputs.tag }}
+        run: |
+          unset NODE_AUTH_TOKEN
+          bun run scripts/publish.ts --tag ${{ steps.tag.outputs.tag }}
 
   release-github:
     name: Create GitHub Release
