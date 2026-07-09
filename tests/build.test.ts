@@ -61,6 +61,7 @@ describe("build scripts", () => {
 
       const pkgJson = await Bun.file(pkgJsonPath).json();
       expect(pkgJson.name).toBe(`@terminal-api/cli-${platform}-${arch}`);
+      expect(pkgJson.repository?.url).toContain("github.com/terminal-api/terminal-cli");
       expect(pkgJson.os).toEqual([process.platform]);
       expect(pkgJson.cpu).toEqual([process.arch]);
     });

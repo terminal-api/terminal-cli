@@ -30,6 +30,7 @@ async function getPackageInfo(): Promise<{
   name: string;
   version: string;
   opentuiVersion: string;
+  repository: { type: string; url: string };
 }> {
   const pkg = await Bun.file(join(ROOT_DIR, "package.json")).json();
   // Extract @opentui/core version
@@ -38,6 +39,7 @@ async function getPackageInfo(): Promise<{
     name: pkg.name.replace("@terminal-api/", ""),
     version: pkg.version,
     opentuiVersion,
+    repository: pkg.repository,
   };
 }
 
@@ -57,6 +59,7 @@ function getNpmPackageName(os: string, arch: string): string {
 async function buildTarget(
   target: (typeof TARGETS)[number],
   version: string,
+  repository: { type: string; url: string },
 ): Promise<{ name: string; version: string }> {
   const binaryName = getBinaryName(target.os, target.arch);
   const distPath = join(DIST_DIR, binaryName);
@@ -94,6 +97,7 @@ async function buildTarget(
   const platformPkg = {
     name: npmPackageName,
     version,
+    repository,
     os: [target.os],
     cpu: [target.arch],
   };
@@ -109,7 +113,7 @@ async function main(): Promise<void> {
   const singleFlag = process.argv.includes("--single");
   const skipInstall = process.argv.includes("--skip-install");
 
-  const { name, version, opentuiVersion } = await getPackageInfo();
+  const { name, version, opentuiVersion, repository } = await getPackageInfo();
 
   console.log(`Building ${name} v${version}\n`);
 
@@ -139,7 +143,7 @@ async function main(): Promise<void> {
   // Build each target and collect package info
   const binaries: Record<string, string> = {};
   for (const target of targets) {
-    const result = await buildTarget(target, version);
+    const result = await buildTarget(target, version, repository);
     binaries[result.name] = result.version;
   }
 
