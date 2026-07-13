@@ -15,6 +15,14 @@ export interface ProfileConfig {
   connectionToken?: string;
   baseUrl?: string;
   environment?: "prod" | "sandbox";
+  authMode?: "api-key" | "google";
+  adminAccessToken?: string;
+  adminRefreshToken?: string;
+  adminAccessTokenExpiresAt?: string;
+  adminGoogleClientId?: string;
+  adminGoogleClientSecret?: string;
+  adminEmail?: string;
+  adminApplicationId?: string;
 }
 
 export interface ConfigFile {
@@ -26,6 +34,15 @@ export interface Config {
   apiKey?: string;
   connectionToken?: string;
   baseUrl: string;
+  authMode: "api-key" | "google";
+  adminAccessToken?: string;
+  adminRefreshToken?: string;
+  adminAccessTokenExpiresAt?: string;
+  adminGoogleClientId?: string;
+  adminGoogleClientSecret?: string;
+  adminEmail?: string;
+  adminApplicationId?: string;
+  profileName: string;
 }
 
 function getConfigDir(): string {
@@ -100,6 +117,14 @@ export function loadConfig(profileName?: string): Config {
   const envBaseUrl = process.env["TERMINAL_BASE_URL"];
   const envEnvironment = process.env["TERMINAL_ENVIRONMENT"] as "prod" | "sandbox" | undefined;
   const envProfile = process.env["TERMINAL_PROFILE"];
+  const envAuthMode = process.env["TERMINAL_AUTH_MODE"] as "api-key" | "google" | undefined;
+  const envAdminAccessToken = process.env["TERMINAL_ADMIN_ACCESS_TOKEN"];
+  const envAdminRefreshToken = process.env["TERMINAL_ADMIN_REFRESH_TOKEN"];
+  const envAdminAccessTokenExpiresAt = process.env["TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT"];
+  const envAdminGoogleClientId = process.env["TERMINAL_ADMIN_GOOGLE_CLIENT_ID"];
+  const envAdminGoogleClientSecret = process.env["TERMINAL_ADMIN_GOOGLE_CLIENT_SECRET"];
+  const envAdminEmail = process.env["TERMINAL_ADMIN_EMAIL"];
+  const envAdminApplicationId = process.env["TERMINAL_ADMIN_APPLICATION_ID"];
 
   const configFile = loadConfigFile();
   const selectedProfile = profileName ?? envProfile ?? configFile.defaultProfile;
@@ -107,11 +132,23 @@ export function loadConfig(profileName?: string): Config {
 
   const environment = envEnvironment ?? profile.environment ?? "prod";
   const baseUrl = envBaseUrl ?? profile.baseUrl ?? getBaseUrl(environment);
+  const authMode = envAuthMode ?? profile.authMode ?? "api-key";
 
   return {
     apiKey: envApiKey ?? profile.apiKey,
     connectionToken: envConnectionToken ?? profile.connectionToken,
     baseUrl,
+    authMode,
+    adminAccessToken: envAdminAccessToken ?? profile.adminAccessToken,
+    adminRefreshToken: envAdminRefreshToken ?? profile.adminRefreshToken,
+    adminAccessTokenExpiresAt: envAdminAccessToken
+      ? envAdminAccessTokenExpiresAt
+      : (envAdminAccessTokenExpiresAt ?? profile.adminAccessTokenExpiresAt),
+    adminGoogleClientId: envAdminGoogleClientId ?? profile.adminGoogleClientId,
+    adminGoogleClientSecret: envAdminGoogleClientSecret ?? profile.adminGoogleClientSecret,
+    adminEmail: envAdminEmail ?? profile.adminEmail,
+    adminApplicationId: envAdminApplicationId ?? profile.adminApplicationId,
+    profileName: selectedProfile,
   };
 }
 

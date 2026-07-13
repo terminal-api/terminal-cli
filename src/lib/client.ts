@@ -1,4 +1,10 @@
 import { loadConfig, type Config } from "./config.ts";
+import {
+  isAdminFeatureEnabled,
+  refreshAdminSession,
+  resolveAdminAccessToken,
+  type GoogleSession,
+} from "./admin-auth.ts";
 import { getCliVersion } from "./version.ts";
 
 export interface RequestOptions {
@@ -21,9 +27,107 @@ export interface ApiError {
 
 export class TerminalClient {
   private config: Config;
+  private adminTokenPromise?: Promise<string>;
 
   constructor(config?: Partial<Config>) {
-    this.config = { ...loadConfig(), ...config };
+    this.config = { ...loadConfig(config?.profileName), ...config };
+  }
+
+  private assertAuthorizationConfigured(): void {
+    if (this.config.authMode === "google") {
+      if (!isAdminFeatureEnabled()) {
+        throw new Error(
+          "Admin mode is disabled in this build. Set TERMINAL_ENABLE_ADMIN=1 to enable employee login.",
+        );
+      }
+      if (!this.config.adminApplicationId) {
+        throw new Error(
+          "Application ID is required for admin mode. Run: terminal admin login --application-id <app_id>",
+        );
+      }
+      if (!this.config.adminAccessToken && !this.config.adminRefreshToken) {
+        throw new Error(
+          "Admin login is required. Run: terminal admin login" +
+            (this.config.profileName ? ` --profile ${this.config.profileName}` : ""),
+        );
+      }
+      return;
+    }
+
+    if (!this.config.apiKey) {
+      throw new Error(
+        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>",
+      );
+    }
+  }
+
+  private applyAdminSession(session: GoogleSession): string {
+    this.config = {
+      ...this.config,
+      adminAccessToken: session.accessToken,
+      adminRefreshToken: session.refreshToken,
+      adminAccessTokenExpiresAt: session.accessTokenExpiresAt,
+      adminEmail: session.email,
+      adminGoogleClientId: session.clientId ?? this.config.adminGoogleClientId,
+      adminGoogleClientSecret: session.clientSecret ?? this.config.adminGoogleClientSecret,
+    };
+    return session.accessToken;
+  }
+
+  private async runAdminTokenRequest(request: () => Promise<GoogleSession>): Promise<string> {
+    if (!this.adminTokenPromise) {
+      const tokenPromise = request().then((session) => this.applyAdminSession(session));
+      this.adminTokenPromise = tokenPromise;
+      void tokenPromise.then(
+        () => {
+          if (this.adminTokenPromise === tokenPromise) {
+            this.adminTokenPromise = undefined;
+          }
+        },
+        () => {
+          if (this.adminTokenPromise === tokenPromise) {
+            this.adminTokenPromise = undefined;
+          }
+        },
+      );
+    }
+
+    return await this.adminTokenPromise;
+  }
+
+  private async getAuthorizationToken(): Promise<string> {
+    if (this.config.authMode === "google") {
+      return await this.runAdminTokenRequest(() => resolveAdminAccessToken(this.config));
+    }
+
+    const apiKey = this.config.apiKey;
+    if (!apiKey) {
+      throw new Error(
+        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>",
+      );
+    }
+
+    return apiKey;
+  }
+
+  private async refreshRejectedAdminToken(rejectedToken: string): Promise<string | undefined> {
+    const environmentAccessToken = process.env["TERMINAL_ADMIN_ACCESS_TOKEN"];
+    if (
+      this.config.authMode !== "google" ||
+      (environmentAccessToken && this.config.adminAccessToken === environmentAccessToken)
+    ) {
+      return undefined;
+    }
+
+    if (this.config.adminAccessToken && this.config.adminAccessToken !== rejectedToken) {
+      return this.config.adminAccessToken;
+    }
+
+    if (!this.config.adminRefreshToken) {
+      return undefined;
+    }
+
+    return await this.runAdminTokenRequest(() => refreshAdminSession(this.config));
   }
 
   async request<T>(options: RequestOptions): Promise<T> {
@@ -57,13 +161,13 @@ export class TerminalClient {
       ...headers,
     };
 
-    // Add authorization
-    if (!this.config.apiKey) {
-      throw new Error(
-        "API key is required. Set TERMINAL_API_KEY or run: terminal config set api-key <key>",
-      );
+    this.assertAuthorizationConfigured();
+    requestHeaders["Authorization"] = `Bearer ${await this.getAuthorizationToken()}`;
+
+    if (this.config.authMode === "google" && this.config.adminApplicationId) {
+      requestHeaders["X-Application-Id"] = this.config.adminApplicationId;
+      requestHeaders["Admin-Application-Id"] = this.config.adminApplicationId;
     }
-    requestHeaders["Authorization"] = `Bearer ${this.config.apiKey}`;
 
     // Add connection token if required
     if (requiresConnectionToken) {
@@ -76,10 +180,10 @@ export class TerminalClient {
     }
 
     const bodyText = body ? JSON.stringify(body) : undefined;
-    let lastError: unknown;
+    let retryAttempt = 0;
+    let adminRefreshAttempted = false;
 
-    const attempts = shouldRetry ? maxRetries + 1 : 1;
-    for (let attempt = 0; attempt < attempts; attempt++) {
+    while (true) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -93,10 +197,9 @@ export class TerminalClient {
         });
       } catch (error) {
         clearTimeout(timeoutId);
-        lastError = error;
-
-        if (attempt < attempts - 1 && shouldRetry) {
-          await sleep(getRetryDelayMs(attempt));
+        if (shouldRetry && retryAttempt < maxRetries) {
+          await sleep(getRetryDelayMs(retryAttempt));
+          retryAttempt++;
           continue;
         }
 
@@ -122,16 +225,31 @@ export class TerminalClient {
           };
         }
         const clientError = new ClientError(response.status, error);
-        lastError = clientError;
 
-        if (attempt < attempts - 1 && retryOn.has(response.status)) {
+        if (
+          response.status === 401 &&
+          this.config.authMode === "google" &&
+          !adminRefreshAttempted
+        ) {
+          adminRefreshAttempted = true;
+          const authorizationHeader: string = requestHeaders["Authorization"] ?? "";
+          const rejectedToken: string = authorizationHeader.replace(/^Bearer /u, "");
+          const refreshedToken = await this.refreshRejectedAdminToken(rejectedToken);
+          if (refreshedToken && refreshedToken !== rejectedToken) {
+            requestHeaders["Authorization"] = `Bearer ${refreshedToken}`;
+            continue;
+          }
+        }
+
+        if (shouldRetry && retryAttempt < maxRetries && retryOn.has(response.status)) {
           const retryAfterHeader = response.headers.get("Retry-After");
           const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : Number.NaN;
           const retryAfterMs = Number.isFinite(retryAfterSeconds)
             ? retryAfterSeconds * 1000
             : undefined;
-          const delayMs = Math.max(getRetryDelayMs(attempt), retryAfterMs ?? 0);
+          const delayMs = Math.max(getRetryDelayMs(retryAttempt), retryAfterMs ?? 0);
           await sleep(delayMs);
+          retryAttempt++;
           continue;
         }
 
@@ -148,8 +266,6 @@ export class TerminalClient {
         throw new Error("Failed to parse JSON response");
       }
     }
-
-    throw lastError;
   }
 
   // Helper methods for common HTTP methods

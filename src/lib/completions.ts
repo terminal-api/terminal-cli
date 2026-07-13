@@ -3,9 +3,13 @@
  */
 
 import { commandGroups } from "../../generated/index.ts";
+import { isAdminFeatureEnabled } from "./admin-auth.ts";
 
 function getAllCommands(): string[] {
   const commands: string[] = ["config", "profile", "completions"];
+  if (isAdminFeatureEnabled()) {
+    commands.push("admin");
+  }
   for (const group of commandGroups) {
     for (const cmd of group.commands) {
       commands.push(cmd.name);
@@ -16,6 +20,13 @@ function getAllCommands(): string[] {
 
 export function generateBashCompletions(): string {
   const commands = getAllCommands();
+  const adminCase = isAdminFeatureEnabled()
+    ? `    admin)
+      COMPREPLY=( $(compgen -W "login logout whoami" -- "\${cur}") )
+      return 0
+      ;;
+`
+    : "";
 
   return `# Bash completion for terminal-cli
 # Add to ~/.bashrc or ~/.bash_profile:
@@ -42,7 +53,7 @@ _terminal_completions() {
       COMPREPLY=( $(compgen -W "list show create delete use copy" -- "\${cur}") )
       return 0
       ;;
-    completions)
+${adminCase}    completions)
       COMPREPLY=( $(compgen -W "bash zsh fish" -- "\${cur}") )
       return 0
       ;;
@@ -73,6 +84,21 @@ complete -F _terminal_completions terminal
 
 export function generateZshCompletions(): string {
   let commandList = "";
+  const adminCommandLine = isAdminFeatureEnabled()
+    ? "    'admin:Employee admin authentication'\n"
+    : "";
+  const adminArgsBlock = isAdminFeatureEnabled()
+    ? `        admin)
+          local -a admin_commands
+          admin_commands=(
+            'login:Sign in with Google for employee access'
+            'logout:Clear stored employee tokens'
+            'whoami:Show the current employee auth state'
+          )
+          _describe -t admin_commands 'admin subcommands' admin_commands
+          ;;
+`
+    : "";
   for (const group of commandGroups) {
     for (const cmd of group.commands) {
       commandList += `    '${cmd.name}:${cmd.description}'\n`;
@@ -89,7 +115,7 @@ _terminal() {
   commands=(
     'config:Manage configuration'
     'profile:Manage profiles'
-    'completions:Generate shell completions'
+${adminCommandLine}    'completions:Generate shell completions'
 ${commandList}  )
 
   _arguments -C \\
@@ -130,7 +156,7 @@ ${commandList}  )
           )
           _describe -t profile_commands 'profile subcommands' profile_commands
           ;;
-        completions)
+${adminArgsBlock}        completions)
           local -a completion_shells
           completion_shells=(
             'bash:Generate bash completions'
@@ -149,6 +175,15 @@ _terminal "$@"
 }
 
 export function generateFishCompletions(): string {
+  const adminCompletions = isAdminFeatureEnabled()
+    ? `# Admin commands
+complete -c terminal -n '__fish_use_subcommand' -a admin -d 'Employee admin authentication'
+complete -c terminal -n '__fish_seen_subcommand_from admin' -a login -d 'Sign in with Google for employee access'
+complete -c terminal -n '__fish_seen_subcommand_from admin' -a logout -d 'Clear stored employee tokens'
+complete -c terminal -n '__fish_seen_subcommand_from admin' -a whoami -d 'Show the current employee auth state'
+
+`
+    : "";
   let completions = `# Fish completion for terminal-cli
 # Add to ~/.config/fish/completions/terminal.fish:
 #   terminal completions fish > ~/.config/fish/completions/terminal.fish
@@ -180,7 +215,7 @@ complete -c terminal -n '__fish_seen_subcommand_from profile' -a delete -d 'Dele
 complete -c terminal -n '__fish_seen_subcommand_from profile' -a use -d 'Set default profile'
 complete -c terminal -n '__fish_seen_subcommand_from profile' -a copy -d 'Copy a profile'
 
-# Completion commands
+${adminCompletions}# Completion commands
 complete -c terminal -n '__fish_use_subcommand' -a completions -d 'Generate shell completions'
 complete -c terminal -n '__fish_seen_subcommand_from completions' -a bash -d 'Bash completions'
 complete -c terminal -n '__fish_seen_subcommand_from completions' -a zsh -d 'Zsh completions'
