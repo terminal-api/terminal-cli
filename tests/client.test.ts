@@ -4,8 +4,16 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { isAdminSessionExpired, refreshAdminSession } from "../src/lib/admin-auth";
 import { TerminalClient, ClientError } from "../src/lib/client";
+import { saveConfig } from "../src/lib/config";
 import { getCliVersion } from "../src/lib/version";
-import { createMockServer, getServerUrl, lastRequestHeaders, mockData } from "./mock-server";
+import {
+  createMockServer,
+  getServerUrl,
+  googleRefreshRequestCount,
+  lastRequestHeaders,
+  mockData,
+  resetMockRequestCounts,
+} from "./mock-server";
 
 type BunServer = ReturnType<typeof Bun.serve>;
 
@@ -51,6 +59,7 @@ describe("TerminalClient", () => {
     delete process.env.TERMINAL_ADMIN_EMAIL;
     delete process.env.TERMINAL_ADMIN_APPLICATION_ID;
     delete process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL;
+    resetMockRequestCounts();
   });
 
   afterEach(() => {
@@ -165,6 +174,116 @@ describe("TerminalClient", () => {
       );
 
       expect(result.authorization).toBe("Bearer google-access-token-refreshed");
+    });
+
+    test("refreshes Google access tokens when expiry metadata is missing or invalid", async () => {
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+      process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = `http://localhost:${server.port}/google/token`;
+
+      for (const adminAccessTokenExpiresAt of [undefined, "not-a-date"]) {
+        const client = new TerminalClient({
+          authMode: "google",
+          adminAccessToken: "google-access-token-with-unknown-expiry",
+          adminAccessTokenExpiresAt,
+          adminRefreshToken: "google-refresh-token",
+          adminGoogleClientId: "google-client-id",
+          adminApplicationId: "app_admin_123",
+          baseUrl,
+          profileName: "employee",
+        });
+
+        const result = await client.get<{ authorization: string }>(
+          "/debug/headers",
+          undefined,
+          false,
+        );
+
+        expect(result.authorization).toBe("Bearer google-access-token-refreshed");
+      }
+
+      expect(googleRefreshRequestCount).toBe(2);
+      expect(isAdminSessionExpired({ adminAccessTokenExpiresAt: undefined })).toBe(true);
+      expect(isAdminSessionExpired({ adminAccessTokenExpiresAt: "not-a-date" })).toBe(true);
+    });
+
+    test("uses an environment access token without inheriting stale profile expiry", async () => {
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+      process.env.TERMINAL_AUTH_MODE = "google";
+      process.env.TERMINAL_ADMIN_ACCESS_TOKEN = "environment-google-access-token";
+      process.env.TERMINAL_ADMIN_APPLICATION_ID = "app_admin_123";
+      process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = `http://localhost:${server.port}/google/token`;
+      saveConfig(
+        {
+          authMode: "google",
+          adminAccessToken: "stale-profile-access-token",
+          adminAccessTokenExpiresAt: "2000-01-01T00:00:00.000Z",
+          adminRefreshToken: "google-refresh-token",
+          adminGoogleClientId: "google-client-id",
+          adminApplicationId: "app_admin_123",
+        },
+        "prod",
+      );
+
+      const client = new TerminalClient({ baseUrl });
+      const result = await client.get<{ authorization: string }>(
+        "/debug/headers",
+        undefined,
+        false,
+      );
+
+      expect(result.authorization).toBe("Bearer environment-google-access-token");
+      expect(googleRefreshRequestCount).toBe(0);
+    });
+
+    test("refreshes once and retries after an unauthorized admin response", async () => {
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+      process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = `http://localhost:${server.port}/google/token`;
+
+      const client = new TerminalClient({
+        authMode: "google",
+        adminAccessToken: "rejected-google-access-token",
+        adminAccessTokenExpiresAt: "2099-01-01T00:00:00.000Z",
+        adminRefreshToken: "google-refresh-token",
+        adminGoogleClientId: "google-client-id",
+        adminApplicationId: "app_admin_123",
+        baseUrl,
+        connectionToken: "test-token",
+        profileName: "employee",
+      });
+
+      const result = await client.get<{ authorization: string }>("/debug/reauth");
+
+      expect(result.authorization).toBe("Bearer google-access-token-refreshed");
+      expect(googleRefreshRequestCount).toBe(1);
+    });
+
+    test("deduplicates concurrent Google token refreshes", async () => {
+      process.env.TERMINAL_ENABLE_ADMIN = "1";
+      process.env.TERMINAL_ADMIN_GOOGLE_TOKEN_URL = `http://localhost:${server.port}/google/token`;
+
+      const client = new TerminalClient({
+        authMode: "google",
+        adminAccessToken: "expired-google-access-token",
+        adminAccessTokenExpiresAt: "2000-01-01T00:00:00.000Z",
+        adminRefreshToken: "google-refresh-token",
+        adminGoogleClientId: "google-client-id",
+        adminApplicationId: "app_admin_123",
+        baseUrl,
+        profileName: "employee",
+      });
+
+      const results = await Promise.all(
+        Array.from({ length: 3 }, () =>
+          client.get<{ authorization: string }>("/debug/headers", undefined, false),
+        ),
+      );
+
+      expect(
+        results.every(
+          ({ authorization }) => authorization === "Bearer google-access-token-refreshed",
+        ),
+      ).toBe(true);
+      expect(googleRefreshRequestCount).toBe(1);
     });
 
     test("treats zero-second Google token lifetimes as immediately expired", async () => {

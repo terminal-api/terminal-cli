@@ -6,6 +6,11 @@
 type BunServer = ReturnType<typeof Bun.serve>;
 
 export let lastRequestHeaders = new Headers();
+export let googleRefreshRequestCount = 0;
+
+export function resetMockRequestCounts(): void {
+  googleRefreshRequestCount = 0;
+}
 
 // Mock data based on OpenAPI spec schemas
 export const mockData = {
@@ -214,6 +219,19 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
         });
       },
     },
+    {
+      pattern: /^\/tsp\/v1\/debug\/reauth$/,
+      handler: (req) => {
+        if (req.headers.get("Authorization") !== "Bearer google-access-token-refreshed") {
+          return Response.json(
+            { code: "unauthorized", message: "Expired Google access token" },
+            { status: 401 },
+          );
+        }
+
+        return Response.json({ authorization: req.headers.get("Authorization") });
+      },
+    },
 
     // Mock Google token endpoint for refresh/login tests
     {
@@ -223,6 +241,7 @@ export function createMockServer(options: MockServerOptions = {}): BunServer {
         const grantType = body.get("grant_type");
 
         if (grantType === "refresh_token") {
+          googleRefreshRequestCount++;
           if (body.get("refresh_token") === "zero-expiry-refresh-token") {
             return Response.json({
               access_token: "google-access-token-zero-expiry",

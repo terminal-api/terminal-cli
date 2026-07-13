@@ -182,5 +182,22 @@ describe("config", () => {
       expect(config.adminGoogleClientSecret).toBe("google-client-secret");
       expect(config.adminApplicationId).toBe("app_admin_123");
     });
+
+    test("env admin access token does not inherit profile expiry", async () => {
+      const configModule = await import(`../src/lib/config.ts?t=${Date.now()}`);
+      configModule.saveConfig(
+        {
+          adminAccessToken: "profile-access-token",
+          adminAccessTokenExpiresAt: "2000-01-01T00:00:00.000Z",
+        },
+        "prod",
+      );
+      process.env.TERMINAL_ADMIN_ACCESS_TOKEN = "environment-access-token";
+
+      const config = configModule.loadConfig();
+
+      expect(config.adminAccessToken).toBe("environment-access-token");
+      expect(config.adminAccessTokenExpiresAt).toBeUndefined();
+    });
   });
 });

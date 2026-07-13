@@ -154,12 +154,12 @@ export function isAdminFeatureEnabled(): boolean {
 
 export function isAdminSessionExpired(config: Pick<Config, "adminAccessTokenExpiresAt">): boolean {
   if (!config.adminAccessTokenExpiresAt) {
-    return false;
+    return true;
   }
 
   const expiresAt = Date.parse(config.adminAccessTokenExpiresAt);
   if (!Number.isFinite(expiresAt)) {
-    return false;
+    return true;
   }
 
   return expiresAt <= Date.now() + TOKEN_EXPIRY_BUFFER_MS;
@@ -231,10 +231,36 @@ export async function resolveAdminAccessToken(config: Config): Promise<GoogleSes
     return await refreshAdminSession(config);
   }
 
+  const environmentAccessToken = process.env["TERMINAL_ADMIN_ACCESS_TOKEN"];
+  if (environmentAccessToken && config.adminAccessToken === environmentAccessToken) {
+    return {
+      accessToken: config.adminAccessToken,
+      refreshToken: config.adminRefreshToken,
+      accessTokenExpiresAt: process.env["TERMINAL_ADMIN_ACCESS_TOKEN_EXPIRES_AT"],
+      email: config.adminEmail,
+      clientId: config.adminGoogleClientId,
+      clientSecret: config.adminGoogleClientSecret,
+    };
+  }
+
   if (!isAdminSessionExpired(config)) {
     return {
       accessToken: config.adminAccessToken,
       refreshToken: config.adminRefreshToken,
+      accessTokenExpiresAt: config.adminAccessTokenExpiresAt,
+      email: config.adminEmail,
+      clientId: config.adminGoogleClientId,
+      clientSecret: config.adminGoogleClientSecret,
+    };
+  }
+
+  if (
+    !config.adminRefreshToken &&
+    (!config.adminAccessTokenExpiresAt ||
+      !Number.isFinite(Date.parse(config.adminAccessTokenExpiresAt)))
+  ) {
+    return {
+      accessToken: config.adminAccessToken,
       accessTokenExpiresAt: config.adminAccessTokenExpiresAt,
       email: config.adminEmail,
       clientId: config.adminGoogleClientId,

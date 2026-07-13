@@ -1,5 +1,10 @@
 import { loadConfig, type Config } from "./config.ts";
-import { isAdminFeatureEnabled, resolveAdminAccessToken } from "./admin-auth.ts";
+import {
+  isAdminFeatureEnabled,
+  refreshAdminSession,
+  resolveAdminAccessToken,
+  type GoogleSession,
+} from "./admin-auth.ts";
 import { getCliVersion } from "./version.ts";
 
 export interface RequestOptions {
@@ -22,6 +27,7 @@ export interface ApiError {
 
 export class TerminalClient {
   private config: Config;
+  private adminTokenPromise?: Promise<string>;
 
   constructor(config?: Partial<Config>) {
     this.config = { ...loadConfig(config?.profileName), ...config };
@@ -55,19 +61,43 @@ export class TerminalClient {
     }
   }
 
+  private applyAdminSession(session: GoogleSession): string {
+    this.config = {
+      ...this.config,
+      adminAccessToken: session.accessToken,
+      adminRefreshToken: session.refreshToken,
+      adminAccessTokenExpiresAt: session.accessTokenExpiresAt,
+      adminEmail: session.email,
+      adminGoogleClientId: session.clientId ?? this.config.adminGoogleClientId,
+      adminGoogleClientSecret: session.clientSecret ?? this.config.adminGoogleClientSecret,
+    };
+    return session.accessToken;
+  }
+
+  private async runAdminTokenRequest(request: () => Promise<GoogleSession>): Promise<string> {
+    if (!this.adminTokenPromise) {
+      const tokenPromise = request().then((session) => this.applyAdminSession(session));
+      this.adminTokenPromise = tokenPromise;
+      void tokenPromise.then(
+        () => {
+          if (this.adminTokenPromise === tokenPromise) {
+            this.adminTokenPromise = undefined;
+          }
+        },
+        () => {
+          if (this.adminTokenPromise === tokenPromise) {
+            this.adminTokenPromise = undefined;
+          }
+        },
+      );
+    }
+
+    return await this.adminTokenPromise;
+  }
+
   private async getAuthorizationToken(): Promise<string> {
     if (this.config.authMode === "google") {
-      const session = await resolveAdminAccessToken(this.config);
-      this.config = {
-        ...this.config,
-        adminAccessToken: session.accessToken,
-        adminRefreshToken: session.refreshToken,
-        adminAccessTokenExpiresAt: session.accessTokenExpiresAt,
-        adminEmail: session.email,
-        adminGoogleClientId: session.clientId ?? this.config.adminGoogleClientId,
-        adminGoogleClientSecret: session.clientSecret ?? this.config.adminGoogleClientSecret,
-      };
-      return session.accessToken;
+      return await this.runAdminTokenRequest(() => resolveAdminAccessToken(this.config));
     }
 
     const apiKey = this.config.apiKey;
@@ -78,6 +108,26 @@ export class TerminalClient {
     }
 
     return apiKey;
+  }
+
+  private async refreshRejectedAdminToken(rejectedToken: string): Promise<string | undefined> {
+    const environmentAccessToken = process.env["TERMINAL_ADMIN_ACCESS_TOKEN"];
+    if (
+      this.config.authMode !== "google" ||
+      (environmentAccessToken && this.config.adminAccessToken === environmentAccessToken)
+    ) {
+      return undefined;
+    }
+
+    if (this.config.adminAccessToken && this.config.adminAccessToken !== rejectedToken) {
+      return this.config.adminAccessToken;
+    }
+
+    if (!this.config.adminRefreshToken) {
+      return undefined;
+    }
+
+    return await this.runAdminTokenRequest(() => refreshAdminSession(this.config));
   }
 
   async request<T>(options: RequestOptions): Promise<T> {
@@ -130,10 +180,10 @@ export class TerminalClient {
     }
 
     const bodyText = body ? JSON.stringify(body) : undefined;
-    let lastError: unknown;
+    let retryAttempt = 0;
+    let adminRefreshAttempted = false;
 
-    const attempts = shouldRetry ? maxRetries + 1 : 1;
-    for (let attempt = 0; attempt < attempts; attempt++) {
+    while (true) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -147,10 +197,9 @@ export class TerminalClient {
         });
       } catch (error) {
         clearTimeout(timeoutId);
-        lastError = error;
-
-        if (attempt < attempts - 1 && shouldRetry) {
-          await sleep(getRetryDelayMs(attempt));
+        if (shouldRetry && retryAttempt < maxRetries) {
+          await sleep(getRetryDelayMs(retryAttempt));
+          retryAttempt++;
           continue;
         }
 
@@ -176,16 +225,31 @@ export class TerminalClient {
           };
         }
         const clientError = new ClientError(response.status, error);
-        lastError = clientError;
 
-        if (attempt < attempts - 1 && retryOn.has(response.status)) {
+        if (
+          response.status === 401 &&
+          this.config.authMode === "google" &&
+          !adminRefreshAttempted
+        ) {
+          adminRefreshAttempted = true;
+          const authorizationHeader: string = requestHeaders["Authorization"] ?? "";
+          const rejectedToken: string = authorizationHeader.replace(/^Bearer /u, "");
+          const refreshedToken = await this.refreshRejectedAdminToken(rejectedToken);
+          if (refreshedToken && refreshedToken !== rejectedToken) {
+            requestHeaders["Authorization"] = `Bearer ${refreshedToken}`;
+            continue;
+          }
+        }
+
+        if (shouldRetry && retryAttempt < maxRetries && retryOn.has(response.status)) {
           const retryAfterHeader = response.headers.get("Retry-After");
           const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : Number.NaN;
           const retryAfterMs = Number.isFinite(retryAfterSeconds)
             ? retryAfterSeconds * 1000
             : undefined;
-          const delayMs = Math.max(getRetryDelayMs(attempt), retryAfterMs ?? 0);
+          const delayMs = Math.max(getRetryDelayMs(retryAttempt), retryAfterMs ?? 0);
           await sleep(delayMs);
+          retryAttempt++;
           continue;
         }
 
@@ -202,8 +266,6 @@ export class TerminalClient {
         throw new Error("Failed to parse JSON response");
       }
     }
-
-    throw lastError;
   }
 
   // Helper methods for common HTTP methods

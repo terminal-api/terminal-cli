@@ -524,7 +524,20 @@ async function main(): Promise<void> {
           profileName,
         );
 
-        printSuccess(`Admin session cleared from profile '${profileName}'`);
+        const environmentCredentials = [
+          "TERMINAL_ADMIN_ACCESS_TOKEN",
+          "TERMINAL_ADMIN_REFRESH_TOKEN",
+        ].filter((name) => process.env[name]);
+
+        if (environmentCredentials.length > 0) {
+          printInfo(
+            `Stored admin session cleared from profile '${profileName}', but environment credentials remain active. Unset: ${environmentCredentials.join(
+              ", ",
+            )}`,
+          );
+        } else {
+          printSuccess(`Admin session cleared from profile '${profileName}'`);
+        }
       });
 
     adminCmd

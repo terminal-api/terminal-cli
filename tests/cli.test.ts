@@ -353,5 +353,17 @@ describe("CLI", () => {
       expect(stdout).toContain(`"profileName": "${profileName}"`);
       expect(stdout).toContain('"adminApplicationId": "app_test_employee"');
     });
+
+    test("admin logout reports environment credentials that remain active", async () => {
+      const { stdout, exitCode } = await runCli(["admin", "logout"], {
+        TERMINAL_ENABLE_ADMIN: "1",
+        TERMINAL_AUTH_MODE: "google",
+        TERMINAL_ADMIN_ACCESS_TOKEN: "environment-access-token",
+      });
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("environment credentials remain active");
+      expect(stdout).toContain("TERMINAL_ADMIN_ACCESS_TOKEN");
+    });
   });
 });

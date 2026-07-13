@@ -141,7 +141,9 @@ export function loadConfig(profileName?: string): Config {
     authMode,
     adminAccessToken: envAdminAccessToken ?? profile.adminAccessToken,
     adminRefreshToken: envAdminRefreshToken ?? profile.adminRefreshToken,
-    adminAccessTokenExpiresAt: envAdminAccessTokenExpiresAt ?? profile.adminAccessTokenExpiresAt,
+    adminAccessTokenExpiresAt: envAdminAccessToken
+      ? envAdminAccessTokenExpiresAt
+      : (envAdminAccessTokenExpiresAt ?? profile.adminAccessTokenExpiresAt),
     adminGoogleClientId: envAdminGoogleClientId ?? profile.adminGoogleClientId,
     adminGoogleClientSecret: envAdminGoogleClientSecret ?? profile.adminGoogleClientSecret,
     adminEmail: envAdminEmail ?? profile.adminEmail,
