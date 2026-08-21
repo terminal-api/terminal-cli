@@ -162,28 +162,20 @@ terminal completions fish > ~/.config/fish/completions/terminal.fish
 
 ## AI Agent Plugin
 
-The portable plugin in `ai/` teaches Cursor, Claude Code, Claude Desktop/Cowork, OpenCode, Codex, and other Agent Skills clients to query Terminal fleet data through this CLI.
-
-Install the skill for a supported agent:
+Query Terminal fleet data from Cursor, Claude, OpenCode, and other Agent Skills clients:
 
 ```bash
 npx skills add terminal-api/terminal-cli --skill terminal-cli
 ```
 
-Install the complete plugin from the Claude Code marketplace:
+Claude Code:
 
 ```text
 /plugin marketplace add terminal-api/terminal-cli
 /plugin install terminal-cli@terminal-cli
 ```
 
-The repository also includes Cursor and Claude marketplace manifests for plugin distribution. Example queries:
-
-- "How many safety events did driver X have this week?"
-- "Where was vehicle ABC on January 2nd?"
-- "Which vehicles are moving right now?"
-
-See [`ai/README.md`](ai/README.md) for Cursor, OpenCode, global, and Claude Desktop team installation.
+See [`ai/README.md`](ai/README.md) for other clients and team install.
 
 ## Development
 
