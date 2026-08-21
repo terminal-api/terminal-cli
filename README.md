@@ -160,23 +160,30 @@ eval "$(terminal completions zsh)"
 terminal completions fish > ~/.config/fish/completions/terminal.fish
 ```
 
-## AI Agent Skills & Commands
+## AI Agent Plugin
 
-The `ai/` folder contains ready-to-use skills and commands for AI coding assistants. These help you query Terminal API data using natural language.
+The portable plugin in `ai/` teaches Cursor, Claude Code, Claude Desktop/Cowork, OpenCode, Codex, and other Agent Skills clients to query Terminal fleet data through this CLI.
 
-| Tool        | Type    | Install Command                              |
-| ----------- | ------- | -------------------------------------------- |
-| Cursor      | Command | `cp -r ai/cursor/commands .cursor/commands`  |
-| Claude Code | Skill   | `cp -r ai/claude-code/skills .claude/skills` |
-| OpenCode    | Skill   | `cp -r ai/opencode/skill .opencode/skill`    |
+Install the skill for a supported agent:
 
-Example queries:
+```bash
+npx skills add terminal-api/terminal-cli --skill terminal-cli
+```
 
-- "How many safety events for driver X this week?"
+Install the complete plugin from the Claude Code marketplace:
+
+```text
+/plugin marketplace add terminal-api/terminal-cli
+/plugin install terminal-cli@terminal-cli
+```
+
+The repository also includes Cursor and Claude marketplace manifests for plugin distribution. Example queries:
+
+- "How many safety events did driver X have this week?"
 - "Where was vehicle ABC on January 2nd?"
-- "Which vehicles have active movement?"
+- "Which vehicles are moving right now?"
 
-See [`ai/README.md`](ai/README.md) for full setup instructions.
+See [`ai/README.md`](ai/README.md) for Cursor, OpenCode, global, and Claude Desktop team installation.
 
 ## Development
 

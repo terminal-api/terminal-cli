@@ -1,0 +1,15 @@
+{
+  "name": "terminal-cli",
+  "owner": {
+    "name": "Terminal",
+    "email": "support@withterminal.com"
+  },
+  "plugins": [
+    {
+      "name": "terminal-cli",
+      "source": "./ai",
+      "version": "0.1.0",
+      "description": "Query fleet telematics data through the Terminal CLI."
+    }
+  ]
+}
