@@ -183,4 +183,3 @@ In Cursor or Claude Code, you can invoke the command explicitly:
 - [Terminal API documentation](https://docs.withterminal.com)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Agent Plugins specification](https://agent-plugins.org)
-

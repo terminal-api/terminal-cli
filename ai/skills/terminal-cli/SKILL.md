@@ -44,6 +44,7 @@ The prerequisites are complete when `terminal config show` identifies the intend
    ```
 
    Use `--limit` for a quick lookup. Use `--all` only when the answer requires the complete result set.
+
 5. **Analyze the response.** Filter, aggregate, or join records needed to answer the question. Treat an empty result as “no matching records returned,” not proof that an event never occurred.
 6. **Report the result.** Include the relevant count or records, identifiers needed for follow-up, explicit time range, and any assumptions. Include the command used, but redact credentials and connection tokens.
 
@@ -51,17 +52,17 @@ The query is complete when the answer is traceable to returned Terminal records 
 
 ## Command map
 
-| Need | Start with |
-| --- | --- |
-| Vehicles and locations | `list-vehicles`, `get-vehicle`, `list-latest-vehicle-locations` |
-| Drivers | `list-drivers`, `get-driver` |
-| Trips and utilization | `list-trips`, `get-vehicle-utilization` |
-| Safety and camera media | `list-safety-events`, `get-safety-event`, `get-event-camera-media` |
-| Hours of Service | `list-hoslogs`, `list-hosdaily-logs`, `list-hosavailable-time` |
-| Diagnostics | `list-fault-code-events` |
-| IFTA | `get-iftasummary` |
-| Connections and providers | `list-connections`, `get-current-connection`, `list-providers` |
-| Sync health | `list-issues`, `list-sync-history`, `get-sync-job-status` |
+| Need                      | Start with                                                         |
+| ------------------------- | ------------------------------------------------------------------ |
+| Vehicles and locations    | `list-vehicles`, `get-vehicle`, `list-latest-vehicle-locations`    |
+| Drivers                   | `list-drivers`, `get-driver`                                       |
+| Trips and utilization     | `list-trips`, `get-vehicle-utilization`                            |
+| Safety and camera media   | `list-safety-events`, `get-safety-event`, `get-event-camera-media` |
+| Hours of Service          | `list-hoslogs`, `list-hosdaily-logs`, `list-hosavailable-time`     |
+| Diagnostics               | `list-fault-code-events`                                           |
+| IFTA                      | `get-iftasummary`                                                  |
+| Connections and providers | `list-connections`, `get-current-connection`, `list-providers`     |
+| Sync health               | `list-issues`, `list-sync-history`, `get-sync-job-status`          |
 
 Read [references/commands.md](references/commands.md) for the full command catalog, common filters, and pagination behavior.
 
@@ -116,4 +117,3 @@ Use `--all` only because a complete monthly total requires every page.
 - **Empty data:** confirm connection, entity ID, UTC boundaries, filters, and pagination. Retry with a small unfiltered request when safe.
 - **Unknown command or option:** run the command's `--help`; the CLI is generated from the current Terminal OpenAPI specification and may evolve.
 - **Connectivity:** `terminal list-providers --format json` does not require a connection token and isolates API-key or network problems.
-

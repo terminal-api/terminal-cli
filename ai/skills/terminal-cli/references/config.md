@@ -115,4 +115,3 @@ terminal list-vehicles --limit 1 --format json
 ```
 
 Configuration is ready when the provider request succeeds and the connection-scoped request identifies the expected fleet, even if that fleet currently has no vehicles.
-

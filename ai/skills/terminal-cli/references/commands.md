@@ -6,15 +6,15 @@ Load this reference to choose a command or common filter. The CLI is generated f
 
 Global options work with API commands:
 
-| Option | Purpose |
-| --- | --- |
-| `--format json|pretty|table` | Select output format; use `json` for agent analysis |
-| `--api-key <key>` | Override the configured API key for one invocation |
-| `--connection-token <token>` | Override the configured connection token |
-| `--profile <name>` | Select a configuration profile |
-| `--all` | Follow pagination cursors and combine every page |
-| `--help` | Show command help |
-| `--version` | Show CLI version |
+| Option                       | Purpose                                            |
+| ---------------------------- | -------------------------------------------------- | ------ | --------------------------------------------------- |
+| `--format json               | pretty                                             | table` | Select output format; use `json` for agent analysis |
+| `--api-key <key>`            | Override the configured API key for one invocation |
+| `--connection-token <token>` | Override the configured connection token           |
+| `--profile <name>`           | Select a configuration profile                     |
+| `--all`                      | Follow pagination cursors and combine every page   |
+| `--help`                     | Show command help                                  |
+| `--version`                  | Show CLI version                                   |
 
 List endpoints generally accept `--limit` and `--cursor`, but use each command's `--help` to confirm. Generated command-specific flags preserve the OpenAPI argument name in camelCase.
 
@@ -147,4 +147,3 @@ terminal list-vehicles --all --format json
 - Date filters use `YYYY-MM-DD`.
 - IFTA month filters use `YYYY-MM`.
 - Prefer explicit half-open ranges: start inclusive and next-period boundary as the end. Verify endpoint semantics before treating boundary events as included or excluded.
-
