@@ -1,7 +1,7 @@
 {
   "name": "terminal-cli",
   "displayName": "Terminal CLI",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Query fleet telematics data through the Terminal CLI.",
   "author": {
     "name": "Terminal",

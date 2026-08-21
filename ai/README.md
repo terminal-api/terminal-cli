@@ -20,7 +20,7 @@ ai/
     └── terminal-setup.md
 ```
 
-- `terminal-cli` skill: discovers the right CLI command, resolves entity names to IDs, handles time ranges and pagination, and summarizes records.
+- `terminal-cli` skill: uses `terminal --help` to discover commands, then resolves entity names to IDs, handles time ranges and pagination, and summarizes records.
 - `/terminal-cli`: explicitly run a fleet query in Cursor or Claude Code.
 - `/terminal-setup`: install, configure, and smoke-test the CLI without exposing credentials.
 
