@@ -148,7 +148,6 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -160,31 +159,13 @@ export const commands: Command[] = [
               year: { type: "integer", example: 2013 },
               groups: {
                 type: "array",
+                description:
+                  "The groups the trailer belongs to. Use the expand query parameter to return the full entity details instead of just the ID.",
                 items: {
+                  type: "string",
+                  title: "GroupId",
+                  format: "ulid",
                   example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  oneOf: [
-                    {
-                      type: "string",
-                      title: "GroupId",
-                      format: "ulid",
-                      example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                    },
-                    {
-                      type: "object",
-                      title: "Expanded Group",
-                      properties: {
-                        id: {
-                          type: "string",
-                          title: "GroupId",
-                          format: "ulid",
-                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                        },
-                      },
-                      required: ["id"],
-                    },
-                  ],
-                  description:
-                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               licensePlate: {
@@ -316,7 +297,7 @@ export const commands: Command[] = [
                     ],
                     example: "visible",
                     description:
-                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
+                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
                   },
                   modifiedAt: {
                     type: "string",
@@ -354,6 +335,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -407,36 +389,15 @@ export const commands: Command[] = [
             properties: {
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               trailer: {
+                type: "string",
+                title: "TrailerId",
+                format: "ulid",
                 example: "trl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "TrailerId",
-                    format: "ulid",
-                    example: "trl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                  {
-                    type: "object",
-                    title: "Expanded Trailer",
-                    properties: {
-                      id: {
-                        type: "string",
-                        title: "TrailerId",
-                        format: "ulid",
-                        example: "trl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                    },
-                    required: ["id"],
-                  },
-                ],
-                description:
-                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               locatedAt: {
                 type: "string",
@@ -499,6 +460,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],

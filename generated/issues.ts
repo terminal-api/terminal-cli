@@ -106,16 +106,7 @@ export const commands: Command[] = [
         name: "errorCode",
         type: "string",
         required: false,
-        description: "Filter issues to a specific error code",
-        enum: [
-          "missing_permissions",
-          "exceeded_retention_window",
-          "invalid_source_id",
-          "unknown_device_type",
-          "missing_safety_configuration",
-          "inaccessible_data",
-          "manually_disabled",
-        ],
+        description: "Filter issues to a specific semantic Issue code",
       },
       {
         name: "status",
@@ -144,20 +135,28 @@ export const commands: Command[] = [
                 example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
               },
               status: { enum: ["ongoing", "resolved"] },
-              connection: {
-                title: "ExpandableConnection",
-                example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "ConnectionId",
-                    format: "ulid",
-                    example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
-                  },
-                  { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+              resolutionType: {
+                type: "string",
+                title: "IssueResolutionType",
+                description: "How an issue is expected to be investigated or resolved.",
+                enum: [
+                  "action_required",
+                  "automatic_retry",
+                  "terminal_managed",
+                  "known_limitation",
+                  "investigation_required",
                 ],
-                description:
-                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
+              },
+              documentationUrl: {
+                type: "string",
+                format: "uri",
+                description: "Direct link to the resolution guide for this semantic issue.",
+              },
+              connection: {
+                type: "string",
+                title: "ConnectionId",
+                format: "ulid",
+                example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
               },
               error: {
                 type: "object",
@@ -165,6 +164,8 @@ export const commands: Command[] = [
                   code: {
                     type: "string",
                     title: "IssueCode",
+                    description:
+                      "Stable semantic identifier for an Issue and its remediation workflow. Legacy values remain in the schema for source compatibility but are not emitted after migration.",
                     enum: [
                       "missing_permissions",
                       "exceeded_retention_window",
@@ -173,6 +174,24 @@ export const commands: Command[] = [
                       "missing_safety_configuration",
                       "inaccessible_data",
                       "manually_disabled",
+                      "permission_missing",
+                      "oauth_scope_missing",
+                      "subscription_required",
+                      "retention_window_exceeded",
+                      "provider_data_inaccessible",
+                      "invalid_source_identifier",
+                      "unsupported_device_type",
+                      "stream_disabled",
+                      "provider_provisioning_pending",
+                      "provider_feature_not_enabled",
+                      "missing_vehicle_identifier",
+                      "missing_vehicle_assignment",
+                      "provider_capability_not_supported",
+                      "provider_source_data_invalid",
+                      "provider_partially_configured",
+                      "managed_poll_returned_no_data",
+                      "managed_poll_failed",
+                      "data_delayed",
                     ],
                   },
                   message: {
@@ -209,6 +228,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -242,20 +262,28 @@ export const commands: Command[] = [
           example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
         },
         status: { enum: ["ongoing", "resolved"] },
-        connection: {
-          title: "ExpandableConnection",
-          example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
-          oneOf: [
-            {
-              type: "string",
-              title: "ConnectionId",
-              format: "ulid",
-              example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
-            },
-            { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+        resolutionType: {
+          type: "string",
+          title: "IssueResolutionType",
+          description: "How an issue is expected to be investigated or resolved.",
+          enum: [
+            "action_required",
+            "automatic_retry",
+            "terminal_managed",
+            "known_limitation",
+            "investigation_required",
           ],
-          description:
-            "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
+        },
+        documentationUrl: {
+          type: "string",
+          format: "uri",
+          description: "Direct link to the resolution guide for this semantic issue.",
+        },
+        connection: {
+          type: "string",
+          title: "ConnectionId",
+          format: "ulid",
+          example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
         },
         error: {
           type: "object",
@@ -263,6 +291,8 @@ export const commands: Command[] = [
             code: {
               type: "string",
               title: "IssueCode",
+              description:
+                "Stable semantic identifier for an Issue and its remediation workflow. Legacy values remain in the schema for source compatibility but are not emitted after migration.",
               enum: [
                 "missing_permissions",
                 "exceeded_retention_window",
@@ -271,6 +301,24 @@ export const commands: Command[] = [
                 "missing_safety_configuration",
                 "inaccessible_data",
                 "manually_disabled",
+                "permission_missing",
+                "oauth_scope_missing",
+                "subscription_required",
+                "retention_window_exceeded",
+                "provider_data_inaccessible",
+                "invalid_source_identifier",
+                "unsupported_device_type",
+                "stream_disabled",
+                "provider_provisioning_pending",
+                "provider_feature_not_enabled",
+                "missing_vehicle_identifier",
+                "missing_vehicle_assignment",
+                "provider_capability_not_supported",
+                "provider_source_data_invalid",
+                "provider_partially_configured",
+                "managed_poll_returned_no_data",
+                "managed_poll_failed",
+                "data_delayed",
               ],
             },
             message: {

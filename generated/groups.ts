@@ -121,36 +121,16 @@ export const commands: Command[] = [
               sourceId: { type: "string", example: "12345" },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               description: { type: "string", example: "Resources part of the California division" },
               parent: {
-                description: "Optional parent group. This is expandable.",
+                type: "string",
+                title: "GroupId",
+                format: "ulid",
                 example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "GroupId",
-                    format: "ulid",
-                    example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                  {
-                    type: "object",
-                    title: "Expanded Group",
-                    properties: {
-                      id: {
-                        type: "string",
-                        title: "GroupId",
-                        format: "ulid",
-                        example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                    },
-                    required: ["id"],
-                  },
-                ],
               },
               createdAt: {
                 type: "string",
@@ -197,7 +177,7 @@ export const commands: Command[] = [
                     ],
                     example: "visible",
                     description:
-                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
+                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
                   },
                   modifiedAt: {
                     type: "string",
@@ -236,6 +216,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],

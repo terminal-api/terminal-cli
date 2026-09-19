@@ -100,6 +100,23 @@ export async function passthrough(
   );
 }
 
+export async function passthrough_raw(
+  client: TerminalClient,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  return await client.post(
+    "/passthrough/raw",
+    {
+      method: args["method"],
+      path: args["path"],
+      headers: args["headers"],
+      body: args["body"],
+    },
+    undefined,
+    true,
+  );
+}
+
 // Command definitions
 export const commands: Command[] = [
   {
@@ -126,7 +143,6 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description: "",
-        enum: ["requested", "in_progress", "completed", "failed"],
       },
       {
         name: "expand",
@@ -179,32 +195,11 @@ export const commands: Command[] = [
                 description:
                   "Issues are problems encountered with a connection that did not result in a failed sync but may require manual intervention. You can see the issues for a given sync by providing `issues` to the `expand` parameter.",
                 items: {
-                  title: "ExpandableIssue",
+                  type: "string",
+                  title: "IssueId",
+                  format: "ulid",
+                  pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
                   example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  oneOf: [
-                    {
-                      type: "string",
-                      title: "IssueId",
-                      format: "ulid",
-                      pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
-                      example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                    },
-                    {
-                      type: "object",
-                      properties: {
-                        id: {
-                          type: "string",
-                          title: "IssueId",
-                          format: "ulid",
-                          pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
-                          example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                        },
-                      },
-                      required: ["id"],
-                    },
-                  ],
-                  description:
-                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               startFrom: {
@@ -252,6 +247,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -346,32 +342,11 @@ export const commands: Command[] = [
           description:
             "Issues are problems encountered with a connection that did not result in a failed sync but may require manual intervention. You can see the issues for a given sync by providing `issues` to the `expand` parameter.",
           items: {
-            title: "ExpandableIssue",
+            type: "string",
+            title: "IssueId",
+            format: "ulid",
+            pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
             example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-            oneOf: [
-              {
-                type: "string",
-                title: "IssueId",
-                format: "ulid",
-                pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
-                example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-              },
-              {
-                type: "object",
-                properties: {
-                  id: {
-                    type: "string",
-                    title: "IssueId",
-                    format: "ulid",
-                    pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
-                    example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                },
-                required: ["id"],
-              },
-            ],
-            description:
-              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
           },
         },
         startFrom: {
@@ -489,7 +464,8 @@ export const commands: Command[] = [
         name: "path",
         type: "string",
         required: true,
-        description: "The path for the third-party request, such as `/reports`",
+        description:
+          "A relative provider path such as `/reports`, or an absolute URL. Absolute URLs are accepted only when they target the connection's provider host.",
       },
       {
         name: "headers",
@@ -532,8 +508,6 @@ export const commands: Command[] = [
           description: "Any returned headers from the passthrough request.",
         },
         response: {
-          example: { reportId: "1234" },
-          description: "The response body from the passthrough request",
           title: "JSON Value",
           oneOf: [
             { type: "object" },
@@ -546,6 +520,44 @@ export const commands: Command[] = [
       },
       required: ["method", "path", "statusCode", "headers", "response"],
     },
+  },
+  {
+    name: "passthrough-raw",
+    description: "Raw Passthrough",
+    method: "POST",
+    path: "/passthrough/raw",
+    requiresConnectionToken: true,
+    args: [
+      {
+        name: "method",
+        type: "string",
+        required: true,
+        description: "The method for the third-party request, such as GET or POST.",
+        enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      },
+      {
+        name: "path",
+        type: "string",
+        required: true,
+        description:
+          "A relative provider path such as `/reports`, or an absolute URL. Absolute URLs are accepted only when they target the connection's provider host.",
+      },
+      {
+        name: "headers",
+        type: "object",
+        required: false,
+        description:
+          "The headers to use for the request (Terminal will handle the connection's authorization headers)",
+      },
+      {
+        name: "body",
+        type: "string",
+        required: false,
+        description: "The request body",
+      },
+    ],
+    handler: passthrough_raw,
+    responseSchema: null,
   },
 ];
 

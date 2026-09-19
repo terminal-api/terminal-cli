@@ -212,7 +212,6 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -223,60 +222,24 @@ export const commands: Command[] = [
               year: { type: "integer", example: 2016 },
               groups: {
                 type: "array",
+                description:
+                  "The groups the vehicle belongs to. Use the expand query parameter to return the full entity details instead of just the ID.",
                 items: {
+                  type: "string",
+                  title: "GroupId",
+                  format: "ulid",
                   example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  oneOf: [
-                    {
-                      type: "string",
-                      title: "GroupId",
-                      format: "ulid",
-                      example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                    },
-                    {
-                      type: "object",
-                      title: "Expanded Group",
-                      properties: {
-                        id: {
-                          type: "string",
-                          title: "GroupId",
-                          format: "ulid",
-                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                        },
-                      },
-                      required: ["id"],
-                    },
-                  ],
-                  description:
-                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               devices: {
                 type: "array",
+                description:
+                  "The devices installed in the vehicle. Use the expand query parameter to return the full entity details instead of just the ID.",
                 items: {
-                  example: "dvc_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  oneOf: [
-                    {
-                      type: "string",
-                      title: "DeviceId",
-                      format: "ulid",
-                      example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
-                    },
-                    {
-                      type: "object",
-                      title: "Expanded Device",
-                      properties: {
-                        id: {
-                          type: "string",
-                          title: "DeviceId",
-                          format: "ulid",
-                          example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
-                        },
-                      },
-                      required: ["id"],
-                    },
-                  ],
-                  description:
-                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
+                  type: "string",
+                  title: "DeviceId",
+                  format: "ulid",
+                  example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
                 },
               },
               licensePlate: {
@@ -438,7 +401,7 @@ export const commands: Command[] = [
                     ],
                     example: "visible",
                     description:
-                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
+                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
                   },
                   modifiedAt: {
                     type: "string",
@@ -476,6 +439,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -540,7 +504,6 @@ export const commands: Command[] = [
         },
         provider: {
           type: "string",
-          title: "Provider Code",
           example: "geotab",
           description:
             "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -551,60 +514,24 @@ export const commands: Command[] = [
         year: { type: "integer", example: 2016 },
         groups: {
           type: "array",
+          description:
+            "The groups the vehicle belongs to. Use the expand query parameter to return the full entity details instead of just the ID.",
           items: {
+            type: "string",
+            title: "GroupId",
+            format: "ulid",
             example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-            oneOf: [
-              {
-                type: "string",
-                title: "GroupId",
-                format: "ulid",
-                example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-              },
-              {
-                type: "object",
-                title: "Expanded Group",
-                properties: {
-                  id: {
-                    type: "string",
-                    title: "GroupId",
-                    format: "ulid",
-                    example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                },
-                required: ["id"],
-              },
-            ],
-            description:
-              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
           },
         },
         devices: {
           type: "array",
+          description:
+            "The devices installed in the vehicle. Use the expand query parameter to return the full entity details instead of just the ID.",
           items: {
-            example: "dvc_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-            oneOf: [
-              {
-                type: "string",
-                title: "DeviceId",
-                format: "ulid",
-                example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
-              },
-              {
-                type: "object",
-                title: "Expanded Device",
-                properties: {
-                  id: {
-                    type: "string",
-                    title: "DeviceId",
-                    format: "ulid",
-                    example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
-                  },
-                },
-                required: ["id"],
-              },
-            ],
-            description:
-              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
+            type: "string",
+            title: "DeviceId",
+            format: "ulid",
+            example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
           },
         },
         licensePlate: {
@@ -766,7 +693,7 @@ export const commands: Command[] = [
               ],
               example: "visible",
               description:
-                "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
+                "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
             },
             modifiedAt: {
               type: "string",
@@ -863,69 +790,25 @@ export const commands: Command[] = [
                 properties: {
                   provider: {
                     type: "string",
-                    title: "Provider Code",
                     example: "geotab",
                     description:
                       "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
                   },
                   vehicle: {
-                    description: "The ID of the vehicle that the location is tracking.",
+                    type: "string",
+                    title: "VehicleId",
+                    description: "Unique identifier for the vehicle in Terminal.",
+                    format: "ulid",
+                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                     example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                    oneOf: [
-                      {
-                        type: "string",
-                        title: "VehicleId",
-                        description: "Unique identifier for the vehicle in Terminal.",
-                        format: "ulid",
-                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                      {
-                        type: "object",
-                        title: "Expanded Vehicle",
-                        properties: {
-                          id: {
-                            type: "string",
-                            title: "VehicleId",
-                            description: "Unique identifier for the vehicle in Terminal.",
-                            format: "ulid",
-                            pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                            example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                          },
-                        },
-                        required: ["id"],
-                      },
-                    ],
                   },
                   driver: {
+                    type: "string",
+                    title: "DriverId",
+                    description: "Unique identifier for the driver in Terminal.",
+                    format: "ulid",
+                    pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                     example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                    oneOf: [
-                      {
-                        type: "string",
-                        title: "DriverId",
-                        description: "Unique identifier for the driver in Terminal.",
-                        format: "ulid",
-                        pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                      {
-                        type: "object",
-                        title: "Expanded Driver",
-                        properties: {
-                          id: {
-                            type: "string",
-                            title: "DriverId",
-                            description: "Unique identifier for the driver in Terminal.",
-                            format: "ulid",
-                            pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-                            example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                          },
-                        },
-                        required: ["id"],
-                      },
-                    ],
-                    description:
-                      "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                   },
                   locatedAt: {
                     type: "string",
@@ -972,8 +855,9 @@ export const commands: Command[] = [
                   odometer: {
                     type: "number",
                     title: "Distance In Kilometers",
+                    format: "double",
                     description: "Distance in kilometers",
-                    example: 100,
+                    example: 100.25,
                   },
                   fuel: {
                     type: "object",
@@ -982,35 +866,29 @@ export const commands: Command[] = [
                     properties: {
                       primaryPercentage: {
                         type: "number",
-                        description:
-                          "The percentage value of how much fuel is left in the primary tank.",
                         title: "Fuel Percentage",
                         example: 50,
                         minimum: 0,
                         maximum: 100,
+                        description: "The percentage value of how much fuel is left in the tank.",
                       },
                       secondaryPercentage: {
                         type: "number",
-                        description:
-                          "The percentage value of how much fuel is left in the secondary tank.",
                         title: "Fuel Percentage",
                         example: 50,
                         minimum: 0,
                         maximum: 100,
+                        description: "The percentage value of how much fuel is left in the tank.",
                       },
                     },
                     required: ["primaryPercentage"],
                   },
-                  engineState: {
-                    type: "string",
-                    description: "The current state of the vehicle's engine",
-                    enum: ["on", "off", "idle"],
-                  },
+                  engineState: { type: "string", enum: ["on", "off", "idle"] },
                   engineRuntime: {
                     type: "integer",
-                    description: "Total engine runtime duration",
                     title: "DurationInMS",
                     example: 0,
+                    description: "Duration in MS",
                   },
                   raw: {
                     type: "array",
@@ -1040,6 +918,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -1099,7 +978,7 @@ export const commands: Command[] = [
           type: "array",
           items: {
             title: "Vehicle Location",
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             allOf: [
               {
                 type: "object",
@@ -1126,69 +1005,25 @@ export const commands: Command[] = [
                 properties: {
                   provider: {
                     type: "string",
-                    title: "Provider Code",
                     example: "geotab",
                     description:
                       "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
                   },
                   vehicle: {
-                    description: "The ID of the vehicle that the location is tracking.",
+                    type: "string",
+                    title: "VehicleId",
+                    description: "Unique identifier for the vehicle in Terminal.",
+                    format: "ulid",
+                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                     example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                    oneOf: [
-                      {
-                        type: "string",
-                        title: "VehicleId",
-                        description: "Unique identifier for the vehicle in Terminal.",
-                        format: "ulid",
-                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                      {
-                        type: "object",
-                        title: "Expanded Vehicle",
-                        properties: {
-                          id: {
-                            type: "string",
-                            title: "VehicleId",
-                            description: "Unique identifier for the vehicle in Terminal.",
-                            format: "ulid",
-                            pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                            example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                          },
-                        },
-                        required: ["id"],
-                      },
-                    ],
                   },
                   driver: {
+                    type: "string",
+                    title: "DriverId",
+                    description: "Unique identifier for the driver in Terminal.",
+                    format: "ulid",
+                    pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                     example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                    oneOf: [
-                      {
-                        type: "string",
-                        title: "DriverId",
-                        description: "Unique identifier for the driver in Terminal.",
-                        format: "ulid",
-                        pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                      {
-                        type: "object",
-                        title: "Expanded Driver",
-                        properties: {
-                          id: {
-                            type: "string",
-                            title: "DriverId",
-                            description: "Unique identifier for the driver in Terminal.",
-                            format: "ulid",
-                            pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-                            example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                          },
-                        },
-                        required: ["id"],
-                      },
-                    ],
-                    description:
-                      "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                   },
                   locatedAt: {
                     type: "string",
@@ -1276,6 +1111,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -1348,7 +1184,7 @@ export const commands: Command[] = [
           type: "array",
           items: {
             type: "object",
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             title: "Vehicle Stat Log",
             properties: {
               id: {
@@ -1366,7 +1202,6 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -1379,33 +1214,12 @@ export const commands: Command[] = [
                 description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
               },
               vehicle: {
-                description: "Reference to the vehicle the event is about",
+                type: "string",
+                title: "VehicleId",
+                description: "Unique identifier for the vehicle in Terminal.",
+                format: "ulid",
+                pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "VehicleId",
-                    description: "Unique identifier for the vehicle in Terminal.",
-                    format: "ulid",
-                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                  {
-                    type: "object",
-                    title: "Expanded Vehicle",
-                    properties: {
-                      id: {
-                        type: "string",
-                        title: "VehicleId",
-                        description: "Unique identifier for the vehicle in Terminal.",
-                        format: "ulid",
-                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                    },
-                    required: ["id"],
-                  },
-                ],
               },
               metadata: {
                 type: "object",
@@ -1459,8 +1273,9 @@ export const commands: Command[] = [
                   odometer: {
                     type: "number",
                     title: "Distance In Kilometers",
+                    format: "double",
                     description: "Distance in kilometers",
-                    example: 100,
+                    example: 100.25,
                   },
                 },
                 required: ["type", "odometer"],
@@ -1725,6 +1540,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],

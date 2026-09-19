@@ -123,44 +123,22 @@ export const commands: Command[] = [
           items: {
             type: "object",
             title: "Vehicle Utilization",
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             additionalProperties: false,
             properties: {
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               vehicle: {
-                description: "The vehicle this utilization data is for.",
+                type: "string",
+                title: "VehicleId",
+                description: "Unique identifier for the vehicle in Terminal.",
+                format: "ulid",
+                pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "VehicleId",
-                    description: "Unique identifier for the vehicle in Terminal.",
-                    format: "ulid",
-                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                  {
-                    type: "object",
-                    title: "Expanded Vehicle",
-                    properties: {
-                      id: {
-                        type: "string",
-                        title: "VehicleId",
-                        description: "Unique identifier for the vehicle in Terminal.",
-                        format: "ulid",
-                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                    },
-                    required: ["id"],
-                  },
-                ],
               },
               startAt: {
                 type: "string",
@@ -174,30 +152,31 @@ export const commands: Command[] = [
               },
               fuelConsumed: {
                 type: "number",
-                description: "Fuel consumed during this date in liters.",
                 title: "Volume In Liters",
+                description: "Volume in liters rounded to 2 decimal places.",
                 example: 95.33,
               },
               distance: {
                 type: "number",
                 title: "Distance In Kilometers",
+                format: "double",
                 description: "Distance in kilometers",
-                example: 100,
+                example: 100.25,
               },
               durations: {
                 type: "object",
                 properties: {
                   driving: {
                     type: "integer",
-                    description: "Time spent driving during this date in milliseconds.",
                     title: "DurationInMS",
                     example: 0,
+                    description: "Duration in MS",
                   },
                   idling: {
                     type: "integer",
-                    description: "Time spent idling during this date in milliseconds.",
                     title: "DurationInMS",
                     example: 0,
+                    description: "Duration in MS",
                   },
                 },
               },
@@ -228,6 +207,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],

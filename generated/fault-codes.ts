@@ -122,7 +122,7 @@ export const commands: Command[] = [
           items: {
             type: "object",
             title: "Fault Code Event",
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             properties: {
               id: {
                 type: "string",
@@ -138,40 +138,17 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
               },
               vehicle: {
+                type: "string",
+                title: "VehicleId",
+                description: "Unique identifier for the vehicle in Terminal.",
+                format: "ulid",
+                pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "VehicleId",
-                    description: "Unique identifier for the vehicle in Terminal.",
-                    format: "ulid",
-                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                  {
-                    type: "object",
-                    title: "Expanded Vehicle",
-                    properties: {
-                      id: {
-                        type: "string",
-                        title: "VehicleId",
-                        description: "Unique identifier for the vehicle in Terminal.",
-                        format: "ulid",
-                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                    },
-                    required: ["id"],
-                  },
-                ],
-                description:
-                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               protocol: {
                 type: "string",
@@ -332,6 +309,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],

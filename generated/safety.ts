@@ -158,7 +158,7 @@ export const commands: Command[] = [
             type: "object",
             title: "Safety Event",
             additionalProperties: false,
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             properties: {
               id: {
                 type: "string",
@@ -200,7 +200,6 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -212,63 +211,20 @@ export const commands: Command[] = [
                   "The original event type as defined by the telematics provider's system",
               },
               driver: {
+                type: "string",
+                title: "DriverId",
+                description: "Unique identifier for the driver in Terminal.",
+                format: "ulid",
+                pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "DriverId",
-                    description: "Unique identifier for the driver in Terminal.",
-                    format: "ulid",
-                    pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-                    example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                  {
-                    type: "object",
-                    title: "Expanded Driver",
-                    properties: {
-                      id: {
-                        type: "string",
-                        title: "DriverId",
-                        description: "Unique identifier for the driver in Terminal.",
-                        format: "ulid",
-                        pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                    },
-                    required: ["id"],
-                  },
-                ],
-                description:
-                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               vehicle: {
-                description: "The ID of the vehicle that was involved in the event.",
+                type: "string",
+                title: "VehicleId",
+                description: "Unique identifier for the vehicle in Terminal.",
+                format: "ulid",
+                pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                oneOf: [
-                  {
-                    type: "string",
-                    title: "VehicleId",
-                    description: "Unique identifier for the vehicle in Terminal.",
-                    format: "ulid",
-                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                  },
-                  {
-                    type: "object",
-                    title: "Expanded Vehicle",
-                    properties: {
-                      id: {
-                        type: "string",
-                        title: "VehicleId",
-                        description: "Unique identifier for the vehicle in Terminal.",
-                        format: "ulid",
-                        pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                        example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                      },
-                    },
-                    required: ["id"],
-                  },
-                ],
               },
               startLocation: {
                 type: "object",
@@ -311,14 +267,14 @@ export const commands: Command[] = [
                   },
                   gForceForwardBackward: {
                     type: "number",
-                    description: "The acceleration/breaking force as a factor of gravity (g).",
                     title: "G-Force",
+                    description: "Acceleration as a factor of gravity (g)",
                     example: 1,
                   },
                   gForceSideToSide: {
                     type: "number",
-                    description: "The cornering (lateral) acceleration as a factor of gravity (g).",
                     title: "G-Force",
+                    description: "Acceleration as a factor of gravity (g)",
                     example: 1,
                   },
                   heading: {
@@ -335,7 +291,6 @@ export const commands: Command[] = [
                 properties: {
                   frontFacing: {
                     type: "object",
-                    description: "The front facing camera media.",
                     title: "Camera Media Reference",
                     properties: {
                       sourceId: {
@@ -355,7 +310,6 @@ export const commands: Command[] = [
                   },
                   rearFacing: {
                     type: "object",
-                    description: "The rear facing camera media.",
                     title: "Camera Media Reference",
                     properties: {
                       sourceId: {
@@ -378,11 +332,10 @@ export const commands: Command[] = [
               extensions: {
                 type: "object",
                 description:
-                  "Includes data enriched via third-party vendors. See [Extensions](/terminal-platform/extensions)",
+                  "Includes data enriched via third-party vendors. See [Extensions](/guides/third-party-extensions)",
                 properties: {
                   here: {
                     type: "object",
-                    description: "Data obtained from the HERE platform.",
                     title: "Here Safety Event Extension",
                     properties: {
                       speedLimit: {
@@ -621,6 +574,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -660,7 +614,7 @@ export const commands: Command[] = [
       type: "object",
       title: "Safety Event",
       additionalProperties: false,
-      "x-model-category": "historical",
+      "x-model-category": "time-series",
       properties: {
         id: {
           type: "string",
@@ -702,7 +656,6 @@ export const commands: Command[] = [
         },
         provider: {
           type: "string",
-          title: "Provider Code",
           example: "geotab",
           description:
             "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -713,63 +666,20 @@ export const commands: Command[] = [
           description: "The original event type as defined by the telematics provider's system",
         },
         driver: {
+          type: "string",
+          title: "DriverId",
+          description: "Unique identifier for the driver in Terminal.",
+          format: "ulid",
+          pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-          oneOf: [
-            {
-              type: "string",
-              title: "DriverId",
-              description: "Unique identifier for the driver in Terminal.",
-              format: "ulid",
-              pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-              example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-            },
-            {
-              type: "object",
-              title: "Expanded Driver",
-              properties: {
-                id: {
-                  type: "string",
-                  title: "DriverId",
-                  description: "Unique identifier for the driver in Terminal.",
-                  format: "ulid",
-                  pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
-                  example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                },
-              },
-              required: ["id"],
-            },
-          ],
-          description:
-            "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
         },
         vehicle: {
-          description: "The ID of the vehicle that was involved in the event.",
+          type: "string",
+          title: "VehicleId",
+          description: "Unique identifier for the vehicle in Terminal.",
+          format: "ulid",
+          pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-          oneOf: [
-            {
-              type: "string",
-              title: "VehicleId",
-              description: "Unique identifier for the vehicle in Terminal.",
-              format: "ulid",
-              pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-              example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-            },
-            {
-              type: "object",
-              title: "Expanded Vehicle",
-              properties: {
-                id: {
-                  type: "string",
-                  title: "VehicleId",
-                  description: "Unique identifier for the vehicle in Terminal.",
-                  format: "ulid",
-                  pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
-                  example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
-                },
-              },
-              required: ["id"],
-            },
-          ],
         },
         startLocation: {
           type: "object",
@@ -812,14 +722,14 @@ export const commands: Command[] = [
             },
             gForceForwardBackward: {
               type: "number",
-              description: "The acceleration/breaking force as a factor of gravity (g).",
               title: "G-Force",
+              description: "Acceleration as a factor of gravity (g)",
               example: 1,
             },
             gForceSideToSide: {
               type: "number",
-              description: "The cornering (lateral) acceleration as a factor of gravity (g).",
               title: "G-Force",
+              description: "Acceleration as a factor of gravity (g)",
               example: 1,
             },
             heading: {
@@ -836,7 +746,6 @@ export const commands: Command[] = [
           properties: {
             frontFacing: {
               type: "object",
-              description: "The front facing camera media.",
               title: "Camera Media Reference",
               properties: {
                 sourceId: {
@@ -855,7 +764,6 @@ export const commands: Command[] = [
             },
             rearFacing: {
               type: "object",
-              description: "The rear facing camera media.",
               title: "Camera Media Reference",
               properties: {
                 sourceId: {
@@ -877,11 +785,10 @@ export const commands: Command[] = [
         extensions: {
           type: "object",
           description:
-            "Includes data enriched via third-party vendors. See [Extensions](/terminal-platform/extensions)",
+            "Includes data enriched via third-party vendors. See [Extensions](/guides/third-party-extensions)",
           properties: {
             here: {
               type: "object",
-              description: "Data obtained from the HERE platform.",
               title: "Here Safety Event Extension",
               properties: {
                 speedLimit: {
@@ -1117,7 +1024,6 @@ export const commands: Command[] = [
       properties: {
         frontFacing: {
           type: "object",
-          description: "The front facing camera media.",
           title: "Camera Media File",
           properties: {
             sourceId: {
@@ -1130,12 +1036,15 @@ export const commands: Command[] = [
               description: "A URL to download the video file.",
               example: "https://example.com/video.mp4",
             },
+            imageUrl: {
+              type: "string",
+              description: "A URL to download the image file.",
+              example: "https://example.com/image.jpg",
+            },
           },
-          required: ["videoUrl"],
         },
         rearFacing: {
           type: "object",
-          description: "The rear facing camera media.",
           title: "Camera Media File",
           properties: {
             sourceId: {
@@ -1148,8 +1057,12 @@ export const commands: Command[] = [
               description: "A URL to download the video file.",
               example: "https://example.com/video.mp4",
             },
+            imageUrl: {
+              type: "string",
+              description: "A URL to download the image file.",
+              example: "https://example.com/image.jpg",
+            },
           },
-          required: ["videoUrl"],
         },
         raw: {
           type: "array",
@@ -1168,7 +1081,7 @@ export const commands: Command[] = [
           },
         },
       },
-      "x-description": "Video footage from vehicle cameras associated with safety events.",
+      "x-description": "Media from vehicle cameras associated with safety events.",
     },
   },
 ];
