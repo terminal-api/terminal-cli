@@ -1,0 +1,14 @@
+{
+  "name": "terminal-cli",
+  "displayName": "Terminal CLI",
+  "version": "0.1.1",
+  "description": "Query fleet telematics data through the Terminal CLI.",
+  "author": {
+    "name": "Terminal",
+    "email": "support@withterminal.com"
+  },
+  "homepage": "https://docs.withterminal.com",
+  "repository": "https://github.com/terminal-api/terminal-cli",
+  "license": "MIT",
+  "keywords": ["terminal", "telematics", "fleet", "trucking", "cli"]
+}
