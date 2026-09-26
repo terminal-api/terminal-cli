@@ -158,7 +158,7 @@ export const commands: Command[] = [
             type: "object",
             title: "Safety Event",
             additionalProperties: false,
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             properties: {
               id: {
                 type: "string",
@@ -200,7 +200,6 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -225,6 +224,8 @@ export const commands: Command[] = [
                   {
                     type: "object",
                     title: "Expanded Driver",
+                    additionalProperties: false,
+                    examples: [],
                     properties: {
                       id: {
                         type: "string",
@@ -234,15 +235,214 @@ export const commands: Command[] = [
                         pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                         example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                       },
+                      status: {
+                        type: "string",
+                        enum: ["active", "inactive"],
+                        example: "active",
+                        description: "The status in the providers system",
+                      },
+                      sourceId: {
+                        type: "string",
+                        title: "SourceId",
+                        example: "123456789",
+                        description: "The ID used to represent the entity in the source system.",
+                      },
+                      provider: {
+                        type: "string",
+                        example: "geotab",
+                        description:
+                          "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                      },
+                      firstName: { type: "string", example: "Mike" },
+                      middleName: { type: "string", example: "Bryan" },
+                      lastName: { type: "string", example: "Miller" },
+                      email: { type: "string", format: "email", example: "driver@example.com" },
+                      phone: {
+                        type: "string",
+                        title: "Phone",
+                        pattern: "^\\+?\\d{10,14}$",
+                        example: "+19058084567",
+                        description:
+                          "Phone number formatted in [E.164](https://www.twilio.com/docs/glossary/what-e164) formatting",
+                      },
+                      username: {
+                        type: "string",
+                        description: "The driver's username for login purposes",
+                        example: "driver123",
+                      },
+                      license: {
+                        type: "object",
+                        properties: {
+                          state: {
+                            type: "string",
+                            title: "State",
+                            enum: [
+                              "AL",
+                              "AK",
+                              "AS",
+                              "AZ",
+                              "AR",
+                              "CA",
+                              "CO",
+                              "CT",
+                              "DE",
+                              "FL",
+                              "GA",
+                              "GU",
+                              "HI",
+                              "ID",
+                              "IL",
+                              "IN",
+                              "IA",
+                              "KS",
+                              "KY",
+                              "LA",
+                              "ME",
+                              "MD",
+                              "MA",
+                              "MI",
+                              "MN",
+                              "MP",
+                              "MS",
+                              "MO",
+                              "MT",
+                              "NE",
+                              "NV",
+                              "NH",
+                              "NJ",
+                              "NM",
+                              "NY",
+                              "NC",
+                              "ND",
+                              "OH",
+                              "OK",
+                              "OR",
+                              "PA",
+                              "PR",
+                              "RI",
+                              "SC",
+                              "SD",
+                              "TN",
+                              "TX",
+                              "UT",
+                              "VT",
+                              "VA",
+                              "WA",
+                              "WV",
+                              "WI",
+                              "WY",
+                              "VI",
+                              "AB",
+                              "BC",
+                              "MB",
+                              "NB",
+                              "NL",
+                              "NS",
+                              "ON",
+                              "PE",
+                              "QC",
+                              "SK",
+                              "NT",
+                              "NU",
+                              "UM",
+                              "YT",
+                              "DC",
+                            ],
+                            example: "TN",
+                            description: "US State or Canadian Province",
+                          },
+                          number: { type: "string", example: "123-456-789-0" },
+                        },
+                      },
+                      groups: {
+                        type: "array",
+                        description: "The groups the driver belongs to.",
+                        items: {
+                          type: "string",
+                          title: "GroupId",
+                          format: "ulid",
+                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      createdAt: {
+                        type: "string",
+                        title: "SourceCreatedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                      },
+                      updatedAt: {
+                        type: "string",
+                        title: "SourceUpdatedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                      },
+                      metadata: {
+                        type: "object",
+                        title: "CoreEntityMetadata",
+                        description: "Internal metadata about the record.",
+                        required: ["addedAt", "modifiedAt"],
+                        properties: {
+                          addedAt: {
+                            type: "string",
+                            title: "AddedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                          },
+                          deletedAt: {
+                            type: "string",
+                            title: "DeletedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                          },
+                          visibility: {
+                            type: "string",
+                            enum: [
+                              "visible",
+                              "hidden_by_exclude_list",
+                              "hidden_by_include_list",
+                              "hidden_by_status",
+                              "deleted",
+                            ],
+                            example: "visible",
+                            description:
+                              "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                          },
+                          modifiedAt: {
+                            type: "string",
+                            title: "ModifiedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                          },
+                        },
+                      },
+                      raw: {
+                        type: "array",
+                        title: "RawDataList",
+                        example: [],
+                        items: {
+                          type: "object",
+                          title: "RawData",
+                          properties: {
+                            provider: { type: "string" },
+                            schema: { type: "string" },
+                            extractedAt: { type: "string" },
+                            data: { type: "object" },
+                          },
+                          required: ["provider", "schema", "extractedAt", "data"],
+                        },
+                      },
                     },
-                    required: ["id"],
+                    required: ["id", "sourceId", "provider", "status", "metadata"],
+                    "x-description": "The model representing a driver in Terminal.",
                   },
                 ],
-                description:
-                  "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
               },
               vehicle: {
-                description: "The ID of the vehicle that was involved in the event.",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                 oneOf: [
                   {
@@ -256,6 +456,7 @@ export const commands: Command[] = [
                   {
                     type: "object",
                     title: "Expanded Vehicle",
+                    additionalProperties: false,
                     properties: {
                       id: {
                         type: "string",
@@ -265,8 +466,238 @@ export const commands: Command[] = [
                         pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                         example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                       },
+                      name: { type: "string", example: "Big Red" },
+                      status: {
+                        type: "string",
+                        enum: ["active", "inactive"],
+                        example: "active",
+                        description: "The status in the providers system",
+                      },
+                      sourceId: {
+                        type: "string",
+                        title: "SourceId",
+                        example: "123456789",
+                        description: "The ID used to represent the entity in the source system.",
+                      },
+                      provider: {
+                        type: "string",
+                        example: "geotab",
+                        description:
+                          "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                      },
+                      vin: { type: "string", title: "VIN", example: "1HGCM82633A004352" },
+                      make: { type: "string", example: "Peterbilt" },
+                      model: { type: "string", example: "Model 579" },
+                      year: { type: "integer", example: 2016 },
+                      groups: {
+                        type: "array",
+                        description: "The groups the vehicle belongs to.",
+                        items: {
+                          type: "string",
+                          title: "GroupId",
+                          format: "ulid",
+                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      devices: {
+                        type: "array",
+                        description: "The devices installed in the vehicle.",
+                        items: {
+                          type: "string",
+                          title: "DeviceId",
+                          format: "ulid",
+                          example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      licensePlate: {
+                        type: "object",
+                        properties: {
+                          state: {
+                            type: "string",
+                            title: "State",
+                            enum: [
+                              "AL",
+                              "AK",
+                              "AS",
+                              "AZ",
+                              "AR",
+                              "CA",
+                              "CO",
+                              "CT",
+                              "DE",
+                              "FL",
+                              "GA",
+                              "GU",
+                              "HI",
+                              "ID",
+                              "IL",
+                              "IN",
+                              "IA",
+                              "KS",
+                              "KY",
+                              "LA",
+                              "ME",
+                              "MD",
+                              "MA",
+                              "MI",
+                              "MN",
+                              "MP",
+                              "MS",
+                              "MO",
+                              "MT",
+                              "NE",
+                              "NV",
+                              "NH",
+                              "NJ",
+                              "NM",
+                              "NY",
+                              "NC",
+                              "ND",
+                              "OH",
+                              "OK",
+                              "OR",
+                              "PA",
+                              "PR",
+                              "RI",
+                              "SC",
+                              "SD",
+                              "TN",
+                              "TX",
+                              "UT",
+                              "VT",
+                              "VA",
+                              "WA",
+                              "WV",
+                              "WI",
+                              "WY",
+                              "VI",
+                              "AB",
+                              "BC",
+                              "MB",
+                              "NB",
+                              "NL",
+                              "NS",
+                              "ON",
+                              "PE",
+                              "QC",
+                              "SK",
+                              "NT",
+                              "NU",
+                              "UM",
+                              "YT",
+                              "DC",
+                            ],
+                            example: "TN",
+                            description: "US State or Canadian Province",
+                          },
+                          number: { type: "string", example: "ABC-1234" },
+                        },
+                      },
+                      fuelType: {
+                        enum: [
+                          "gasoline",
+                          "diesel",
+                          "propane",
+                          "electric",
+                          "hybrid_gasoline",
+                          "hybrid_diesel",
+                          "biodiesel",
+                          "compressed_natural_gas",
+                          "liquefied_natural_gas",
+                          "ethanol",
+                          "hydrogen",
+                          "plug_in_hybrid",
+                        ],
+                        example: "diesel",
+                      },
+                      fuelEfficiency: {
+                        type: "number",
+                        deprecated: true,
+                        description:
+                          "This field will be removed in the future as is not commonly available from providers.",
+                        example: 27.4,
+                      },
+                      fuelTankCapacity: {
+                        type: "number",
+                        description: "Maximum amount of fuel vehicle can hold in liters.",
+                        title: "Volume In Liters",
+                        example: 95.33,
+                      },
+                      createdAt: {
+                        type: "string",
+                        title: "SourceCreatedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                      },
+                      updatedAt: {
+                        type: "string",
+                        title: "SourceUpdatedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                      },
+                      metadata: {
+                        type: "object",
+                        title: "CoreEntityMetadata",
+                        description: "Internal metadata about the record.",
+                        required: ["addedAt", "modifiedAt"],
+                        properties: {
+                          addedAt: {
+                            type: "string",
+                            title: "AddedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                          },
+                          deletedAt: {
+                            type: "string",
+                            title: "DeletedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                          },
+                          visibility: {
+                            type: "string",
+                            enum: [
+                              "visible",
+                              "hidden_by_exclude_list",
+                              "hidden_by_include_list",
+                              "hidden_by_status",
+                              "deleted",
+                            ],
+                            example: "visible",
+                            description:
+                              "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                          },
+                          modifiedAt: {
+                            type: "string",
+                            title: "ModifiedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                          },
+                        },
+                      },
+                      raw: {
+                        type: "array",
+                        title: "RawDataList",
+                        example: [],
+                        items: {
+                          type: "object",
+                          title: "RawData",
+                          properties: {
+                            provider: { type: "string" },
+                            schema: { type: "string" },
+                            extractedAt: { type: "string" },
+                            data: { type: "object" },
+                          },
+                          required: ["provider", "schema", "extractedAt", "data"],
+                        },
+                      },
                     },
-                    required: ["id"],
+                    required: ["id", "sourceId", "provider", "status", "metadata"],
+                    "x-description": "The model representing a vehicle in Terminal.",
                   },
                 ],
               },
@@ -311,14 +742,14 @@ export const commands: Command[] = [
                   },
                   gForceForwardBackward: {
                     type: "number",
-                    description: "The acceleration/breaking force as a factor of gravity (g).",
                     title: "G-Force",
+                    description: "Acceleration as a factor of gravity (g)",
                     example: 1,
                   },
                   gForceSideToSide: {
                     type: "number",
-                    description: "The cornering (lateral) acceleration as a factor of gravity (g).",
                     title: "G-Force",
+                    description: "Acceleration as a factor of gravity (g)",
                     example: 1,
                   },
                   heading: {
@@ -335,7 +766,6 @@ export const commands: Command[] = [
                 properties: {
                   frontFacing: {
                     type: "object",
-                    description: "The front facing camera media.",
                     title: "Camera Media Reference",
                     properties: {
                       sourceId: {
@@ -355,7 +785,6 @@ export const commands: Command[] = [
                   },
                   rearFacing: {
                     type: "object",
-                    description: "The rear facing camera media.",
                     title: "Camera Media Reference",
                     properties: {
                       sourceId: {
@@ -372,188 +801,6 @@ export const commands: Command[] = [
                       },
                     },
                     required: ["available"],
-                  },
-                },
-              },
-              extensions: {
-                type: "object",
-                description:
-                  "Includes data enriched via third-party vendors. See [Extensions](/terminal-platform/extensions)",
-                properties: {
-                  here: {
-                    type: "object",
-                    description: "Data obtained from the HERE platform.",
-                    title: "Here Safety Event Extension",
-                    properties: {
-                      speedLimit: {
-                        type: "number",
-                        title: "Speed In KPH",
-                        description: "Speed in KPH rounded to 2 decimal places.",
-                        example: 95.33,
-                      },
-                      speedLimitSource: {
-                        type: "string",
-                        title: "Speed Limit Source",
-                        enum: ["posted", "derived"],
-                        description: "Source for speed limit obtained from the HERE platform.",
-                        example: "posted",
-                      },
-                      truckSpeedLimit: {
-                        type: "number",
-                        title: "Speed In KPH",
-                        description: "Speed in KPH rounded to 2 decimal places.",
-                        example: 95.33,
-                      },
-                      roadName: {
-                        type: "string",
-                        description: "Name of the road obtained from the HERE platform.",
-                        example: "John St",
-                      },
-                      linkAttributes: {
-                        type: "object",
-                        description: "Additional road attributes from HERE platform",
-                        properties: {
-                          countryCode: {
-                            type: "string",
-                            description: "ISO country code of the road location",
-                          },
-                          vehicleTypes: {
-                            type: "string",
-                            description: "Types of vehicles allowed",
-                          },
-                          isUrban: {
-                            type: "string",
-                            description: "Indicates if the road is in an urban area",
-                          },
-                          transportVerified: {
-                            type: "string",
-                            description: "Indicates if transport information is verified",
-                          },
-                          functionalClass: {
-                            type: "string",
-                            description:
-                              "Road functional class according to HERE Maps:\n- 0: Unknown\n- 1: Functional Class 1 \n- 2: Functional Class 2 \n- 3: Functional Class 3 \n- 4: Functional Class 4 \n- 5: Functional Class 5",
-                          },
-                          controlledAccess: {
-                            type: "string",
-                            description: "Indicates if the road has controlled access",
-                          },
-                          limitedAccessRoad: {
-                            type: "string",
-                            description: "Indicates if it's a limited access road",
-                          },
-                          travelDirection: { type: "string", description: "Direction of travel" },
-                          isBoatFerry: {
-                            type: "string",
-                            description: "Indicates if it's a boat ferry route",
-                          },
-                          isRailFerry: {
-                            type: "string",
-                            description: "Indicates if it's a rail ferry route",
-                          },
-                          isMultiDigitized: {
-                            type: "string",
-                            description: "Indicates if the road is multi-digitized",
-                          },
-                          isDivided: {
-                            type: "string",
-                            description: "Indicates if the road is divided",
-                          },
-                          isDividerLegal: {
-                            type: "string",
-                            description: "Indicates if the divider is legal",
-                          },
-                          isFrontage: {
-                            type: "string",
-                            description: "Indicates if it's a frontage road",
-                          },
-                          isPaved: {
-                            type: "string",
-                            description: "Indicates if the road is paved",
-                          },
-                          isRamp: { type: "string", description: "Indicates if it's a ramp" },
-                          isPrivate: {
-                            type: "string",
-                            description: "Indicates if it's a private road",
-                          },
-                          hasPoiAccess: {
-                            type: "string",
-                            description: "Indicates if there's POI access",
-                          },
-                          intersectionCategory: {
-                            type: "string",
-                            description:
-                              "Type of intersection according to HERE Maps:\n- 0: Unknown\n- 1: Intersection Internal\n- 2: Manoeuvre\n- 3: Indescribable\n- 4: Roundabout\n- 5: Undefined Traffic Area\n- 6: Special Traffic Figure",
-                          },
-                          speedCategory: {
-                            type: "string",
-                            description:
-                              "Speed category according to HERE Maps:\n- 0: Unknown\n- 1: Over 130 km/h (80 mph)\n- 2: 101-130 km/h (65-80 mph)\n- 3: 91-100 km/h (55-64 mph)\n- 4: 71-90 km/h (41-54 mph)\n- 5: 51-70 km/h (31-40 mph)\n- 6: 31-50 km/h (21-30 mph)\n- 7: 11-30 km/h (6-20 mph)\n- 8: Under 11 km/h (6 mph)",
-                          },
-                          laneCategory: {
-                            type: "string",
-                            description:
-                              "Lane category according to HERE Maps:\n- 0: Unknown\n- 1: One lane\n- 2: Two or three lanes\n- 3: Four or more lanes",
-                          },
-                          coverageIndicator: { type: "string", description: "Coverage indicator" },
-                          lowMobility: {
-                            type: "string",
-                            description:
-                              "Low mobility indicator:\n- 0: Unknown (Default)\n- 1: Low mobility driving condition\n- 2: Not low mobility driving condition",
-                          },
-                          hasPublicAccess: {
-                            type: "string",
-                            description: "Indicates if there's public access",
-                          },
-                          routeTypes: { type: "string", description: "Types of routes" },
-                        },
-                      },
-                      weather: {
-                        type: "object",
-                        description: "Weather conditions at the time of the event",
-                        properties: {
-                          latitude: {
-                            type: "number",
-                            description: "Latitude of weather measurement location",
-                          },
-                          longitude: {
-                            type: "number",
-                            description: "Longitude of weather measurement location",
-                          },
-                          temperature: {
-                            type: "number",
-                            description: "Air temperature in Celsius",
-                          },
-                          dewPoint: {
-                            type: "number",
-                            description: "Dew point temperature in Celsius",
-                          },
-                          humidity: { type: "number", description: "Relative humidity percentage" },
-                          pressure: { type: "number", description: "Air pressure" },
-                          windSpeed: {
-                            type: "number",
-                            description: "Wind velocity in meters per second",
-                          },
-                          windDirection: {
-                            type: "number",
-                            description: "Wind direction in degrees",
-                          },
-                          locationId: {
-                            type: "string",
-                            description: "HERE weather location identifier",
-                          },
-                          precipitationType: { type: "string", description: "Precipitation type" },
-                          intensityOfPrecipitation: {
-                            type: "number",
-                            description: "Intensity of precipitation (measured in cm/h)",
-                          },
-                          visibility: {
-                            type: "number",
-                            description: "Visibility (measured in km)",
-                          },
-                        },
-                      },
-                    },
                   },
                 },
               },
@@ -621,6 +868,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -660,7 +908,7 @@ export const commands: Command[] = [
       type: "object",
       title: "Safety Event",
       additionalProperties: false,
-      "x-model-category": "historical",
+      "x-model-category": "time-series",
       properties: {
         id: {
           type: "string",
@@ -702,7 +950,6 @@ export const commands: Command[] = [
         },
         provider: {
           type: "string",
-          title: "Provider Code",
           example: "geotab",
           description:
             "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -726,6 +973,8 @@ export const commands: Command[] = [
             {
               type: "object",
               title: "Expanded Driver",
+              additionalProperties: false,
+              examples: [],
               properties: {
                 id: {
                   type: "string",
@@ -735,15 +984,214 @@ export const commands: Command[] = [
                   pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                   example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                 },
+                status: {
+                  type: "string",
+                  enum: ["active", "inactive"],
+                  example: "active",
+                  description: "The status in the providers system",
+                },
+                sourceId: {
+                  type: "string",
+                  title: "SourceId",
+                  example: "123456789",
+                  description: "The ID used to represent the entity in the source system.",
+                },
+                provider: {
+                  type: "string",
+                  example: "geotab",
+                  description:
+                    "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                },
+                firstName: { type: "string", example: "Mike" },
+                middleName: { type: "string", example: "Bryan" },
+                lastName: { type: "string", example: "Miller" },
+                email: { type: "string", format: "email", example: "driver@example.com" },
+                phone: {
+                  type: "string",
+                  title: "Phone",
+                  pattern: "^\\+?\\d{10,14}$",
+                  example: "+19058084567",
+                  description:
+                    "Phone number formatted in [E.164](https://www.twilio.com/docs/glossary/what-e164) formatting",
+                },
+                username: {
+                  type: "string",
+                  description: "The driver's username for login purposes",
+                  example: "driver123",
+                },
+                license: {
+                  type: "object",
+                  properties: {
+                    state: {
+                      type: "string",
+                      title: "State",
+                      enum: [
+                        "AL",
+                        "AK",
+                        "AS",
+                        "AZ",
+                        "AR",
+                        "CA",
+                        "CO",
+                        "CT",
+                        "DE",
+                        "FL",
+                        "GA",
+                        "GU",
+                        "HI",
+                        "ID",
+                        "IL",
+                        "IN",
+                        "IA",
+                        "KS",
+                        "KY",
+                        "LA",
+                        "ME",
+                        "MD",
+                        "MA",
+                        "MI",
+                        "MN",
+                        "MP",
+                        "MS",
+                        "MO",
+                        "MT",
+                        "NE",
+                        "NV",
+                        "NH",
+                        "NJ",
+                        "NM",
+                        "NY",
+                        "NC",
+                        "ND",
+                        "OH",
+                        "OK",
+                        "OR",
+                        "PA",
+                        "PR",
+                        "RI",
+                        "SC",
+                        "SD",
+                        "TN",
+                        "TX",
+                        "UT",
+                        "VT",
+                        "VA",
+                        "WA",
+                        "WV",
+                        "WI",
+                        "WY",
+                        "VI",
+                        "AB",
+                        "BC",
+                        "MB",
+                        "NB",
+                        "NL",
+                        "NS",
+                        "ON",
+                        "PE",
+                        "QC",
+                        "SK",
+                        "NT",
+                        "NU",
+                        "UM",
+                        "YT",
+                        "DC",
+                      ],
+                      example: "TN",
+                      description: "US State or Canadian Province",
+                    },
+                    number: { type: "string", example: "123-456-789-0" },
+                  },
+                },
+                groups: {
+                  type: "array",
+                  description: "The groups the driver belongs to.",
+                  items: {
+                    type: "string",
+                    title: "GroupId",
+                    format: "ulid",
+                    example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                },
+                createdAt: {
+                  type: "string",
+                  title: "SourceCreatedAt",
+                  format: "date-time",
+                  description:
+                    "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                },
+                updatedAt: {
+                  type: "string",
+                  title: "SourceUpdatedAt",
+                  format: "date-time",
+                  description:
+                    "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                },
+                metadata: {
+                  type: "object",
+                  title: "CoreEntityMetadata",
+                  description: "Internal metadata about the record.",
+                  required: ["addedAt", "modifiedAt"],
+                  properties: {
+                    addedAt: {
+                      type: "string",
+                      title: "AddedAt",
+                      format: "date-time",
+                      description:
+                        "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                    },
+                    deletedAt: {
+                      type: "string",
+                      title: "DeletedAt",
+                      format: "date-time",
+                      description:
+                        "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                    },
+                    visibility: {
+                      type: "string",
+                      enum: [
+                        "visible",
+                        "hidden_by_exclude_list",
+                        "hidden_by_include_list",
+                        "hidden_by_status",
+                        "deleted",
+                      ],
+                      example: "visible",
+                      description:
+                        "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                    },
+                    modifiedAt: {
+                      type: "string",
+                      title: "ModifiedAt",
+                      format: "date-time",
+                      description:
+                        "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                    },
+                  },
+                },
+                raw: {
+                  type: "array",
+                  title: "RawDataList",
+                  example: [],
+                  items: {
+                    type: "object",
+                    title: "RawData",
+                    properties: {
+                      provider: { type: "string" },
+                      schema: { type: "string" },
+                      extractedAt: { type: "string" },
+                      data: { type: "object" },
+                    },
+                    required: ["provider", "schema", "extractedAt", "data"],
+                  },
+                },
               },
-              required: ["id"],
+              required: ["id", "sourceId", "provider", "status", "metadata"],
+              "x-description": "The model representing a driver in Terminal.",
             },
           ],
-          description:
-            "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
         },
         vehicle: {
-          description: "The ID of the vehicle that was involved in the event.",
           example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
           oneOf: [
             {
@@ -757,6 +1205,7 @@ export const commands: Command[] = [
             {
               type: "object",
               title: "Expanded Vehicle",
+              additionalProperties: false,
               properties: {
                 id: {
                   type: "string",
@@ -766,8 +1215,238 @@ export const commands: Command[] = [
                   pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                   example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                 },
+                name: { type: "string", example: "Big Red" },
+                status: {
+                  type: "string",
+                  enum: ["active", "inactive"],
+                  example: "active",
+                  description: "The status in the providers system",
+                },
+                sourceId: {
+                  type: "string",
+                  title: "SourceId",
+                  example: "123456789",
+                  description: "The ID used to represent the entity in the source system.",
+                },
+                provider: {
+                  type: "string",
+                  example: "geotab",
+                  description:
+                    "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                },
+                vin: { type: "string", title: "VIN", example: "1HGCM82633A004352" },
+                make: { type: "string", example: "Peterbilt" },
+                model: { type: "string", example: "Model 579" },
+                year: { type: "integer", example: 2016 },
+                groups: {
+                  type: "array",
+                  description: "The groups the vehicle belongs to.",
+                  items: {
+                    type: "string",
+                    title: "GroupId",
+                    format: "ulid",
+                    example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                },
+                devices: {
+                  type: "array",
+                  description: "The devices installed in the vehicle.",
+                  items: {
+                    type: "string",
+                    title: "DeviceId",
+                    format: "ulid",
+                    example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
+                  },
+                },
+                licensePlate: {
+                  type: "object",
+                  properties: {
+                    state: {
+                      type: "string",
+                      title: "State",
+                      enum: [
+                        "AL",
+                        "AK",
+                        "AS",
+                        "AZ",
+                        "AR",
+                        "CA",
+                        "CO",
+                        "CT",
+                        "DE",
+                        "FL",
+                        "GA",
+                        "GU",
+                        "HI",
+                        "ID",
+                        "IL",
+                        "IN",
+                        "IA",
+                        "KS",
+                        "KY",
+                        "LA",
+                        "ME",
+                        "MD",
+                        "MA",
+                        "MI",
+                        "MN",
+                        "MP",
+                        "MS",
+                        "MO",
+                        "MT",
+                        "NE",
+                        "NV",
+                        "NH",
+                        "NJ",
+                        "NM",
+                        "NY",
+                        "NC",
+                        "ND",
+                        "OH",
+                        "OK",
+                        "OR",
+                        "PA",
+                        "PR",
+                        "RI",
+                        "SC",
+                        "SD",
+                        "TN",
+                        "TX",
+                        "UT",
+                        "VT",
+                        "VA",
+                        "WA",
+                        "WV",
+                        "WI",
+                        "WY",
+                        "VI",
+                        "AB",
+                        "BC",
+                        "MB",
+                        "NB",
+                        "NL",
+                        "NS",
+                        "ON",
+                        "PE",
+                        "QC",
+                        "SK",
+                        "NT",
+                        "NU",
+                        "UM",
+                        "YT",
+                        "DC",
+                      ],
+                      example: "TN",
+                      description: "US State or Canadian Province",
+                    },
+                    number: { type: "string", example: "ABC-1234" },
+                  },
+                },
+                fuelType: {
+                  enum: [
+                    "gasoline",
+                    "diesel",
+                    "propane",
+                    "electric",
+                    "hybrid_gasoline",
+                    "hybrid_diesel",
+                    "biodiesel",
+                    "compressed_natural_gas",
+                    "liquefied_natural_gas",
+                    "ethanol",
+                    "hydrogen",
+                    "plug_in_hybrid",
+                  ],
+                  example: "diesel",
+                },
+                fuelEfficiency: {
+                  type: "number",
+                  deprecated: true,
+                  description:
+                    "This field will be removed in the future as is not commonly available from providers.",
+                  example: 27.4,
+                },
+                fuelTankCapacity: {
+                  type: "number",
+                  description: "Maximum amount of fuel vehicle can hold in liters.",
+                  title: "Volume In Liters",
+                  example: 95.33,
+                },
+                createdAt: {
+                  type: "string",
+                  title: "SourceCreatedAt",
+                  format: "date-time",
+                  description:
+                    "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                },
+                updatedAt: {
+                  type: "string",
+                  title: "SourceUpdatedAt",
+                  format: "date-time",
+                  description:
+                    "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                },
+                metadata: {
+                  type: "object",
+                  title: "CoreEntityMetadata",
+                  description: "Internal metadata about the record.",
+                  required: ["addedAt", "modifiedAt"],
+                  properties: {
+                    addedAt: {
+                      type: "string",
+                      title: "AddedAt",
+                      format: "date-time",
+                      description:
+                        "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                    },
+                    deletedAt: {
+                      type: "string",
+                      title: "DeletedAt",
+                      format: "date-time",
+                      description:
+                        "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                    },
+                    visibility: {
+                      type: "string",
+                      enum: [
+                        "visible",
+                        "hidden_by_exclude_list",
+                        "hidden_by_include_list",
+                        "hidden_by_status",
+                        "deleted",
+                      ],
+                      example: "visible",
+                      description:
+                        "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                    },
+                    modifiedAt: {
+                      type: "string",
+                      title: "ModifiedAt",
+                      format: "date-time",
+                      description:
+                        "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                    },
+                  },
+                },
+                raw: {
+                  type: "array",
+                  title: "RawDataList",
+                  example: [],
+                  items: {
+                    type: "object",
+                    title: "RawData",
+                    properties: {
+                      provider: { type: "string" },
+                      schema: { type: "string" },
+                      extractedAt: { type: "string" },
+                      data: { type: "object" },
+                    },
+                    required: ["provider", "schema", "extractedAt", "data"],
+                  },
+                },
               },
-              required: ["id"],
+              required: ["id", "sourceId", "provider", "status", "metadata"],
+              "x-description": "The model representing a vehicle in Terminal.",
             },
           ],
         },
@@ -812,14 +1491,14 @@ export const commands: Command[] = [
             },
             gForceForwardBackward: {
               type: "number",
-              description: "The acceleration/breaking force as a factor of gravity (g).",
               title: "G-Force",
+              description: "Acceleration as a factor of gravity (g)",
               example: 1,
             },
             gForceSideToSide: {
               type: "number",
-              description: "The cornering (lateral) acceleration as a factor of gravity (g).",
               title: "G-Force",
+              description: "Acceleration as a factor of gravity (g)",
               example: 1,
             },
             heading: {
@@ -836,7 +1515,6 @@ export const commands: Command[] = [
           properties: {
             frontFacing: {
               type: "object",
-              description: "The front facing camera media.",
               title: "Camera Media Reference",
               properties: {
                 sourceId: {
@@ -855,7 +1533,6 @@ export const commands: Command[] = [
             },
             rearFacing: {
               type: "object",
-              description: "The rear facing camera media.",
               title: "Camera Media Reference",
               properties: {
                 sourceId: {
@@ -871,161 +1548,6 @@ export const commands: Command[] = [
                 },
               },
               required: ["available"],
-            },
-          },
-        },
-        extensions: {
-          type: "object",
-          description:
-            "Includes data enriched via third-party vendors. See [Extensions](/terminal-platform/extensions)",
-          properties: {
-            here: {
-              type: "object",
-              description: "Data obtained from the HERE platform.",
-              title: "Here Safety Event Extension",
-              properties: {
-                speedLimit: {
-                  type: "number",
-                  title: "Speed In KPH",
-                  description: "Speed in KPH rounded to 2 decimal places.",
-                  example: 95.33,
-                },
-                speedLimitSource: {
-                  type: "string",
-                  title: "Speed Limit Source",
-                  enum: ["posted", "derived"],
-                  description: "Source for speed limit obtained from the HERE platform.",
-                  example: "posted",
-                },
-                truckSpeedLimit: {
-                  type: "number",
-                  title: "Speed In KPH",
-                  description: "Speed in KPH rounded to 2 decimal places.",
-                  example: 95.33,
-                },
-                roadName: {
-                  type: "string",
-                  description: "Name of the road obtained from the HERE platform.",
-                  example: "John St",
-                },
-                linkAttributes: {
-                  type: "object",
-                  description: "Additional road attributes from HERE platform",
-                  properties: {
-                    countryCode: {
-                      type: "string",
-                      description: "ISO country code of the road location",
-                    },
-                    vehicleTypes: { type: "string", description: "Types of vehicles allowed" },
-                    isUrban: {
-                      type: "string",
-                      description: "Indicates if the road is in an urban area",
-                    },
-                    transportVerified: {
-                      type: "string",
-                      description: "Indicates if transport information is verified",
-                    },
-                    functionalClass: {
-                      type: "string",
-                      description:
-                        "Road functional class according to HERE Maps:\n- 0: Unknown\n- 1: Functional Class 1 \n- 2: Functional Class 2 \n- 3: Functional Class 3 \n- 4: Functional Class 4 \n- 5: Functional Class 5",
-                    },
-                    controlledAccess: {
-                      type: "string",
-                      description: "Indicates if the road has controlled access",
-                    },
-                    limitedAccessRoad: {
-                      type: "string",
-                      description: "Indicates if it's a limited access road",
-                    },
-                    travelDirection: { type: "string", description: "Direction of travel" },
-                    isBoatFerry: {
-                      type: "string",
-                      description: "Indicates if it's a boat ferry route",
-                    },
-                    isRailFerry: {
-                      type: "string",
-                      description: "Indicates if it's a rail ferry route",
-                    },
-                    isMultiDigitized: {
-                      type: "string",
-                      description: "Indicates if the road is multi-digitized",
-                    },
-                    isDivided: { type: "string", description: "Indicates if the road is divided" },
-                    isDividerLegal: {
-                      type: "string",
-                      description: "Indicates if the divider is legal",
-                    },
-                    isFrontage: {
-                      type: "string",
-                      description: "Indicates if it's a frontage road",
-                    },
-                    isPaved: { type: "string", description: "Indicates if the road is paved" },
-                    isRamp: { type: "string", description: "Indicates if it's a ramp" },
-                    isPrivate: { type: "string", description: "Indicates if it's a private road" },
-                    hasPoiAccess: {
-                      type: "string",
-                      description: "Indicates if there's POI access",
-                    },
-                    intersectionCategory: {
-                      type: "string",
-                      description:
-                        "Type of intersection according to HERE Maps:\n- 0: Unknown\n- 1: Intersection Internal\n- 2: Manoeuvre\n- 3: Indescribable\n- 4: Roundabout\n- 5: Undefined Traffic Area\n- 6: Special Traffic Figure",
-                    },
-                    speedCategory: {
-                      type: "string",
-                      description:
-                        "Speed category according to HERE Maps:\n- 0: Unknown\n- 1: Over 130 km/h (80 mph)\n- 2: 101-130 km/h (65-80 mph)\n- 3: 91-100 km/h (55-64 mph)\n- 4: 71-90 km/h (41-54 mph)\n- 5: 51-70 km/h (31-40 mph)\n- 6: 31-50 km/h (21-30 mph)\n- 7: 11-30 km/h (6-20 mph)\n- 8: Under 11 km/h (6 mph)",
-                    },
-                    laneCategory: {
-                      type: "string",
-                      description:
-                        "Lane category according to HERE Maps:\n- 0: Unknown\n- 1: One lane\n- 2: Two or three lanes\n- 3: Four or more lanes",
-                    },
-                    coverageIndicator: { type: "string", description: "Coverage indicator" },
-                    lowMobility: {
-                      type: "string",
-                      description:
-                        "Low mobility indicator:\n- 0: Unknown (Default)\n- 1: Low mobility driving condition\n- 2: Not low mobility driving condition",
-                    },
-                    hasPublicAccess: {
-                      type: "string",
-                      description: "Indicates if there's public access",
-                    },
-                    routeTypes: { type: "string", description: "Types of routes" },
-                  },
-                },
-                weather: {
-                  type: "object",
-                  description: "Weather conditions at the time of the event",
-                  properties: {
-                    latitude: {
-                      type: "number",
-                      description: "Latitude of weather measurement location",
-                    },
-                    longitude: {
-                      type: "number",
-                      description: "Longitude of weather measurement location",
-                    },
-                    temperature: { type: "number", description: "Air temperature in Celsius" },
-                    dewPoint: { type: "number", description: "Dew point temperature in Celsius" },
-                    humidity: { type: "number", description: "Relative humidity percentage" },
-                    pressure: { type: "number", description: "Air pressure" },
-                    windSpeed: {
-                      type: "number",
-                      description: "Wind velocity in meters per second",
-                    },
-                    windDirection: { type: "number", description: "Wind direction in degrees" },
-                    locationId: { type: "string", description: "HERE weather location identifier" },
-                    precipitationType: { type: "string", description: "Precipitation type" },
-                    intensityOfPrecipitation: {
-                      type: "number",
-                      description: "Intensity of precipitation (measured in cm/h)",
-                    },
-                    visibility: { type: "number", description: "Visibility (measured in km)" },
-                  },
-                },
-              },
             },
           },
         },
@@ -1117,7 +1639,6 @@ export const commands: Command[] = [
       properties: {
         frontFacing: {
           type: "object",
-          description: "The front facing camera media.",
           title: "Camera Media File",
           properties: {
             sourceId: {
@@ -1130,12 +1651,15 @@ export const commands: Command[] = [
               description: "A URL to download the video file.",
               example: "https://example.com/video.mp4",
             },
+            imageUrl: {
+              type: "string",
+              description: "A URL to download the image file.",
+              example: "https://example.com/image.jpg",
+            },
           },
-          required: ["videoUrl"],
         },
         rearFacing: {
           type: "object",
-          description: "The rear facing camera media.",
           title: "Camera Media File",
           properties: {
             sourceId: {
@@ -1148,8 +1672,12 @@ export const commands: Command[] = [
               description: "A URL to download the video file.",
               example: "https://example.com/video.mp4",
             },
+            imageUrl: {
+              type: "string",
+              description: "A URL to download the image file.",
+              example: "https://example.com/image.jpg",
+            },
           },
-          required: ["videoUrl"],
         },
         raw: {
           type: "array",
@@ -1168,7 +1696,7 @@ export const commands: Command[] = [
           },
         },
       },
-      "x-description": "Video footage from vehicle cameras associated with safety events.",
+      "x-description": "Media from vehicle cameras associated with safety events.",
     },
   },
 ];

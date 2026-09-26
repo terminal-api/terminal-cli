@@ -212,7 +212,6 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -223,6 +222,7 @@ export const commands: Command[] = [
               year: { type: "integer", example: 2016 },
               groups: {
                 type: "array",
+                description: "The groups the vehicle belongs to.",
                 items: {
                   example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                   oneOf: [
@@ -242,16 +242,107 @@ export const commands: Command[] = [
                           format: "ulid",
                           example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                         },
+                        name: { type: "string", example: "California Division" },
+                        sourceId: { type: "string", example: "12345" },
+                        provider: {
+                          type: "string",
+                          example: "geotab",
+                          description:
+                            "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                        },
+                        description: {
+                          type: "string",
+                          example: "Resources part of the California division",
+                        },
+                        parent: {
+                          type: "string",
+                          title: "GroupId",
+                          format: "ulid",
+                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                        createdAt: {
+                          type: "string",
+                          title: "SourceCreatedAt",
+                          format: "date-time",
+                          description:
+                            "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                        },
+                        updatedAt: {
+                          type: "string",
+                          title: "SourceUpdatedAt",
+                          format: "date-time",
+                          description:
+                            "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                        },
+                        metadata: {
+                          type: "object",
+                          title: "CoreEntityMetadata",
+                          description: "Internal metadata about the record.",
+                          required: ["addedAt", "modifiedAt"],
+                          properties: {
+                            addedAt: {
+                              type: "string",
+                              title: "AddedAt",
+                              format: "date-time",
+                              description:
+                                "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                            },
+                            deletedAt: {
+                              type: "string",
+                              title: "DeletedAt",
+                              format: "date-time",
+                              description:
+                                "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                            },
+                            visibility: {
+                              type: "string",
+                              enum: [
+                                "visible",
+                                "hidden_by_exclude_list",
+                                "hidden_by_include_list",
+                                "hidden_by_status",
+                                "deleted",
+                              ],
+                              example: "visible",
+                              description:
+                                "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                            },
+                            modifiedAt: {
+                              type: "string",
+                              title: "ModifiedAt",
+                              format: "date-time",
+                              description:
+                                "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                            },
+                          },
+                        },
+                        raw: {
+                          type: "array",
+                          title: "RawDataList",
+                          example: [],
+                          items: {
+                            type: "object",
+                            title: "RawData",
+                            properties: {
+                              provider: { type: "string" },
+                              schema: { type: "string" },
+                              extractedAt: { type: "string" },
+                              data: { type: "object" },
+                            },
+                            required: ["provider", "schema", "extractedAt", "data"],
+                          },
+                        },
                       },
-                      required: ["id"],
+                      required: ["id", "sourceId", "provider", "metadata"],
+                      "x-description":
+                        "A group represents a collection of assets (vehicles, trailers, drivers) defined by the provider.",
                     },
                   ],
-                  description:
-                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               devices: {
                 type: "array",
+                description: "The devices installed in the vehicle.",
                 items: {
                   example: "dvc_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                   oneOf: [
@@ -264,6 +355,7 @@ export const commands: Command[] = [
                     {
                       type: "object",
                       title: "Expanded Device",
+                      additionalProperties: false,
                       properties: {
                         id: {
                           type: "string",
@@ -271,12 +363,126 @@ export const commands: Command[] = [
                           format: "ulid",
                           example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
                         },
+                        type: {
+                          type: "string",
+                          title: "Device Type",
+                          enum: ["tracker", "camera", "phone"],
+                          example: "tracker",
+                        },
+                        sourceId: {
+                          type: "string",
+                          title: "SourceId",
+                          example: "123456789",
+                          description: "The ID used to represent the entity in the source system.",
+                        },
+                        provider: {
+                          type: "string",
+                          example: "geotab",
+                          description:
+                            "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                        },
+                        vehicle: {
+                          type: "string",
+                          title: "VehicleId",
+                          description: "Unique identifier for the vehicle in Terminal.",
+                          format: "ulid",
+                          pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                          example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                        description: {
+                          type: "string",
+                          description: "The description or model of the device",
+                          example: "CM31",
+                        },
+                        serialNumber: {
+                          type: "string",
+                          description: "The serial number of the device",
+                          example: "1234567890",
+                        },
+                        lastConnectedAt: {
+                          type: "string",
+                          title: "ISODateTime",
+                          format: "date-time",
+                          example: "2021-01-06T03:24:53.000Z",
+                          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+                        },
+                        createdAt: {
+                          type: "string",
+                          title: "SourceCreatedAt",
+                          format: "date-time",
+                          description:
+                            "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                        },
+                        updatedAt: {
+                          type: "string",
+                          title: "SourceUpdatedAt",
+                          format: "date-time",
+                          description:
+                            "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                        },
+                        metadata: {
+                          type: "object",
+                          title: "CoreEntityMetadata",
+                          description: "Internal metadata about the record.",
+                          required: ["addedAt", "modifiedAt"],
+                          properties: {
+                            addedAt: {
+                              type: "string",
+                              title: "AddedAt",
+                              format: "date-time",
+                              description:
+                                "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                            },
+                            deletedAt: {
+                              type: "string",
+                              title: "DeletedAt",
+                              format: "date-time",
+                              description:
+                                "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                            },
+                            visibility: {
+                              type: "string",
+                              enum: [
+                                "visible",
+                                "hidden_by_exclude_list",
+                                "hidden_by_include_list",
+                                "hidden_by_status",
+                                "deleted",
+                              ],
+                              example: "visible",
+                              description:
+                                "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                            },
+                            modifiedAt: {
+                              type: "string",
+                              title: "ModifiedAt",
+                              format: "date-time",
+                              description:
+                                "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                            },
+                          },
+                        },
+                        raw: {
+                          type: "array",
+                          title: "RawDataList",
+                          example: [],
+                          items: {
+                            type: "object",
+                            title: "RawData",
+                            properties: {
+                              provider: { type: "string" },
+                              schema: { type: "string" },
+                              extractedAt: { type: "string" },
+                              data: { type: "object" },
+                            },
+                            required: ["provider", "schema", "extractedAt", "data"],
+                          },
+                        },
                       },
-                      required: ["id"],
+                      required: ["id", "sourceId", "provider", "type", "metadata"],
+                      "x-description": "Type of device installed in a vehicle.",
                     },
                   ],
-                  description:
-                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               licensePlate: {
@@ -438,7 +644,7 @@ export const commands: Command[] = [
                     ],
                     example: "visible",
                     description:
-                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
+                      "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
                   },
                   modifiedAt: {
                     type: "string",
@@ -476,6 +682,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -540,7 +747,6 @@ export const commands: Command[] = [
         },
         provider: {
           type: "string",
-          title: "Provider Code",
           example: "geotab",
           description:
             "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -551,6 +757,7 @@ export const commands: Command[] = [
         year: { type: "integer", example: 2016 },
         groups: {
           type: "array",
+          description: "The groups the vehicle belongs to.",
           items: {
             example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
             oneOf: [
@@ -570,16 +777,107 @@ export const commands: Command[] = [
                     format: "ulid",
                     example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                   },
+                  name: { type: "string", example: "California Division" },
+                  sourceId: { type: "string", example: "12345" },
+                  provider: {
+                    type: "string",
+                    example: "geotab",
+                    description:
+                      "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                  },
+                  description: {
+                    type: "string",
+                    example: "Resources part of the California division",
+                  },
+                  parent: {
+                    type: "string",
+                    title: "GroupId",
+                    format: "ulid",
+                    example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  createdAt: {
+                    type: "string",
+                    title: "SourceCreatedAt",
+                    format: "date-time",
+                    description:
+                      "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                  },
+                  updatedAt: {
+                    type: "string",
+                    title: "SourceUpdatedAt",
+                    format: "date-time",
+                    description:
+                      "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                  },
+                  metadata: {
+                    type: "object",
+                    title: "CoreEntityMetadata",
+                    description: "Internal metadata about the record.",
+                    required: ["addedAt", "modifiedAt"],
+                    properties: {
+                      addedAt: {
+                        type: "string",
+                        title: "AddedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                      },
+                      deletedAt: {
+                        type: "string",
+                        title: "DeletedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                      },
+                      visibility: {
+                        type: "string",
+                        enum: [
+                          "visible",
+                          "hidden_by_exclude_list",
+                          "hidden_by_include_list",
+                          "hidden_by_status",
+                          "deleted",
+                        ],
+                        example: "visible",
+                        description:
+                          "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                      },
+                      modifiedAt: {
+                        type: "string",
+                        title: "ModifiedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                      },
+                    },
+                  },
+                  raw: {
+                    type: "array",
+                    title: "RawDataList",
+                    example: [],
+                    items: {
+                      type: "object",
+                      title: "RawData",
+                      properties: {
+                        provider: { type: "string" },
+                        schema: { type: "string" },
+                        extractedAt: { type: "string" },
+                        data: { type: "object" },
+                      },
+                      required: ["provider", "schema", "extractedAt", "data"],
+                    },
+                  },
                 },
-                required: ["id"],
+                required: ["id", "sourceId", "provider", "metadata"],
+                "x-description":
+                  "A group represents a collection of assets (vehicles, trailers, drivers) defined by the provider.",
               },
             ],
-            description:
-              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
           },
         },
         devices: {
           type: "array",
+          description: "The devices installed in the vehicle.",
           items: {
             example: "dvc_01D8ZQFGHVJ858NBF2Q7DV9MNC",
             oneOf: [
@@ -592,6 +890,7 @@ export const commands: Command[] = [
               {
                 type: "object",
                 title: "Expanded Device",
+                additionalProperties: false,
                 properties: {
                   id: {
                     type: "string",
@@ -599,12 +898,126 @@ export const commands: Command[] = [
                     format: "ulid",
                     example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
                   },
+                  type: {
+                    type: "string",
+                    title: "Device Type",
+                    enum: ["tracker", "camera", "phone"],
+                    example: "tracker",
+                  },
+                  sourceId: {
+                    type: "string",
+                    title: "SourceId",
+                    example: "123456789",
+                    description: "The ID used to represent the entity in the source system.",
+                  },
+                  provider: {
+                    type: "string",
+                    example: "geotab",
+                    description:
+                      "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                  },
+                  vehicle: {
+                    type: "string",
+                    title: "VehicleId",
+                    description: "Unique identifier for the vehicle in Terminal.",
+                    format: "ulid",
+                    pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
+                    example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                  },
+                  description: {
+                    type: "string",
+                    description: "The description or model of the device",
+                    example: "CM31",
+                  },
+                  serialNumber: {
+                    type: "string",
+                    description: "The serial number of the device",
+                    example: "1234567890",
+                  },
+                  lastConnectedAt: {
+                    type: "string",
+                    title: "ISODateTime",
+                    format: "date-time",
+                    example: "2021-01-06T03:24:53.000Z",
+                    description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+                  },
+                  createdAt: {
+                    type: "string",
+                    title: "SourceCreatedAt",
+                    format: "date-time",
+                    description:
+                      "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                  },
+                  updatedAt: {
+                    type: "string",
+                    title: "SourceUpdatedAt",
+                    format: "date-time",
+                    description:
+                      "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                  },
+                  metadata: {
+                    type: "object",
+                    title: "CoreEntityMetadata",
+                    description: "Internal metadata about the record.",
+                    required: ["addedAt", "modifiedAt"],
+                    properties: {
+                      addedAt: {
+                        type: "string",
+                        title: "AddedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                      },
+                      deletedAt: {
+                        type: "string",
+                        title: "DeletedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                      },
+                      visibility: {
+                        type: "string",
+                        enum: [
+                          "visible",
+                          "hidden_by_exclude_list",
+                          "hidden_by_include_list",
+                          "hidden_by_status",
+                          "deleted",
+                        ],
+                        example: "visible",
+                        description:
+                          "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                      },
+                      modifiedAt: {
+                        type: "string",
+                        title: "ModifiedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                      },
+                    },
+                  },
+                  raw: {
+                    type: "array",
+                    title: "RawDataList",
+                    example: [],
+                    items: {
+                      type: "object",
+                      title: "RawData",
+                      properties: {
+                        provider: { type: "string" },
+                        schema: { type: "string" },
+                        extractedAt: { type: "string" },
+                        data: { type: "object" },
+                      },
+                      required: ["provider", "schema", "extractedAt", "data"],
+                    },
+                  },
                 },
-                required: ["id"],
+                required: ["id", "sourceId", "provider", "type", "metadata"],
+                "x-description": "Type of device installed in a vehicle.",
               },
             ],
-            description:
-              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
           },
         },
         licensePlate: {
@@ -766,7 +1179,7 @@ export const commands: Command[] = [
               ],
               example: "visible",
               description:
-                "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/filtering).",
+                "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
             },
             modifiedAt: {
               type: "string",
@@ -863,13 +1276,11 @@ export const commands: Command[] = [
                 properties: {
                   provider: {
                     type: "string",
-                    title: "Provider Code",
                     example: "geotab",
                     description:
                       "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
                   },
                   vehicle: {
-                    description: "The ID of the vehicle that the location is tracking.",
                     example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                     oneOf: [
                       {
@@ -883,6 +1294,7 @@ export const commands: Command[] = [
                       {
                         type: "object",
                         title: "Expanded Vehicle",
+                        additionalProperties: false,
                         properties: {
                           id: {
                             type: "string",
@@ -892,8 +1304,239 @@ export const commands: Command[] = [
                             pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                             example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                           },
+                          name: { type: "string", example: "Big Red" },
+                          status: {
+                            type: "string",
+                            enum: ["active", "inactive"],
+                            example: "active",
+                            description: "The status in the providers system",
+                          },
+                          sourceId: {
+                            type: "string",
+                            title: "SourceId",
+                            example: "123456789",
+                            description:
+                              "The ID used to represent the entity in the source system.",
+                          },
+                          provider: {
+                            type: "string",
+                            example: "geotab",
+                            description:
+                              "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                          },
+                          vin: { type: "string", title: "VIN", example: "1HGCM82633A004352" },
+                          make: { type: "string", example: "Peterbilt" },
+                          model: { type: "string", example: "Model 579" },
+                          year: { type: "integer", example: 2016 },
+                          groups: {
+                            type: "array",
+                            description: "The groups the vehicle belongs to.",
+                            items: {
+                              type: "string",
+                              title: "GroupId",
+                              format: "ulid",
+                              example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                            },
+                          },
+                          devices: {
+                            type: "array",
+                            description: "The devices installed in the vehicle.",
+                            items: {
+                              type: "string",
+                              title: "DeviceId",
+                              format: "ulid",
+                              example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
+                            },
+                          },
+                          licensePlate: {
+                            type: "object",
+                            properties: {
+                              state: {
+                                type: "string",
+                                title: "State",
+                                enum: [
+                                  "AL",
+                                  "AK",
+                                  "AS",
+                                  "AZ",
+                                  "AR",
+                                  "CA",
+                                  "CO",
+                                  "CT",
+                                  "DE",
+                                  "FL",
+                                  "GA",
+                                  "GU",
+                                  "HI",
+                                  "ID",
+                                  "IL",
+                                  "IN",
+                                  "IA",
+                                  "KS",
+                                  "KY",
+                                  "LA",
+                                  "ME",
+                                  "MD",
+                                  "MA",
+                                  "MI",
+                                  "MN",
+                                  "MP",
+                                  "MS",
+                                  "MO",
+                                  "MT",
+                                  "NE",
+                                  "NV",
+                                  "NH",
+                                  "NJ",
+                                  "NM",
+                                  "NY",
+                                  "NC",
+                                  "ND",
+                                  "OH",
+                                  "OK",
+                                  "OR",
+                                  "PA",
+                                  "PR",
+                                  "RI",
+                                  "SC",
+                                  "SD",
+                                  "TN",
+                                  "TX",
+                                  "UT",
+                                  "VT",
+                                  "VA",
+                                  "WA",
+                                  "WV",
+                                  "WI",
+                                  "WY",
+                                  "VI",
+                                  "AB",
+                                  "BC",
+                                  "MB",
+                                  "NB",
+                                  "NL",
+                                  "NS",
+                                  "ON",
+                                  "PE",
+                                  "QC",
+                                  "SK",
+                                  "NT",
+                                  "NU",
+                                  "UM",
+                                  "YT",
+                                  "DC",
+                                ],
+                                example: "TN",
+                                description: "US State or Canadian Province",
+                              },
+                              number: { type: "string", example: "ABC-1234" },
+                            },
+                          },
+                          fuelType: {
+                            enum: [
+                              "gasoline",
+                              "diesel",
+                              "propane",
+                              "electric",
+                              "hybrid_gasoline",
+                              "hybrid_diesel",
+                              "biodiesel",
+                              "compressed_natural_gas",
+                              "liquefied_natural_gas",
+                              "ethanol",
+                              "hydrogen",
+                              "plug_in_hybrid",
+                            ],
+                            example: "diesel",
+                          },
+                          fuelEfficiency: {
+                            type: "number",
+                            deprecated: true,
+                            description:
+                              "This field will be removed in the future as is not commonly available from providers.",
+                            example: 27.4,
+                          },
+                          fuelTankCapacity: {
+                            type: "number",
+                            description: "Maximum amount of fuel vehicle can hold in liters.",
+                            title: "Volume In Liters",
+                            example: 95.33,
+                          },
+                          createdAt: {
+                            type: "string",
+                            title: "SourceCreatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                          },
+                          updatedAt: {
+                            type: "string",
+                            title: "SourceUpdatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                          },
+                          metadata: {
+                            type: "object",
+                            title: "CoreEntityMetadata",
+                            description: "Internal metadata about the record.",
+                            required: ["addedAt", "modifiedAt"],
+                            properties: {
+                              addedAt: {
+                                type: "string",
+                                title: "AddedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                              },
+                              deletedAt: {
+                                type: "string",
+                                title: "DeletedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                              },
+                              visibility: {
+                                type: "string",
+                                enum: [
+                                  "visible",
+                                  "hidden_by_exclude_list",
+                                  "hidden_by_include_list",
+                                  "hidden_by_status",
+                                  "deleted",
+                                ],
+                                example: "visible",
+                                description:
+                                  "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                              },
+                              modifiedAt: {
+                                type: "string",
+                                title: "ModifiedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                              },
+                            },
+                          },
+                          raw: {
+                            type: "array",
+                            title: "RawDataList",
+                            example: [],
+                            items: {
+                              type: "object",
+                              title: "RawData",
+                              properties: {
+                                provider: { type: "string" },
+                                schema: { type: "string" },
+                                extractedAt: { type: "string" },
+                                data: { type: "object" },
+                              },
+                              required: ["provider", "schema", "extractedAt", "data"],
+                            },
+                          },
                         },
-                        required: ["id"],
+                        required: ["id", "sourceId", "provider", "status", "metadata"],
+                        "x-description": "The model representing a vehicle in Terminal.",
                       },
                     ],
                   },
@@ -911,6 +1554,8 @@ export const commands: Command[] = [
                       {
                         type: "object",
                         title: "Expanded Driver",
+                        additionalProperties: false,
+                        examples: [],
                         properties: {
                           id: {
                             type: "string",
@@ -920,12 +1565,213 @@ export const commands: Command[] = [
                             pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                             example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                           },
+                          status: {
+                            type: "string",
+                            enum: ["active", "inactive"],
+                            example: "active",
+                            description: "The status in the providers system",
+                          },
+                          sourceId: {
+                            type: "string",
+                            title: "SourceId",
+                            example: "123456789",
+                            description:
+                              "The ID used to represent the entity in the source system.",
+                          },
+                          provider: {
+                            type: "string",
+                            example: "geotab",
+                            description:
+                              "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                          },
+                          firstName: { type: "string", example: "Mike" },
+                          middleName: { type: "string", example: "Bryan" },
+                          lastName: { type: "string", example: "Miller" },
+                          email: { type: "string", format: "email", example: "driver@example.com" },
+                          phone: {
+                            type: "string",
+                            title: "Phone",
+                            pattern: "^\\+?\\d{10,14}$",
+                            example: "+19058084567",
+                            description:
+                              "Phone number formatted in [E.164](https://www.twilio.com/docs/glossary/what-e164) formatting",
+                          },
+                          username: {
+                            type: "string",
+                            description: "The driver's username for login purposes",
+                            example: "driver123",
+                          },
+                          license: {
+                            type: "object",
+                            properties: {
+                              state: {
+                                type: "string",
+                                title: "State",
+                                enum: [
+                                  "AL",
+                                  "AK",
+                                  "AS",
+                                  "AZ",
+                                  "AR",
+                                  "CA",
+                                  "CO",
+                                  "CT",
+                                  "DE",
+                                  "FL",
+                                  "GA",
+                                  "GU",
+                                  "HI",
+                                  "ID",
+                                  "IL",
+                                  "IN",
+                                  "IA",
+                                  "KS",
+                                  "KY",
+                                  "LA",
+                                  "ME",
+                                  "MD",
+                                  "MA",
+                                  "MI",
+                                  "MN",
+                                  "MP",
+                                  "MS",
+                                  "MO",
+                                  "MT",
+                                  "NE",
+                                  "NV",
+                                  "NH",
+                                  "NJ",
+                                  "NM",
+                                  "NY",
+                                  "NC",
+                                  "ND",
+                                  "OH",
+                                  "OK",
+                                  "OR",
+                                  "PA",
+                                  "PR",
+                                  "RI",
+                                  "SC",
+                                  "SD",
+                                  "TN",
+                                  "TX",
+                                  "UT",
+                                  "VT",
+                                  "VA",
+                                  "WA",
+                                  "WV",
+                                  "WI",
+                                  "WY",
+                                  "VI",
+                                  "AB",
+                                  "BC",
+                                  "MB",
+                                  "NB",
+                                  "NL",
+                                  "NS",
+                                  "ON",
+                                  "PE",
+                                  "QC",
+                                  "SK",
+                                  "NT",
+                                  "NU",
+                                  "UM",
+                                  "YT",
+                                  "DC",
+                                ],
+                                example: "TN",
+                                description: "US State or Canadian Province",
+                              },
+                              number: { type: "string", example: "123-456-789-0" },
+                            },
+                          },
+                          groups: {
+                            type: "array",
+                            description: "The groups the driver belongs to.",
+                            items: {
+                              type: "string",
+                              title: "GroupId",
+                              format: "ulid",
+                              example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                            },
+                          },
+                          createdAt: {
+                            type: "string",
+                            title: "SourceCreatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                          },
+                          updatedAt: {
+                            type: "string",
+                            title: "SourceUpdatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                          },
+                          metadata: {
+                            type: "object",
+                            title: "CoreEntityMetadata",
+                            description: "Internal metadata about the record.",
+                            required: ["addedAt", "modifiedAt"],
+                            properties: {
+                              addedAt: {
+                                type: "string",
+                                title: "AddedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                              },
+                              deletedAt: {
+                                type: "string",
+                                title: "DeletedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                              },
+                              visibility: {
+                                type: "string",
+                                enum: [
+                                  "visible",
+                                  "hidden_by_exclude_list",
+                                  "hidden_by_include_list",
+                                  "hidden_by_status",
+                                  "deleted",
+                                ],
+                                example: "visible",
+                                description:
+                                  "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                              },
+                              modifiedAt: {
+                                type: "string",
+                                title: "ModifiedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                              },
+                            },
+                          },
+                          raw: {
+                            type: "array",
+                            title: "RawDataList",
+                            example: [],
+                            items: {
+                              type: "object",
+                              title: "RawData",
+                              properties: {
+                                provider: { type: "string" },
+                                schema: { type: "string" },
+                                extractedAt: { type: "string" },
+                                data: { type: "object" },
+                              },
+                              required: ["provider", "schema", "extractedAt", "data"],
+                            },
+                          },
                         },
-                        required: ["id"],
+                        required: ["id", "sourceId", "provider", "status", "metadata"],
+                        "x-description": "The model representing a driver in Terminal.",
                       },
                     ],
-                    description:
-                      "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                   },
                   locatedAt: {
                     type: "string",
@@ -972,8 +1818,9 @@ export const commands: Command[] = [
                   odometer: {
                     type: "number",
                     title: "Distance In Kilometers",
+                    format: "double",
                     description: "Distance in kilometers",
-                    example: 100,
+                    example: 100.25,
                   },
                   fuel: {
                     type: "object",
@@ -982,35 +1829,29 @@ export const commands: Command[] = [
                     properties: {
                       primaryPercentage: {
                         type: "number",
-                        description:
-                          "The percentage value of how much fuel is left in the primary tank.",
                         title: "Fuel Percentage",
                         example: 50,
                         minimum: 0,
                         maximum: 100,
+                        description: "The percentage value of how much fuel is left in the tank.",
                       },
                       secondaryPercentage: {
                         type: "number",
-                        description:
-                          "The percentage value of how much fuel is left in the secondary tank.",
                         title: "Fuel Percentage",
                         example: 50,
                         minimum: 0,
                         maximum: 100,
+                        description: "The percentage value of how much fuel is left in the tank.",
                       },
                     },
                     required: ["primaryPercentage"],
                   },
-                  engineState: {
-                    type: "string",
-                    description: "The current state of the vehicle's engine",
-                    enum: ["on", "off", "idle"],
-                  },
+                  engineState: { type: "string", enum: ["on", "off", "idle"] },
                   engineRuntime: {
                     type: "integer",
-                    description: "Total engine runtime duration",
                     title: "DurationInMS",
                     example: 0,
+                    description: "Duration in MS",
                   },
                   raw: {
                     type: "array",
@@ -1040,6 +1881,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -1099,7 +1941,7 @@ export const commands: Command[] = [
           type: "array",
           items: {
             title: "Vehicle Location",
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             allOf: [
               {
                 type: "object",
@@ -1126,13 +1968,11 @@ export const commands: Command[] = [
                 properties: {
                   provider: {
                     type: "string",
-                    title: "Provider Code",
                     example: "geotab",
                     description:
                       "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
                   },
                   vehicle: {
-                    description: "The ID of the vehicle that the location is tracking.",
                     example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                     oneOf: [
                       {
@@ -1146,6 +1986,7 @@ export const commands: Command[] = [
                       {
                         type: "object",
                         title: "Expanded Vehicle",
+                        additionalProperties: false,
                         properties: {
                           id: {
                             type: "string",
@@ -1155,8 +1996,239 @@ export const commands: Command[] = [
                             pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                             example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                           },
+                          name: { type: "string", example: "Big Red" },
+                          status: {
+                            type: "string",
+                            enum: ["active", "inactive"],
+                            example: "active",
+                            description: "The status in the providers system",
+                          },
+                          sourceId: {
+                            type: "string",
+                            title: "SourceId",
+                            example: "123456789",
+                            description:
+                              "The ID used to represent the entity in the source system.",
+                          },
+                          provider: {
+                            type: "string",
+                            example: "geotab",
+                            description:
+                              "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                          },
+                          vin: { type: "string", title: "VIN", example: "1HGCM82633A004352" },
+                          make: { type: "string", example: "Peterbilt" },
+                          model: { type: "string", example: "Model 579" },
+                          year: { type: "integer", example: 2016 },
+                          groups: {
+                            type: "array",
+                            description: "The groups the vehicle belongs to.",
+                            items: {
+                              type: "string",
+                              title: "GroupId",
+                              format: "ulid",
+                              example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                            },
+                          },
+                          devices: {
+                            type: "array",
+                            description: "The devices installed in the vehicle.",
+                            items: {
+                              type: "string",
+                              title: "DeviceId",
+                              format: "ulid",
+                              example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
+                            },
+                          },
+                          licensePlate: {
+                            type: "object",
+                            properties: {
+                              state: {
+                                type: "string",
+                                title: "State",
+                                enum: [
+                                  "AL",
+                                  "AK",
+                                  "AS",
+                                  "AZ",
+                                  "AR",
+                                  "CA",
+                                  "CO",
+                                  "CT",
+                                  "DE",
+                                  "FL",
+                                  "GA",
+                                  "GU",
+                                  "HI",
+                                  "ID",
+                                  "IL",
+                                  "IN",
+                                  "IA",
+                                  "KS",
+                                  "KY",
+                                  "LA",
+                                  "ME",
+                                  "MD",
+                                  "MA",
+                                  "MI",
+                                  "MN",
+                                  "MP",
+                                  "MS",
+                                  "MO",
+                                  "MT",
+                                  "NE",
+                                  "NV",
+                                  "NH",
+                                  "NJ",
+                                  "NM",
+                                  "NY",
+                                  "NC",
+                                  "ND",
+                                  "OH",
+                                  "OK",
+                                  "OR",
+                                  "PA",
+                                  "PR",
+                                  "RI",
+                                  "SC",
+                                  "SD",
+                                  "TN",
+                                  "TX",
+                                  "UT",
+                                  "VT",
+                                  "VA",
+                                  "WA",
+                                  "WV",
+                                  "WI",
+                                  "WY",
+                                  "VI",
+                                  "AB",
+                                  "BC",
+                                  "MB",
+                                  "NB",
+                                  "NL",
+                                  "NS",
+                                  "ON",
+                                  "PE",
+                                  "QC",
+                                  "SK",
+                                  "NT",
+                                  "NU",
+                                  "UM",
+                                  "YT",
+                                  "DC",
+                                ],
+                                example: "TN",
+                                description: "US State or Canadian Province",
+                              },
+                              number: { type: "string", example: "ABC-1234" },
+                            },
+                          },
+                          fuelType: {
+                            enum: [
+                              "gasoline",
+                              "diesel",
+                              "propane",
+                              "electric",
+                              "hybrid_gasoline",
+                              "hybrid_diesel",
+                              "biodiesel",
+                              "compressed_natural_gas",
+                              "liquefied_natural_gas",
+                              "ethanol",
+                              "hydrogen",
+                              "plug_in_hybrid",
+                            ],
+                            example: "diesel",
+                          },
+                          fuelEfficiency: {
+                            type: "number",
+                            deprecated: true,
+                            description:
+                              "This field will be removed in the future as is not commonly available from providers.",
+                            example: 27.4,
+                          },
+                          fuelTankCapacity: {
+                            type: "number",
+                            description: "Maximum amount of fuel vehicle can hold in liters.",
+                            title: "Volume In Liters",
+                            example: 95.33,
+                          },
+                          createdAt: {
+                            type: "string",
+                            title: "SourceCreatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                          },
+                          updatedAt: {
+                            type: "string",
+                            title: "SourceUpdatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                          },
+                          metadata: {
+                            type: "object",
+                            title: "CoreEntityMetadata",
+                            description: "Internal metadata about the record.",
+                            required: ["addedAt", "modifiedAt"],
+                            properties: {
+                              addedAt: {
+                                type: "string",
+                                title: "AddedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                              },
+                              deletedAt: {
+                                type: "string",
+                                title: "DeletedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                              },
+                              visibility: {
+                                type: "string",
+                                enum: [
+                                  "visible",
+                                  "hidden_by_exclude_list",
+                                  "hidden_by_include_list",
+                                  "hidden_by_status",
+                                  "deleted",
+                                ],
+                                example: "visible",
+                                description:
+                                  "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                              },
+                              modifiedAt: {
+                                type: "string",
+                                title: "ModifiedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                              },
+                            },
+                          },
+                          raw: {
+                            type: "array",
+                            title: "RawDataList",
+                            example: [],
+                            items: {
+                              type: "object",
+                              title: "RawData",
+                              properties: {
+                                provider: { type: "string" },
+                                schema: { type: "string" },
+                                extractedAt: { type: "string" },
+                                data: { type: "object" },
+                              },
+                              required: ["provider", "schema", "extractedAt", "data"],
+                            },
+                          },
                         },
-                        required: ["id"],
+                        required: ["id", "sourceId", "provider", "status", "metadata"],
+                        "x-description": "The model representing a vehicle in Terminal.",
                       },
                     ],
                   },
@@ -1174,6 +2246,8 @@ export const commands: Command[] = [
                       {
                         type: "object",
                         title: "Expanded Driver",
+                        additionalProperties: false,
+                        examples: [],
                         properties: {
                           id: {
                             type: "string",
@@ -1183,12 +2257,213 @@ export const commands: Command[] = [
                             pattern: "^drv_[0-9A-HJKMNP-TV-Z]{26}$",
                             example: "drv_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                           },
+                          status: {
+                            type: "string",
+                            enum: ["active", "inactive"],
+                            example: "active",
+                            description: "The status in the providers system",
+                          },
+                          sourceId: {
+                            type: "string",
+                            title: "SourceId",
+                            example: "123456789",
+                            description:
+                              "The ID used to represent the entity in the source system.",
+                          },
+                          provider: {
+                            type: "string",
+                            example: "geotab",
+                            description:
+                              "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                          },
+                          firstName: { type: "string", example: "Mike" },
+                          middleName: { type: "string", example: "Bryan" },
+                          lastName: { type: "string", example: "Miller" },
+                          email: { type: "string", format: "email", example: "driver@example.com" },
+                          phone: {
+                            type: "string",
+                            title: "Phone",
+                            pattern: "^\\+?\\d{10,14}$",
+                            example: "+19058084567",
+                            description:
+                              "Phone number formatted in [E.164](https://www.twilio.com/docs/glossary/what-e164) formatting",
+                          },
+                          username: {
+                            type: "string",
+                            description: "The driver's username for login purposes",
+                            example: "driver123",
+                          },
+                          license: {
+                            type: "object",
+                            properties: {
+                              state: {
+                                type: "string",
+                                title: "State",
+                                enum: [
+                                  "AL",
+                                  "AK",
+                                  "AS",
+                                  "AZ",
+                                  "AR",
+                                  "CA",
+                                  "CO",
+                                  "CT",
+                                  "DE",
+                                  "FL",
+                                  "GA",
+                                  "GU",
+                                  "HI",
+                                  "ID",
+                                  "IL",
+                                  "IN",
+                                  "IA",
+                                  "KS",
+                                  "KY",
+                                  "LA",
+                                  "ME",
+                                  "MD",
+                                  "MA",
+                                  "MI",
+                                  "MN",
+                                  "MP",
+                                  "MS",
+                                  "MO",
+                                  "MT",
+                                  "NE",
+                                  "NV",
+                                  "NH",
+                                  "NJ",
+                                  "NM",
+                                  "NY",
+                                  "NC",
+                                  "ND",
+                                  "OH",
+                                  "OK",
+                                  "OR",
+                                  "PA",
+                                  "PR",
+                                  "RI",
+                                  "SC",
+                                  "SD",
+                                  "TN",
+                                  "TX",
+                                  "UT",
+                                  "VT",
+                                  "VA",
+                                  "WA",
+                                  "WV",
+                                  "WI",
+                                  "WY",
+                                  "VI",
+                                  "AB",
+                                  "BC",
+                                  "MB",
+                                  "NB",
+                                  "NL",
+                                  "NS",
+                                  "ON",
+                                  "PE",
+                                  "QC",
+                                  "SK",
+                                  "NT",
+                                  "NU",
+                                  "UM",
+                                  "YT",
+                                  "DC",
+                                ],
+                                example: "TN",
+                                description: "US State or Canadian Province",
+                              },
+                              number: { type: "string", example: "123-456-789-0" },
+                            },
+                          },
+                          groups: {
+                            type: "array",
+                            description: "The groups the driver belongs to.",
+                            items: {
+                              type: "string",
+                              title: "GroupId",
+                              format: "ulid",
+                              example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                            },
+                          },
+                          createdAt: {
+                            type: "string",
+                            title: "SourceCreatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                          },
+                          updatedAt: {
+                            type: "string",
+                            title: "SourceUpdatedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                          },
+                          metadata: {
+                            type: "object",
+                            title: "CoreEntityMetadata",
+                            description: "Internal metadata about the record.",
+                            required: ["addedAt", "modifiedAt"],
+                            properties: {
+                              addedAt: {
+                                type: "string",
+                                title: "AddedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                              },
+                              deletedAt: {
+                                type: "string",
+                                title: "DeletedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                              },
+                              visibility: {
+                                type: "string",
+                                enum: [
+                                  "visible",
+                                  "hidden_by_exclude_list",
+                                  "hidden_by_include_list",
+                                  "hidden_by_status",
+                                  "deleted",
+                                ],
+                                example: "visible",
+                                description:
+                                  "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                              },
+                              modifiedAt: {
+                                type: "string",
+                                title: "ModifiedAt",
+                                format: "date-time",
+                                description:
+                                  "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                              },
+                            },
+                          },
+                          raw: {
+                            type: "array",
+                            title: "RawDataList",
+                            example: [],
+                            items: {
+                              type: "object",
+                              title: "RawData",
+                              properties: {
+                                provider: { type: "string" },
+                                schema: { type: "string" },
+                                extractedAt: { type: "string" },
+                                data: { type: "object" },
+                              },
+                              required: ["provider", "schema", "extractedAt", "data"],
+                            },
+                          },
                         },
-                        required: ["id"],
+                        required: ["id", "sourceId", "provider", "status", "metadata"],
+                        "x-description": "The model representing a driver in Terminal.",
                       },
                     ],
-                    description:
-                      "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                   },
                   locatedAt: {
                     type: "string",
@@ -1276,6 +2551,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -1348,7 +2624,7 @@ export const commands: Command[] = [
           type: "array",
           items: {
             type: "object",
-            "x-model-category": "historical",
+            "x-model-category": "time-series",
             title: "Vehicle Stat Log",
             properties: {
               id: {
@@ -1366,7 +2642,6 @@ export const commands: Command[] = [
               },
               provider: {
                 type: "string",
-                title: "Provider Code",
                 example: "geotab",
                 description:
                   "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -1379,7 +2654,6 @@ export const commands: Command[] = [
                 description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
               },
               vehicle: {
-                description: "Reference to the vehicle the event is about",
                 example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                 oneOf: [
                   {
@@ -1393,6 +2667,7 @@ export const commands: Command[] = [
                   {
                     type: "object",
                     title: "Expanded Vehicle",
+                    additionalProperties: false,
                     properties: {
                       id: {
                         type: "string",
@@ -1402,8 +2677,238 @@ export const commands: Command[] = [
                         pattern: "^vcl_[0-9A-HJKMNP-TV-Z]{26}$",
                         example: "vcl_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                       },
+                      name: { type: "string", example: "Big Red" },
+                      status: {
+                        type: "string",
+                        enum: ["active", "inactive"],
+                        example: "active",
+                        description: "The status in the providers system",
+                      },
+                      sourceId: {
+                        type: "string",
+                        title: "SourceId",
+                        example: "123456789",
+                        description: "The ID used to represent the entity in the source system.",
+                      },
+                      provider: {
+                        type: "string",
+                        example: "geotab",
+                        description:
+                          "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
+                      },
+                      vin: { type: "string", title: "VIN", example: "1HGCM82633A004352" },
+                      make: { type: "string", example: "Peterbilt" },
+                      model: { type: "string", example: "Model 579" },
+                      year: { type: "integer", example: 2016 },
+                      groups: {
+                        type: "array",
+                        description: "The groups the vehicle belongs to.",
+                        items: {
+                          type: "string",
+                          title: "GroupId",
+                          format: "ulid",
+                          example: "group_01D8ZQFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      devices: {
+                        type: "array",
+                        description: "The devices installed in the vehicle.",
+                        items: {
+                          type: "string",
+                          title: "DeviceId",
+                          format: "ulid",
+                          example: "dvc_61D9ZWFGHVJ858NBF2Q7DV9MNC",
+                        },
+                      },
+                      licensePlate: {
+                        type: "object",
+                        properties: {
+                          state: {
+                            type: "string",
+                            title: "State",
+                            enum: [
+                              "AL",
+                              "AK",
+                              "AS",
+                              "AZ",
+                              "AR",
+                              "CA",
+                              "CO",
+                              "CT",
+                              "DE",
+                              "FL",
+                              "GA",
+                              "GU",
+                              "HI",
+                              "ID",
+                              "IL",
+                              "IN",
+                              "IA",
+                              "KS",
+                              "KY",
+                              "LA",
+                              "ME",
+                              "MD",
+                              "MA",
+                              "MI",
+                              "MN",
+                              "MP",
+                              "MS",
+                              "MO",
+                              "MT",
+                              "NE",
+                              "NV",
+                              "NH",
+                              "NJ",
+                              "NM",
+                              "NY",
+                              "NC",
+                              "ND",
+                              "OH",
+                              "OK",
+                              "OR",
+                              "PA",
+                              "PR",
+                              "RI",
+                              "SC",
+                              "SD",
+                              "TN",
+                              "TX",
+                              "UT",
+                              "VT",
+                              "VA",
+                              "WA",
+                              "WV",
+                              "WI",
+                              "WY",
+                              "VI",
+                              "AB",
+                              "BC",
+                              "MB",
+                              "NB",
+                              "NL",
+                              "NS",
+                              "ON",
+                              "PE",
+                              "QC",
+                              "SK",
+                              "NT",
+                              "NU",
+                              "UM",
+                              "YT",
+                              "DC",
+                            ],
+                            example: "TN",
+                            description: "US State or Canadian Province",
+                          },
+                          number: { type: "string", example: "ABC-1234" },
+                        },
+                      },
+                      fuelType: {
+                        enum: [
+                          "gasoline",
+                          "diesel",
+                          "propane",
+                          "electric",
+                          "hybrid_gasoline",
+                          "hybrid_diesel",
+                          "biodiesel",
+                          "compressed_natural_gas",
+                          "liquefied_natural_gas",
+                          "ethanol",
+                          "hydrogen",
+                          "plug_in_hybrid",
+                        ],
+                        example: "diesel",
+                      },
+                      fuelEfficiency: {
+                        type: "number",
+                        deprecated: true,
+                        description:
+                          "This field will be removed in the future as is not commonly available from providers.",
+                        example: 27.4,
+                      },
+                      fuelTankCapacity: {
+                        type: "number",
+                        description: "Maximum amount of fuel vehicle can hold in liters.",
+                        title: "Volume In Liters",
+                        example: 95.33,
+                      },
+                      createdAt: {
+                        type: "string",
+                        title: "SourceCreatedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was created in the provider's system. This timestamp comes directly from the source system and represents when the data was originally created there. Note: not all providers expose this.",
+                      },
+                      updatedAt: {
+                        type: "string",
+                        title: "SourceUpdatedAt",
+                        format: "date-time",
+                        description:
+                          "The date and time the record was updated in the provider's system. This timestamp comes directly from the source system and represents when the data was last updated there. Note: not all providers expose this.",
+                      },
+                      metadata: {
+                        type: "object",
+                        title: "CoreEntityMetadata",
+                        description: "Internal metadata about the record.",
+                        required: ["addedAt", "modifiedAt"],
+                        properties: {
+                          addedAt: {
+                            type: "string",
+                            title: "AddedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was ingested into Terminal. Note: this is not the date and time the record was created in the provider's system.",
+                          },
+                          deletedAt: {
+                            type: "string",
+                            title: "DeletedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was deleted from Terminal. Note: this is not the date and time the record was deleted in the provider's system.",
+                          },
+                          visibility: {
+                            type: "string",
+                            enum: [
+                              "visible",
+                              "hidden_by_exclude_list",
+                              "hidden_by_include_list",
+                              "hidden_by_status",
+                              "deleted",
+                            ],
+                            example: "visible",
+                            description:
+                              "Visibility status of a resource. Read more about hidden records [here](https://docs.withterminal.com/guides/vehicle-driver-filtering).",
+                          },
+                          modifiedAt: {
+                            type: "string",
+                            title: "ModifiedAt",
+                            format: "date-time",
+                            description:
+                              "The date and time the record was last updated in Terminal. Note: this is not the date and time the record was updated in the provider's system.",
+                          },
+                        },
+                      },
+                      raw: {
+                        type: "array",
+                        title: "RawDataList",
+                        example: [],
+                        items: {
+                          type: "object",
+                          title: "RawData",
+                          properties: {
+                            provider: { type: "string" },
+                            schema: { type: "string" },
+                            extractedAt: { type: "string" },
+                            data: { type: "object" },
+                          },
+                          required: ["provider", "schema", "extractedAt", "data"],
+                        },
+                      },
                     },
-                    required: ["id"],
+                    required: ["id", "sourceId", "provider", "status", "metadata"],
+                    "x-description": "The model representing a vehicle in Terminal.",
                   },
                 ],
               },
@@ -1459,8 +2964,9 @@ export const commands: Command[] = [
                   odometer: {
                     type: "number",
                     title: "Distance In Kilometers",
+                    format: "double",
                     description: "Distance in kilometers",
-                    example: 100,
+                    example: 100.25,
                   },
                 },
                 required: ["type", "odometer"],
@@ -1725,6 +3231,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
