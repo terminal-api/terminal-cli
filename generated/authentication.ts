@@ -77,10 +77,9 @@ export const commands: Command[] = [
                 },
                 sourceId: {
                   type: "string",
-                  description:
-                    "The ID used in the source system to represent the account this connection has or had access to.\n\nThis may be an `organizationId` or `accountId`.\n\nNote: not all systems expose this information, in which case it may be undefined.",
                   title: "SourceId",
                   example: "123456789",
+                  description: "The ID used to represent the entity in the source system.",
                 },
                 provider: {
                   type: "object",
@@ -93,7 +92,6 @@ export const commands: Command[] = [
                     },
                     code: {
                       type: "string",
-                      title: "Provider Code",
                       example: "geotab",
                       description:
                         "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -205,7 +203,50 @@ export const commands: Command[] = [
                   enum: ["connected", "disconnected", "archived", "pending_deletion"],
                   description: "The current status of the connection.",
                 },
-                options: { type: "object", additionalProperties: true },
+                options: {
+                  type: "object",
+                  oneOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        ingestHistoryFromSourceSystem: {
+                          type: "boolean",
+                          default: true,
+                          description:
+                            "By default our system will ingest Vehicle Locations and Stat Logs from the source system. Omnitracs also supports history at a higher sample rate through a historical file process. If you are using these historical files and want to avoid mixing the data sources, set this to false.",
+                        },
+                      },
+                      required: [],
+                      title: "Omnitracs Options",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        ingestHistoryFromSourceSystem: {
+                          type: "boolean",
+                          default: true,
+                          description:
+                            "By default our system will ingest Vehicle Locations and Stat Logs from the source system. Omnitracs also supports history at a higher sample rate through a historical file process. If you are using these historical files and want to avoid mixing the data sources, set this to false.",
+                        },
+                      },
+                      required: [],
+                      title: "Omnitracs ES Options",
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        ingestHistoryFromSourceSystem: {
+                          type: "boolean",
+                          default: true,
+                          description:
+                            "By default our system will ingest Vehicle Locations and Stat Logs from the source system. Omnitracs also supports history at a higher sample rate through a historical file process. If you are using these historical files and want to avoid mixing the data sources, set this to false.",
+                        },
+                      },
+                      required: [],
+                      title: "Omnitracs XRS Options",
+                    },
+                  ],
+                },
                 filters: {
                   type: "object",
                   properties: {
@@ -315,10 +356,9 @@ export const commands: Command[] = [
                 },
                 sourceId: {
                   type: "string",
-                  description:
-                    "The ID used in the source system to represent the account this connection has or had access to.\n\nThis may be an `organizationId` or `accountId`.\n\nNote: not all systems expose this information, in which case it may be undefined.",
                   title: "SourceId",
                   example: "123456789",
+                  description: "The ID used to represent the entity in the source system.",
                 },
                 provider: {
                   type: "object",
@@ -331,7 +371,6 @@ export const commands: Command[] = [
                     },
                     code: {
                       type: "string",
-                      title: "Provider Code",
                       example: "geotab",
                       description:
                         "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -437,7 +476,16 @@ export const commands: Command[] = [
             },
             {
               type: "object",
-              properties: { status: { type: "string", enum: ["deleting", "deleted"] } },
+              properties: {
+                status: { type: "string", enum: ["deleting", "deleted"] },
+                deletedAt: {
+                  type: "string",
+                  title: "ISODateTime",
+                  format: "date-time",
+                  example: "2021-01-06T03:24:53.000Z",
+                  description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+                },
+              },
               required: ["status"],
             },
           ],
