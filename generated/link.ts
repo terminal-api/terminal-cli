@@ -46,6 +46,13 @@ export async function create_short_link(
   );
 }
 
+export async function delete_short_link(
+  client: TerminalClient,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  return await client.delete(`/link/short/${String(args["id"])}`, undefined, false);
+}
+
 // Command definitions
 export const commands: Command[] = [
   {
@@ -125,16 +132,19 @@ export const commands: Command[] = [
       properties: {
         id: {
           type: "string",
+          title: "ShortLinkId",
+          description:
+            "Unique identifier for a short link. Returned on create and required to delete the short link.",
           format: "ulid",
           pattern: "^slk_[0-9A-HJKMNP-TV-Z]{26}$",
           example: "slk_01JB7K3N2QZP7TVR4FX8SDWFH9",
-          description: "Durable identifier for the short link resource.",
         },
         code: {
           type: "string",
           pattern: "^[a-hjkmnp-z2-9]{8}$",
           example: "az9qtk2d",
-          description: "8-character code that is associated with the original Link parameters.",
+          description:
+            "8-character code that is associated with the original Link parameters. Used in the shared URL; cannot be used to delete the short link.",
         },
         url: {
           type: "string",
@@ -152,6 +162,23 @@ export const commands: Command[] = [
       },
       required: ["id", "code", "url", "expiresAt"],
     },
+  },
+  {
+    name: "delete-short-link",
+    description: "Delete Short Link",
+    method: "DELETE",
+    path: "/link/short/{id}",
+    requiresConnectionToken: false,
+    args: [
+      {
+        name: "id",
+        type: "string",
+        required: true,
+        description: "",
+      },
+    ],
+    handler: delete_short_link,
+    responseSchema: null,
   },
 ];
 
