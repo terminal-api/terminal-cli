@@ -31,7 +31,7 @@ jobs:
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
     steps:
       - name: Setup runs-on
-        uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d # v2.3.1
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
 
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -61,7 +61,7 @@ jobs:
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
     steps:
       - name: Setup runs-on
-        uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d # v2.3.1
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
 
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
