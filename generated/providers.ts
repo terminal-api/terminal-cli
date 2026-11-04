@@ -56,7 +56,6 @@ export const commands: Command[] = [
           },
           code: {
             type: "string",
-            title: "Provider Code",
             example: "geotab",
             description:
               "Every provider has a unique code to identify it across Terminal's system. You can find each provider's code under [provider details](/providers).",
@@ -85,7 +84,7 @@ export const commands: Command[] = [
               properties: {
                 type: {
                   type: "string",
-                  enum: ["login-page", "developer-docs"],
+                  enum: ["login-page", "password-reset", "developer-docs"],
                   description: "The type of reference",
                 },
                 url: { type: "string", description: "The URL of the reference" },
@@ -672,8 +671,21 @@ export const commands: Command[] = [
               "VehicleUtilization",
             ],
           },
+          passthrough: {
+            type: "object",
+            title: "ProviderPassthroughSupport",
+            description: "Provider-level passthrough request support.",
+            required: ["supported"],
+            properties: {
+              supported: {
+                type: "boolean",
+                description:
+                  "Whether Terminal supports authenticated passthrough requests for this provider.",
+              },
+            },
+          },
         },
-        required: ["code", "name", "status", "logo", "icon", "supportedModels"],
+        required: ["code", "name", "status", "logo", "icon", "supportedModels", "passthrough"],
       },
     },
   },

@@ -100,6 +100,23 @@ export async function passthrough(
   );
 }
 
+export async function passthrough_raw(
+  client: TerminalClient,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  return await client.post(
+    "/passthrough/raw",
+    {
+      method: args["method"],
+      path: args["path"],
+      headers: args["headers"],
+      body: args["body"],
+    },
+    undefined,
+    true,
+  );
+}
+
 // Command definitions
 export const commands: Command[] = [
   {
@@ -126,7 +143,6 @@ export const commands: Command[] = [
         type: "string",
         required: false,
         description: "",
-        enum: ["requested", "in_progress", "completed", "failed"],
       },
       {
         name: "expand",
@@ -191,6 +207,7 @@ export const commands: Command[] = [
                     },
                     {
                       type: "object",
+                      title: "Expanded Issue",
                       properties: {
                         id: {
                           type: "string",
@@ -199,12 +216,102 @@ export const commands: Command[] = [
                           pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
                           example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                         },
+                        status: { enum: ["ongoing", "resolved"] },
+                        resolutionType: {
+                          type: "string",
+                          title: "IssueResolutionType",
+                          description: "How an issue is expected to be investigated or resolved.",
+                          enum: [
+                            "action_required",
+                            "automatic_retry",
+                            "terminal_managed",
+                            "known_limitation",
+                            "investigation_required",
+                          ],
+                        },
+                        documentationUrl: {
+                          type: "string",
+                          format: "uri",
+                          description:
+                            "Direct link to the resolution guide for this semantic issue.",
+                        },
+                        connection: {
+                          type: "string",
+                          title: "ConnectionId",
+                          format: "ulid",
+                          example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+                        },
+                        error: {
+                          type: "object",
+                          properties: {
+                            code: {
+                              type: "string",
+                              title: "IssueCode",
+                              description:
+                                "Stable semantic identifier for an Issue and its remediation workflow. Legacy values remain in the schema for source compatibility but are not emitted after migration.",
+                              enum: [
+                                "missing_permissions",
+                                "exceeded_retention_window",
+                                "invalid_source_id",
+                                "unknown_device_type",
+                                "missing_safety_configuration",
+                                "inaccessible_data",
+                                "manually_disabled",
+                                "permission_missing",
+                                "oauth_scope_missing",
+                                "subscription_required",
+                                "retention_window_exceeded",
+                                "provider_data_inaccessible",
+                                "invalid_source_identifier",
+                                "unsupported_device_type",
+                                "stream_disabled",
+                                "provider_provisioning_pending",
+                                "provider_feature_not_enabled",
+                                "missing_vehicle_identifier",
+                                "missing_vehicle_assignment",
+                                "provider_capability_not_supported",
+                                "provider_source_data_invalid",
+                                "provider_partially_configured",
+                                "managed_poll_returned_no_data",
+                                "managed_poll_failed",
+                                "data_delayed",
+                              ],
+                            },
+                            message: {
+                              type: "string",
+                              example:
+                                "Failed to ingest HOS Logs, missing permissions to access Duty Status Logs",
+                            },
+                          },
+                          required: ["code", "message"],
+                        },
+                        firstReportedAt: {
+                          type: "string",
+                          title: "ISODateTime",
+                          format: "date-time",
+                          example: "2021-01-06T03:24:53.000Z",
+                          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+                        },
+                        lastReportedAt: {
+                          type: "string",
+                          title: "ISODateTime",
+                          format: "date-time",
+                          example: "2021-01-06T03:24:53.000Z",
+                          description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+                        },
                       },
-                      required: ["id"],
+                      required: [
+                        "id",
+                        "connection",
+                        "status",
+                        "error",
+                        "firstReportedAt",
+                        "lastReportedAt",
+                      ],
+                      "x-description":
+                        "An issue is a problem we encountered while ingesting data from a connection that may impact the quality or completeness of the data.",
                     },
                   ],
-                  description:
-                    "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
                 },
               },
               startFrom: {
@@ -252,6 +359,7 @@ export const commands: Command[] = [
           example: "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
           description: "Cursor used for pagination.",
           format: "cursor",
+          pattern: "^[A-Za-z0-9+/=_-]+$",
         },
       },
       required: ["results"],
@@ -358,6 +466,7 @@ export const commands: Command[] = [
               },
               {
                 type: "object",
+                title: "Expanded Issue",
                 properties: {
                   id: {
                     type: "string",
@@ -366,12 +475,101 @@ export const commands: Command[] = [
                     pattern: "^isu_[0-9A-HJKMNP-TV-Z]{26}$",
                     example: "isu_01D8ZQFGHVJ858NBF2Q7DV9MNC",
                   },
+                  status: { enum: ["ongoing", "resolved"] },
+                  resolutionType: {
+                    type: "string",
+                    title: "IssueResolutionType",
+                    description: "How an issue is expected to be investigated or resolved.",
+                    enum: [
+                      "action_required",
+                      "automatic_retry",
+                      "terminal_managed",
+                      "known_limitation",
+                      "investigation_required",
+                    ],
+                  },
+                  documentationUrl: {
+                    type: "string",
+                    format: "uri",
+                    description: "Direct link to the resolution guide for this semantic issue.",
+                  },
+                  connection: {
+                    type: "string",
+                    title: "ConnectionId",
+                    format: "ulid",
+                    example: "conn_01GV12VR4DJP70GD1ZBK0SDWFH",
+                  },
+                  error: {
+                    type: "object",
+                    properties: {
+                      code: {
+                        type: "string",
+                        title: "IssueCode",
+                        description:
+                          "Stable semantic identifier for an Issue and its remediation workflow. Legacy values remain in the schema for source compatibility but are not emitted after migration.",
+                        enum: [
+                          "missing_permissions",
+                          "exceeded_retention_window",
+                          "invalid_source_id",
+                          "unknown_device_type",
+                          "missing_safety_configuration",
+                          "inaccessible_data",
+                          "manually_disabled",
+                          "permission_missing",
+                          "oauth_scope_missing",
+                          "subscription_required",
+                          "retention_window_exceeded",
+                          "provider_data_inaccessible",
+                          "invalid_source_identifier",
+                          "unsupported_device_type",
+                          "stream_disabled",
+                          "provider_provisioning_pending",
+                          "provider_feature_not_enabled",
+                          "missing_vehicle_identifier",
+                          "missing_vehicle_assignment",
+                          "provider_capability_not_supported",
+                          "provider_source_data_invalid",
+                          "provider_partially_configured",
+                          "managed_poll_returned_no_data",
+                          "managed_poll_failed",
+                          "data_delayed",
+                        ],
+                      },
+                      message: {
+                        type: "string",
+                        example:
+                          "Failed to ingest HOS Logs, missing permissions to access Duty Status Logs",
+                      },
+                    },
+                    required: ["code", "message"],
+                  },
+                  firstReportedAt: {
+                    type: "string",
+                    title: "ISODateTime",
+                    format: "date-time",
+                    example: "2021-01-06T03:24:53.000Z",
+                    description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+                  },
+                  lastReportedAt: {
+                    type: "string",
+                    title: "ISODateTime",
+                    format: "date-time",
+                    example: "2021-01-06T03:24:53.000Z",
+                    description: "[ISO 8601](https://www.w3.org/TR/NOTE-datetime) date",
+                  },
                 },
-                required: ["id"],
+                required: [
+                  "id",
+                  "connection",
+                  "status",
+                  "error",
+                  "firstReportedAt",
+                  "lastReportedAt",
+                ],
+                "x-description":
+                  "An issue is a problem we encountered while ingesting data from a connection that may impact the quality or completeness of the data.",
               },
             ],
-            description:
-              "Entities in Terminal are expandable. Using the `expand` query parameter you can choose to ingest just an ID or the full entity details.",
           },
         },
         startFrom: {
@@ -489,7 +687,8 @@ export const commands: Command[] = [
         name: "path",
         type: "string",
         required: true,
-        description: "The path for the third-party request, such as `/reports`",
+        description:
+          "A relative provider path such as `/reports`, or an absolute URL. Absolute URLs are accepted only when they target the connection's provider host.",
       },
       {
         name: "headers",
@@ -532,8 +731,6 @@ export const commands: Command[] = [
           description: "Any returned headers from the passthrough request.",
         },
         response: {
-          example: { reportId: "1234" },
-          description: "The response body from the passthrough request",
           title: "JSON Value",
           oneOf: [
             { type: "object" },
@@ -546,6 +743,44 @@ export const commands: Command[] = [
       },
       required: ["method", "path", "statusCode", "headers", "response"],
     },
+  },
+  {
+    name: "passthrough-raw",
+    description: "Raw Passthrough",
+    method: "POST",
+    path: "/passthrough/raw",
+    requiresConnectionToken: true,
+    args: [
+      {
+        name: "method",
+        type: "string",
+        required: true,
+        description: "The method for the third-party request, such as GET or POST.",
+        enum: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      },
+      {
+        name: "path",
+        type: "string",
+        required: true,
+        description:
+          "A relative provider path such as `/reports`, or an absolute URL. Absolute URLs are accepted only when they target the connection's provider host.",
+      },
+      {
+        name: "headers",
+        type: "object",
+        required: false,
+        description:
+          "The headers to use for the request (Terminal will handle the connection's authorization headers)",
+      },
+      {
+        name: "body",
+        type: "string",
+        required: false,
+        description: "The request body",
+      },
+    ],
+    handler: passthrough_raw,
+    responseSchema: null,
   },
 ];
 
